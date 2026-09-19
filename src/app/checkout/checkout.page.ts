@@ -1,3 +1,4 @@
+import { environment } from '../../environments/environment';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -300,7 +301,7 @@ philippineRegions: string[] = [
     // The backend is the source of truth for checkout.
     // Replace its current cart with the items shown in this checkout page
     // so guest/local cart items are not lost after login.
-    const clearResponse = await fetch('http://localhost:4000/api/cart', {
+    const clearResponse = await fetch(`${environment.apiUrl}/cart`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`
@@ -313,7 +314,7 @@ philippineRegions: string[] = [
     }
 
     for (const item of this.cartItems) {
-      const response = await fetch('http://localhost:4000/api/cart/items', {
+      const response = await fetch(`${environment.apiUrl}/cart/items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -755,7 +756,7 @@ philippineRegions: string[] = [
     }
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/login', {
+      const response = await fetch(`${environment.apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1269,7 +1270,7 @@ philippineRegions: string[] = [
       // CREATE REAL BACKEND ORDER
       // -----------------------------
       const response = await fetch(
-        'http://localhost:4000/api/orders',
+        `${environment.apiUrl}/orders`,
         {
           method: 'POST',
 

@@ -1,3 +1,4 @@
+import { environment } from '../../environments/environment';
 import {
   Component,
   OnInit,
@@ -814,7 +815,7 @@ export class NotificationPage
     }
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/login', {
+      const response = await fetch(`${environment.apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password: this.password })

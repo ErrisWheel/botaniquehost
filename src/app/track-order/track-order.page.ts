@@ -1,3 +1,4 @@
+import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -92,7 +93,7 @@ export class TrackOrderPage implements OnInit {
 
   private readonly ORDER_KEY = 'botaniqueOrders';
 
-  private readonly API_URL = 'http://localhost:4000/api';
+  private readonly API_URL = `${environment.apiUrl}`;
   /* STATUS FILTER */
 
 
@@ -1967,7 +1968,7 @@ export class TrackOrderPage implements OnInit {
     }
 
     try {
-      const response = await fetch('http://localhost:4000/api/auth/login', {
+      const response = await fetch(`${environment.apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

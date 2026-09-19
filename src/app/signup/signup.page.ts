@@ -1,3 +1,4 @@
+import { environment } from '../../environments/environment';
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -102,7 +103,7 @@ export class SignupPage {
 
     try {
       const response = await fetch(
-        'http://localhost:4000/api/auth/register',
+        `${environment.apiUrl}/auth/register`,
         {
           method: 'POST',
 
