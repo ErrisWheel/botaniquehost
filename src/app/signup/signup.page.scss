@@ -1,0 +1,723 @@
+/* =====================================================
+   SIGN UP PAGE
+===================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+}
+
+
+/* =====================================================
+   MAIN SPLIT LAYOUT
+===================================================== */
+
+.signup-scroll {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+}
+
+
+/* =====================================================
+   LEFT IMAGE SECTION
+===================================================== */
+
+.image-section {
+  width: 55%;
+  height: 100vh;
+  min-height: 700px;
+  position: sticky;
+  top: 0;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(38, 53, 42, 0.96),
+      rgba(52, 78, 47, 0.92)
+    );
+}
+
+
+/* dark overlay */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(157, 189, 139, 0.16),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(255, 255, 255, 0.05),
+      transparent 40%
+    );
+  pointer-events: none;
+}
+
+
+/* =====================================================
+   BRAND
+===================================================== */
+
+.brand {
+  position: relative;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  margin-bottom: 28px;
+  flex-shrink: 0;
+}
+
+.badge-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.brand-text h1 {
+  margin: 0;
+
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+}
+
+.brand-text p {
+  margin: 3px 0 0;
+
+  font-family: 'Work Sans', Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+
+/* =====================================================
+   PLANT IMAGE ACCORDION
+===================================================== */
+
+.plant-images {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 14px;
+
+  overflow: hidden;
+
+  transition:
+    grid-template-rows 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.plant-images.image-1-active {
+  grid-template-rows: 4fr 1fr 1fr;
+}
+
+.plant-images.image-2-active {
+  grid-template-rows: 1fr 4fr 1fr;
+}
+
+.plant-images.image-3-active {
+  grid-template-rows: 1fr 1fr 4fr;
+}
+
+
+/* individual image */
+
+.plant-image {
+  position: relative;
+
+  width: 100%;
+  min-height: 0;
+
+  overflow: hidden;
+  border-radius: 20px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 24px rgba(20, 35, 26, 0.18);
+
+  transition:
+    border-radius 0.3s ease,
+    transform 0.3s ease;
+}
+
+.plant-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition:
+    transform 0.6s ease,
+    filter 0.4s ease;
+}
+
+.plant-image:hover img {
+  transform: scale(1.04);
+}
+
+.plant-images:hover .plant-image:not(:hover) img {
+  filter: brightness(0.72);
+}
+
+
+/* dark image gradient */
+
+.plant-image::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      to top,
+      rgba(20, 35, 26, 0.65),
+      rgba(20, 35, 26, 0.05)
+    );
+
+  opacity: 0;
+
+  transition: opacity 0.35s ease;
+
+  pointer-events: none;
+}
+
+.plant-image:hover::after {
+  opacity: 1;
+}
+
+
+/* image label */
+
+.image-label {
+  position: absolute;
+
+  left: 18px;
+  bottom: 18px;
+
+  z-index: 2;
+
+  padding: 9px 16px;
+
+  border-radius: 25px;
+
+  background: rgba(52, 78, 47, 0.9);
+  color: #ffffff;
+
+  font-family: 'Work Sans', Arial, sans-serif;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  opacity: 0;
+
+  transform: translateY(10px);
+
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+
+  pointer-events: none;
+}
+
+.plant-image:hover .image-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* =====================================================
+   RIGHT FORM SECTION
+===================================================== */
+
+.form-section {
+  width: 45%;
+  min-height: 100vh;
+
+  display: flex;
+
+  overflow-y: auto;
+
+  padding: 32px 36px;
+
+  background: var(--cream, #f7f5ef);
+
+  box-sizing: border-box;
+}
+
+
+/* scrollbar */
+
+.form-section::-webkit-scrollbar {
+  width: 7px;
+}
+
+.form-section::-webkit-scrollbar-thumb {
+  background: rgba(70, 97, 62, 0.25);
+  border-radius: 10px;
+}
+
+
+/* =====================================================
+   AUTH SHELL
+===================================================== */
+
+.auth-shell {
+  width: 100%;
+  max-width: 520px;
+  margin: auto;
+}
+
+
+/* =====================================================
+   AUTH CARD
+===================================================== */
+
+.auth-card {
+  background: var(--paper, #fffdf8);
+
+  border: 1px solid var(--line, #ddd8ca);
+
+  border-radius: 20px;
+
+  padding: 28px 32px;
+
+  box-shadow: var(
+    --shadow,
+    0 12px 35px rgba(20, 35, 26, 0.08)
+  );
+}
+
+
+/* =====================================================
+   CARD HEADER
+===================================================== */
+
+.auth-card-head {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+.auth-leaf {
+  width: 40px;
+  height: 40px;
+
+  border-radius: 12px;
+
+  flex-shrink: 0;
+
+  font-size: 18px;
+
+  background: var(--moss, #46613e);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card-head h2 {
+  margin: 0;
+
+  font-family: 'Fraunces', Georgia, serif;
+
+  font-size: 23px;
+  font-weight: 600;
+
+  color: var(--ink, #14231a);
+}
+
+.auth-card-head p {
+  margin: 2px 0 0;
+
+  font-size: 12px;
+
+  color: var(--muted, #71806f);
+}
+
+
+/* =====================================================
+   SECTION LABEL
+===================================================== */
+
+.auth-section-label {
+  margin: 14px 0 12px;
+
+  padding-bottom: 6px;
+
+  font-size: 10.5px;
+  font-weight: 700;
+
+  letter-spacing: 0.14em;
+
+  text-transform: uppercase;
+
+  color: var(--moss, #46613e);
+
+  border-bottom: 1px solid var(--line, #ddd8ca);
+}
+
+
+/* =====================================================
+   FORM GRID
+===================================================== */
+
+.auth-grid {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+}
+
+.auth-span2 {
+  grid-column: span 2;
+}
+
+
+/* =====================================================
+   INPUT BOX
+===================================================== */
+
+.auth-grid .input-box {
+  margin-bottom: 0;
+}
+
+.input-box {
+  position: relative;
+}
+
+.auth-grid .input-box label {
+  display: block;
+
+  margin-bottom: 6px;
+
+  font-size: 12.5px;
+  font-weight: 600;
+
+  color: var(--ink, #14231a);
+}
+
+
+/* inputs + select */
+
+.auth-grid .input-box input,
+.auth-grid .input-box select {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 10px 12px;
+
+  border: 1px solid var(--line, #ddd8ca);
+
+  border-radius: 9px;
+
+  background: var(--cream, #f7f5ef);
+
+  color: var(--ink, #14231a);
+
+  font-family: 'Work Sans', Arial, sans-serif;
+
+  font-size: 12.5px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.auth-grid .input-box input::placeholder {
+  color: #9a9f96;
+}
+
+.auth-grid .input-box input:focus,
+.auth-grid .input-box select:focus {
+  border-color: var(--moss, #46613e);
+
+  box-shadow:
+    0 0 0 3px rgba(70, 97, 62, 0.12);
+}
+
+
+/* select */
+
+.auth-grid .input-box select {
+  appearance: auto;
+
+  cursor: pointer;
+}
+
+
+/* =====================================================
+   PASSWORD
+===================================================== */
+
+.password-box input {
+  padding-right: 44px !important;
+}
+
+.toggle-pass {
+  position: absolute;
+
+  right: 12px;
+  bottom: 9px;
+
+  width: 24px;
+  height: 24px;
+
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: none;
+  border: none;
+
+  color: var(--ink, #14231a);
+
+  cursor: pointer;
+}
+
+.toggle-pass svg {
+  width: 18px;
+  height: 18px;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 2;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* =====================================================
+   TERMS
+===================================================== */
+
+.auth-terms {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  margin: 14px 0;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+
+  color: var(--muted, #71806f);
+}
+
+.auth-terms input {
+  width: 15px;
+  height: 15px;
+
+  margin: 0;
+
+  flex-shrink: 0;
+
+  accent-color: var(--moss, #46613e);
+}
+
+.auth-terms a {
+  color: var(--moss, #46613e);
+
+  font-weight: 600;
+
+  text-decoration: none;
+}
+
+.auth-terms a:hover {
+  text-decoration: underline;
+}
+
+
+/* =====================================================
+   CREATE ACCOUNT BUTTON
+===================================================== */
+
+.auth-submit {
+  width: 100%;
+
+  padding: 12px;
+
+  border: 0;
+
+  border-radius: 999px;
+
+  background: var(--moss, #46613e);
+
+  color: #ffffff;
+
+  font-family: 'Work Sans', Arial, sans-serif;
+
+  font-weight: 600;
+
+  font-size: 13.5px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+.auth-submit:hover {
+  background: var(--moss-dark, #344d30);
+
+  transform: translateY(-2px);
+}
+
+
+/* =====================================================
+   LOGIN REDIRECT
+===================================================== */
+
+.auth-redirect {
+  text-align: center;
+
+  font-size: 12.5px;
+
+  color: var(--muted, #71806f);
+
+  margin: 14px 0 0;
+}
+
+.auth-redirect a {
+  color: var(--moss, #46613e);
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+.auth-redirect a:hover {
+  text-decoration: underline;
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 900px) {
+
+  .signup-scroll {
+    flex-direction: column;
+  }
+
+  .image-section {
+    position: relative;
+
+    width: 100%;
+    height: auto;
+
+    min-height: 320px;
+
+    top: auto;
+
+    padding: 20px;
+
+    box-sizing: border-box;
+  }
+
+  .brand {
+    margin-bottom: 20px;
+  }
+
+  .badge-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brand-text h1 {
+    font-size: 20px;
+  }
+
+  .brand-text p {
+    font-size: 11px;
+  }
+
+  .plant-images {
+    flex: none;
+
+    height: 300px;
+  }
+
+  .form-section {
+    width: 100%;
+
+    min-height: auto;
+
+    padding: 40px 22px;
+  }
+
+  .auth-shell {
+    max-width: 520px;
+  }
+}
+
+
+/* =====================================================
+   SMALL MOBILE
+===================================================== */
+
+@media (max-width: 560px) {
+
+  .plant-images {
+    height: 240px;
+  }
+
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-span2 {
+    grid-column: span 1;
+  }
+
+  .auth-card {
+    padding: 26px 20px;
+  }
+
+  .auth-card-head h2 {
+    font-size: 21px;
+  }
+
+  .auth-terms {
+    align-items: flex-start;
+  }
+}

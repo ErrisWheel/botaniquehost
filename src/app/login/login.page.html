@@ -1,0 +1,261 @@
+<div class="login-page">
+  <div class="login-scroll">
+
+    <div class="login-container">
+
+      <!-- LEFT SIDE - PLANT IMAGE ACCORDION -->
+      <section class="image-section">
+
+        <!-- BRAND -->
+        <div class="brand">
+          <img
+            src="assets/images/logo.png"
+            alt="Botanique Logo"
+            class="badge-logo"
+          />
+
+          <div class="brand-text">
+            <h1>BOTANIQUE</h1>
+            <p>
+              Bring nature in the comfort of your own home.
+            </p>
+          </div>
+        </div>
+
+
+        <!-- PLANT ACCORDION -->
+        <div
+          class="plant-images"
+          [class.image-1-active]="hoveredImage === 0"
+          [class.image-2-active]="hoveredImage === 1"
+          [class.image-3-active]="hoveredImage === 2"
+        >
+
+          <!-- IMAGE 1 -->
+          <div
+            class="plant-image"
+            (mouseenter)="setHoveredImage(0)"
+            (mouseleave)="clearHoveredImage()"
+            (click)="setHoveredImage(0)"
+          >
+            <img
+              src="https://media.architecturaldigest.com/photos/5dcde00380598800086215f6/16:9/w_2560%2Cc_limit/Osofsky_Oct19-5.jpg"
+              alt="Indoor plants"
+            />
+
+            <span class="image-label">
+              INDOOR PLANTS
+            </span>
+          </div>
+
+
+          <!-- IMAGE 2 -->
+          <div
+            class="plant-image"
+            (mouseenter)="setHoveredImage(1)"
+            (mouseleave)="clearHoveredImage()"
+            (click)="setHoveredImage(1)"
+          >
+            <img
+              src="https://static.wixstatic.com/media/12c460_aaeabdba79b44c3fa0834ab51502b83d~mv2.png/v1/fill/w_980,h_653,al_c,q_90,usm_0.66_1.00_0.01,enc_avif,quality_auto/12c460_aaeabdba79b44c3fa0834ab51502b83d~mv2.png"
+              alt="Outdoor plants"
+            />
+
+            <span class="image-label">
+              OUTDOOR PLANTS
+            </span>
+          </div>
+
+
+          <!-- IMAGE 3 -->
+          <div
+            class="plant-image"
+            (mouseenter)="setHoveredImage(2)"
+            (mouseleave)="clearHoveredImage()"
+            (click)="setHoveredImage(2)"
+          >
+            <img
+              src="https://www.rainbowgardens.biz/wp-content/uploads/2025/01/Scale-15-940x675.png"
+              alt="Plant care"
+            />
+
+            <span class="image-label">
+              PLANT CARE
+            </span>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!--  RIGHT SIDE - LOGIN FORM -->
+      <section class="form-section">
+
+        <div class="auth-shell">
+
+          <div class="auth-card">
+
+            <!-- CARD HEADER -->
+            <div class="auth-card-head">
+
+              <span class="auth-leaf">
+                🌿
+              </span>
+
+              <div>
+                <h2>Welcome Back</h2>
+
+                <p>
+                  Login to your Botanique account
+                </p>
+              </div>
+
+            </div>
+
+
+            <!-- LOGIN FORM -->
+            <form
+              #loginForm="ngForm"
+              (ngSubmit)="login(loginForm)"
+              novalidate
+            >
+
+              <!-- EMAIL -->
+              <div class="input-box">
+
+                <label for="loginEmail">
+                  Email Address
+                </label>
+
+                <input
+                  type="email"
+                  id="loginEmail"
+                  name="email"
+                  [(ngModel)]="email"
+                  placeholder="Enter your email"
+                  autocomplete="email"
+                  required
+                />
+
+              </div>
+
+
+              <!-- PASSWORD -->
+              <div class="input-box password-box">
+
+                <label for="loginPassword">
+                  Password
+                </label>
+
+                <div class="password-input">
+
+                  <input
+                    [type]="showPassword ? 'text' : 'password'"
+                    id="loginPassword"
+                    name="password"
+                    [(ngModel)]="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                  />
+
+                  <button
+                    type="button"
+                    class="toggle-pass"
+                    (click)="togglePassword()"
+                    [attr.aria-label]="
+                      showPassword
+                        ? 'Hide password'
+                        : 'Show password'
+                    "
+                  >
+                    {{ showPassword ? '◉' : '◌' }}
+                  </button>
+
+                </div>
+
+              </div>
+
+
+              <!-- FORM OPTIONS -->
+              <div class="form-options">
+
+                <label class="remember">
+
+                  <input
+                    type="checkbox"
+                    name="rememberMe"
+                    [(ngModel)]="rememberMe"
+                  />
+
+                  <span>
+                    Remember me
+                  </span>
+
+                </label>
+
+
+                <button
+                  type="button"
+                  class="forgot-button"
+                  (click)="forgotPassword($event)"
+                >
+                  Forgot Password?
+                </button>
+
+              </div>
+
+
+              <!-- LOGIN BUTTON -->
+              <button
+                class="login-button"
+                type="submit"
+              >
+                Login
+              </button>
+
+            </form>
+
+
+            <!-- DIVIDER -->
+            <div class="divider">
+              <span>OR</span>
+            </div>
+
+
+            <!-- GUEST -->
+            <button
+              class="guest-button"
+              type="button"
+              (click)="continueAsGuest()"
+            >
+              Continue as Guest
+            </button>
+
+
+            <!-- SIGN UP -->
+            <p class="signup">
+
+              Don't have an account?
+
+              <button
+                type="button"
+                class="signup-link"
+                (click)="goToSignup($event)"
+              >
+                Sign Up
+              </button>
+
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </div>
+</div>

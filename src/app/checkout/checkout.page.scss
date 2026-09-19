@@ -1,0 +1,1899 @@
+/* =========================================================
+   CHECKOUT PAGE
+========================================================= */
+
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+
+  --ink: #243126;
+  --ink-soft: #526052;
+  --moss: #46613e;
+  --muted: #71806f;
+  --cream: #f6f2e7;
+  --cream-light: #fffdf8;
+
+  --line: rgba(36, 49, 38, 0.13);
+  --line-dark: rgba(255, 255, 255, 0.16);
+}
+
+
+/* =========================================================
+   PAGE SCROLL
+========================================================= */
+
+.home-scroll {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: var(--cream);
+  color: var(--ink);
+}
+
+
+/* =========================================================
+   COMMON CONTAINER
+========================================================= */
+
+.wrap {
+  width: min(1305px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+
+
+/* =========================================================
+   CHECKOUT PAGE
+========================================================= */
+
+.checkout-page {
+  padding-top: 47px;
+  padding-bottom: 100px;
+}
+
+
+/* =========================================================
+   HEADING
+========================================================= */
+
+.checkout-heading {
+  width: min(720px, 100%);
+  margin: 0 auto 52px;
+
+  text-align: center;
+}
+
+.checkout-heading .eyebrow {
+  display: block;
+  margin-bottom: 12px;
+
+  color: var(--moss);
+
+  font-family: 'Work Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.checkout-heading h1 {
+  margin: 0;
+
+  color: var(--ink);
+
+  font-family: 'Fraunces', serif;
+  font-size: clamp(38px, 4vw, 58px);
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.checkout-heading p {
+  max-width: 620px;
+  margin: 19px auto 0;
+
+  color: var(--ink-soft);
+
+  font-family: 'Work Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   MAIN TWO-COLUMN CONTAINER
+========================================================= */
+
+.checkout-layout {
+  width: 100%;
+  max-width: 1305px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 741px)
+    minmax(0, 530px);
+
+  gap: 32px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   LEFT COLUMN
+========================================================= */
+
+.checkout-form-column {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 22px;
+}
+
+
+/* =========================================================
+   CHECKOUT CARDS
+========================================================= */
+
+.checkout-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 32px;
+
+  background: var(--cream-light);
+
+  border: 1px solid var(--line);
+  border-radius: 17px;
+
+  box-shadow:
+    0 10px 30px rgba(36, 49, 38, 0.035);
+}
+
+
+/* =========================================================
+   CARD HEADING
+========================================================= */
+
+.card-heading {
+  margin-bottom: 28px;
+}
+
+.card-heading > div {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 17px;
+}
+
+.card-number {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid rgba(70, 97, 62, 0.25);
+  border-radius: 50%;
+
+  color: var(--moss);
+
+  font-family: 'Work Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 0.05em;
+}
+
+.card-heading .eyebrow {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: var(--moss);
+
+  font-family: 'Work Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.card-heading h2 {
+  margin: 0;
+
+  color: var(--ink);
+
+  font-family: 'Fraunces', serif;
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.checkout-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.form-group {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.form-group label {
+  display: flex;
+  align-items: baseline;
+
+  gap: 4px;
+
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-group label span {
+  color: #9c5a48;
+}
+
+.form-group label small {
+  margin-left: auto;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   INPUT / TEXTAREA / SELECT
+========================================================= */
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  box-sizing: border-box;
+
+  border: 1px solid rgba(36, 49, 38, 0.16);
+  border-radius: 9px;
+
+  background: #fff;
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+
+/* =========================================================
+   TEXT INPUTS
+========================================================= */
+
+.form-group input {
+  height: 48px;
+  padding: 0 14px;
+}
+
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.form-group textarea {
+  min-height: 92px;
+
+  padding: 13px 14px;
+
+  resize: vertical;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   REGION DROPDOWN
+========================================================= */
+
+.form-group select {
+  height: 48px;
+
+  padding: 0 44px 0 14px;
+
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: #fff;
+
+  /* Custom dropdown arrow */
+  background-image:
+    linear-gradient(
+      45deg,
+      transparent 50%,
+      var(--moss) 50%
+    ),
+    linear-gradient(
+      135deg,
+      var(--moss) 50%,
+      transparent 50%
+    );
+
+  background-position:
+    calc(100% - 19px) 20px,
+    calc(100% - 14px) 20px;
+
+  background-size:
+    5px 5px,
+    5px 5px;
+
+  background-repeat: no-repeat;
+}
+
+
+/* =========================================================
+   REGION DROPDOWN OPTIONS
+========================================================= */
+
+.form-group select option {
+  color: var(--ink);
+
+  background: #fff;
+
+  font-family: 'Work Sans', sans-serif;
+  font-size: 14px;
+}
+
+.form-group select option[value=''] {
+  color: #9aa198;
+}
+
+
+/* =========================================================
+   SELECT PLACEHOLDER
+========================================================= */
+
+.form-group select:invalid {
+  color: #9aa198;
+}
+
+
+/* =========================================================
+   INPUT PLACEHOLDERS
+========================================================= */
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #9aa198;
+}
+
+
+/* =========================================================
+   INPUT / SELECT FOCUS
+========================================================= */
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--moss);
+
+  box-shadow:
+    0 0 0 3px rgba(70, 97, 62, 0.09);
+
+  background: #fff;
+}
+
+
+/* =========================================================
+   REGION HOVER
+========================================================= */
+
+.form-group select:hover {
+  border-color: rgba(70, 97, 62, 0.45);
+}
+
+
+/* =========================================================
+   DISABLED SELECT
+========================================================= */
+
+.form-group select:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+
+  background-color: #f1efe7;
+}
+
+
+/* =========================================================
+   ADDRESS ROW
+========================================================= */
+
+.address-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+
+/* =========================================================
+   ZIP + REGION
+========================================================= */
+
+.address-row.zip-region {
+  grid-template-columns:
+    minmax(150px, 0.75fr)
+    minmax(0, 1.25fr);
+}
+
+
+/* =========================================================
+   PAYMENT
+========================================================= */
+
+.payment-options {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-bottom: 16px;
+}
+
+.payment-option {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  min-height: 78px;
+
+  box-sizing: border-box;
+
+  padding: 14px;
+
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  background: var(--cream-light);
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.payment-option:hover {
+  border-color: rgba(70, 97, 62, 0.45);
+}
+
+.payment-option.selected {
+  border-color: var(--moss);
+
+  background: rgba(70, 97, 62, 0.045);
+
+  box-shadow:
+    0 0 0 1px rgba(70, 97, 62, 0.08);
+}
+
+.payment-option input[type='radio'] {
+  position: absolute;
+
+  opacity: 0;
+
+  width: 0;
+  height: 0;
+
+  pointer-events: none;
+}
+
+.payment-radio {
+  width: 18px;
+  height: 18px;
+
+  border: 2px solid #8b9689;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+}
+
+.payment-radio::after {
+  content: '';
+
+  width: 8px;
+  height: 8px;
+
+  background: var(--moss);
+
+  border-radius: 50%;
+
+  transform: scale(0);
+
+  transition:
+    transform 0.2s ease;
+}
+
+.payment-option.selected .payment-radio {
+  border-color: var(--moss);
+}
+
+.payment-option.selected .payment-radio::after {
+  transform: scale(1);
+}
+
+
+/* =========================================================
+   PAYMENT LOGO
+========================================================= */
+
+.payment-logo {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 8px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+}
+
+.payment-logo img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.payment-logo.cash-logo {
+  background: #e8f5e9;
+
+  color: #2e7d32;
+
+  font-size: 18px;
+}
+
+
+/* =========================================================
+   PAYMENT DETAILS
+========================================================= */
+
+.payment-details {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.payment-details strong {
+  display: block;
+
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.payment-details small {
+  display: block;
+
+  color: var(--muted);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   PAYMENT NOTE
+========================================================= */
+
+.payment-note {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 10px 12px;
+
+  background: rgba(70, 97, 62, 0.07);
+
+  border-radius: 8px;
+
+  color: var(--muted);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+}
+
+.payment-note p {
+  margin: 0;
+}
+
+
+/* =========================================================
+   CONFIRMATION
+========================================================= */
+
+.confirmation-content {
+  display: flex;
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+.confirmation-content > p {
+  margin: 0;
+
+  color: var(--ink-soft);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 13px;
+
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   TERMS CHECKBOX
+========================================================= */
+
+.terms-check {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 11px;
+
+  cursor: pointer;
+}
+
+.terms-check input {
+  position: absolute;
+
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+.custom-checkbox {
+  flex: 0 0 auto;
+
+  width: 18px;
+  height: 18px;
+
+  margin-top: 1px;
+
+  border: 1px solid #8d978c;
+  border-radius: 4px;
+
+  background: #fff;
+
+  position: relative;
+}
+
+.terms-check input:checked + .custom-checkbox {
+  border-color: var(--moss);
+
+  background: var(--moss);
+}
+
+.terms-check input:checked + .custom-checkbox::after {
+  content: '';
+
+  position: absolute;
+
+  left: 5px;
+  top: 2px;
+
+  width: 5px;
+  height: 9px;
+
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+
+  transform: rotate(45deg);
+}
+
+.terms-text {
+  color: var(--ink-soft);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+.terms-text a {
+  color: var(--moss);
+
+  font-weight: 650;
+
+  text-decoration: underline;
+
+  text-underline-offset: 2px;
+}
+
+
+/* =========================================================
+   ORDER SUMMARY
+========================================================= */
+
+.checkout-summary-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 32px;
+
+  background: var(--cream-light);
+
+  border: 1px solid var(--line);
+  border-radius: 17px;
+
+  position: sticky;
+  top: 108px;
+
+  box-shadow:
+    0 10px 30px rgba(36, 49, 38, 0.035);
+}
+
+.summary-heading {
+  margin-bottom: 26px;
+}
+
+.summary-heading .eyebrow {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--moss);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.15em;
+
+  text-transform: uppercase;
+}
+
+.summary-heading h2 {
+  margin: 0;
+
+  color: var(--ink);
+
+  font-family: 'Fraunces', serif;
+
+  font-size: 27px;
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   EMPTY CART
+========================================================= */
+
+.empty-cart {
+  padding: 35px 15px;
+
+  text-align: center;
+
+  border: 1px dashed rgba(36, 49, 38, 0.15);
+
+  border-radius: 12px;
+}
+
+.empty-cart-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 48px;
+  height: 48px;
+
+  margin: 0 auto 14px;
+
+  border-radius: 50%;
+
+  background: rgba(70, 97, 62, 0.08);
+}
+
+.empty-cart-icon svg {
+  width: 22px;
+  height: 22px;
+
+  fill: none;
+
+  stroke: var(--moss);
+
+  stroke-width: 1.5;
+
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.empty-cart h3 {
+  margin: 0 0 6px;
+
+  color: var(--ink);
+
+  font-family: 'Fraunces', serif;
+
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.empty-cart p {
+  margin: 0 0 18px;
+
+  color: var(--muted);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+.browse-products-btn {
+  height: 43px;
+
+  padding: 0 18px;
+
+  border: 1px solid var(--moss);
+  border-radius: 8px;
+
+  background: var(--moss);
+
+  color: #fff;
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+.checkout-products {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkout-product {
+  display: grid;
+
+  grid-template-columns:
+    62px
+    minmax(0, 1fr)
+    auto;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 15px 0;
+
+  border-bottom: 1px solid rgba(36, 49, 38, 0.09);
+}
+
+.checkout-product:first-child {
+  padding-top: 0;
+}
+
+.checkout-product-image {
+  width: 62px;
+  height: 62px;
+
+  overflow: hidden;
+
+  border-radius: 8px;
+
+  background: #eee9dc;
+}
+
+.checkout-product-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.checkout-product-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.checkout-product-info h3 {
+  margin: 0;
+
+  overflow: hidden;
+
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.checkout-product-info span {
+  color: var(--muted);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 11px;
+}
+
+.checkout-product-price {
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   SUMMARY DETAILS
+========================================================= */
+
+.summary-details {
+  margin-top: 21px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 7px 0;
+}
+
+.summary-row span {
+  color: var(--ink-soft);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+}
+
+.summary-row strong {
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.summary-row.discount span,
+.summary-row.discount strong {
+  color: var(--moss);
+}
+
+.summary-divider {
+  width: 100%;
+  height: 1px;
+
+  margin: 13px 0;
+
+  background: var(--line);
+}
+
+.summary-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.summary-total span {
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.summary-total strong {
+  color: var(--ink);
+
+  font-family: 'Fraunces', serif;
+
+  font-size: 27px;
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   ORDER BUTTON
+========================================================= */
+
+.place-order-btn {
+  width: 100%;
+  height: 52px;
+
+  margin-top: 25px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: var(--moss);
+
+  color: #fff;
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.place-order-btn:hover:not(:disabled) {
+  background: var(--ink);
+
+  transform: translateY(-1px);
+}
+
+.place-order-btn:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   BACK CART
+========================================================= */
+
+.back-cart-btn {
+  width: 100%;
+  height: 43px;
+
+  margin-top: 10px;
+
+  border: 1px solid rgba(36, 49, 38, 0.15);
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: var(--ink);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.back-cart-btn:hover {
+  background: rgba(36, 49, 38, 0.04);
+
+  border-color: rgba(36, 49, 38, 0.25);
+}
+
+.secure-note {
+  margin: 16px 0 0;
+
+  color: var(--muted);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 10px;
+
+  text-align: center;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.site-footer {
+  padding: 65px 0 25px;
+
+  background: var(--ink);
+
+  color: #fff;
+}
+
+.footer-grid {
+  display: grid;
+
+  grid-template-columns:
+    2fr
+    1fr
+    1fr;
+
+  gap: 60px;
+
+  padding-bottom: 45px;
+}
+
+.footer-brand img {
+  width: 92px;
+  height: auto;
+
+  display: block;
+
+  margin-bottom: 18px;
+}
+
+.footer-brand p {
+  max-width: 290px;
+
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.65);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+
+  line-height: 1.7;
+}
+
+.footer-grid > div:not(.footer-brand) {
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  gap: 10px;
+}
+
+.footer-grid h3 {
+  margin: 0 0 6px;
+
+  color: #fff;
+
+  font-family: 'Fraunces', serif;
+
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.footer-grid a {
+  color: rgba(255, 255, 255, 0.62);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+
+  text-decoration: none;
+
+  transition:
+    color 0.2s ease;
+}
+
+.footer-grid a:hover {
+  color: #fff;
+}
+
+.footer-bottom {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding-top: 22px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+  color: rgba(255, 255, 255, 0.45);
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   POLICY MODAL BACKDROP
+========================================================= */
+
+.policy-modal-backdrop {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 3000;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background: rgba(20, 28, 22, 0.68);
+
+  backdrop-filter: blur(7px);
+
+  -webkit-backdrop-filter: blur(7px);
+}
+
+
+/* =========================================================
+   POLICY MODAL
+========================================================= */
+
+.policy-modal {
+  width: min(700px, 100%);
+
+  max-height:
+    min(720px, calc(100vh - 48px));
+
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #0c1c12;
+
+  color: #d8ded5;
+
+  border: 1px solid rgba(143, 177, 122, 0.55);
+
+  border-radius: 17px;
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+
+/* =========================================================
+   POLICY MODAL HEADER
+========================================================= */
+
+.policy-modal-header {
+  flex: 0 0 auto;
+
+  min-height: 87px;
+
+  box-sizing: border-box;
+
+  padding: 16px 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  border-bottom: 1px solid rgba(143, 177, 122, 0.35);
+}
+
+.policy-modal-title {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+  min-width: 0;
+}
+
+.policy-logo {
+  flex: 0 0 auto;
+
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(143, 177, 122, 0.5);
+
+  border-radius: 13px;
+
+  background: #102217;
+}
+
+.policy-logo img {
+  width: 38px;
+  height: 38px;
+
+  display: block;
+
+  object-fit: contain;
+}
+
+.policy-modal-title h2 {
+  margin: 0;
+
+  color: #a8c991;
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 19px;
+  font-weight: 700;
+
+  letter-spacing: 0.01em;
+}
+
+.policy-modal-close {
+  flex: 0 0 auto;
+
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  color: #a8c991;
+
+  font-family: Arial, sans-serif;
+
+  font-size: 31px;
+  font-weight: 300;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.policy-modal-close:hover {
+  background: rgba(168, 201, 145, 0.1);
+
+  color: #d8e9ca;
+}
+
+
+/* =========================================================
+   POLICY MODAL BODY
+========================================================= */
+
+.policy-modal-body {
+  flex: 1 1 auto;
+
+  overflow-y: auto;
+
+  padding: 27px 32px 30px;
+
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    rgba(168, 201, 145, 0.35)
+    transparent;
+}
+
+.policy-modal-body::-webkit-scrollbar {
+  width: 7px;
+}
+
+.policy-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.policy-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(168, 201, 145, 0.35);
+
+  border-radius: 10px;
+}
+
+.policy-modal-body p {
+  margin: 0 0 20px;
+
+  color: #cbd3c7;
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 15px;
+  font-weight: 450;
+
+  line-height: 1.85;
+}
+
+.policy-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.policy-modal-body h3 {
+  margin: 25px 0 8px;
+
+  color: #dce7d8;
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.policy-modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.policy-modal-body strong {
+  color: #f0f5ed;
+
+  font-weight: 700;
+}
+
+.policy-final {
+  padding-top: 5px;
+}
+
+
+/* =========================================================
+   POLICY MODAL FOOTER
+========================================================= */
+
+.policy-modal-footer {
+  flex: 0 0 auto;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding: 16px 24px;
+
+  border-top: 1px solid rgba(143, 177, 122, 0.35);
+
+  background: #0a180f;
+}
+
+.policy-close-btn,
+.policy-agree-btn {
+  height: 42px;
+
+  padding: 0 20px;
+
+  border-radius: 8px;
+
+  font-family: 'Work Sans', sans-serif;
+
+  font-size: 12px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.policy-close-btn {
+  border: 1px solid rgba(168, 201, 145, 0.3);
+
+  background: transparent;
+
+  color: #cbd3c7;
+}
+
+.policy-close-btn:hover {
+  background: rgba(168, 201, 145, 0.08);
+}
+
+.policy-agree-btn {
+  border: 1px solid #8eaf78;
+
+  background: #8eaf78;
+
+  color: #102016;
+}
+
+.policy-agree-btn:hover {
+  background: #a8c991;
+
+  border-color: #a8c991;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   RESPONSIVE — 1100px
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .wrap {
+    width: min(100% - 40px, 100%);
+  }
+
+  .checkout-layout {
+    grid-template-columns:
+      minmax(0, 1.4fr)
+      minmax(340px, 1fr);
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — 950px
+========================================================= */
+
+@media (max-width: 950px) {
+
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-summary-card {
+    position: static;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — 800px
+========================================================= */
+
+@media (max-width: 800px) {
+
+  .checkout-page {
+    padding-top: 35px;
+    padding-bottom: 70px;
+  }
+
+  .checkout-heading {
+    margin-bottom: 35px;
+  }
+
+  .checkout-heading h1 {
+    font-size: 42px;
+  }
+
+  .checkout-card,
+  .checkout-summary-card {
+    padding: 25px;
+  }
+
+  .footer-grid {
+    grid-template-columns:
+      1fr
+      1fr;
+
+    gap: 35px;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — 600px
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .wrap {
+    width: calc(100% - 28px);
+  }
+
+  .checkout-heading h1 {
+    font-size: 36px;
+  }
+
+  .checkout-heading p {
+    font-size: 13px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+  }
+
+  .address-row,
+  .address-row.zip-region {
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-size: 14px;
+  }
+
+  .form-group select {
+    height: 48px;
+
+    padding-right: 42px;
+
+    background-position:
+      calc(100% - 18px) 20px,
+      calc(100% - 13px) 20px;
+  }
+
+  .payment-options {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-card,
+  .checkout-summary-card {
+    padding: 21px;
+
+    border-radius: 14px;
+  }
+
+  .card-heading {
+    margin-bottom: 23px;
+  }
+
+  .card-heading h2 {
+    font-size: 22px;
+  }
+
+  .policy-modal-backdrop {
+    padding: 12px;
+  }
+
+  .policy-modal {
+    max-height: calc(100vh - 24px);
+
+    border-radius: 14px;
+  }
+
+  .policy-modal-header {
+    min-height: 75px;
+
+    padding: 12px 15px;
+  }
+
+  .policy-logo {
+    width: 44px;
+    height: 44px;
+
+    border-radius: 10px;
+  }
+
+  .policy-logo img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .policy-modal-title h2 {
+    font-size: 16px;
+  }
+
+  .policy-modal-body {
+    padding: 22px 20px;
+  }
+
+  .policy-modal-body p {
+    font-size: 13px;
+
+    line-height: 1.75;
+  }
+
+  .policy-modal-footer {
+    padding: 13px 16px;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — 500px
+========================================================= */
+
+@media (max-width: 500px) {
+
+  .checkout-heading {
+    margin-bottom: 28px;
+  }
+
+  .checkout-heading h1 {
+    font-size: 32px;
+  }
+
+  .checkout-card,
+  .checkout-summary-card {
+    padding: 18px;
+  }
+
+  .checkout-product {
+    grid-template-columns:
+      54px
+      minmax(0, 1fr)
+      auto;
+
+    gap: 10px;
+  }
+
+  .checkout-product-image {
+    width: 54px;
+    height: 54px;
+  }
+
+  .checkout-product-price {
+    font-size: 12px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+
+    gap: 28px;
+  }
+
+  .footer-brand {
+    grid-column: auto;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+  .policy-modal-footer {
+    justify-content: stretch;
+  }
+
+  .policy-close-btn,
+  .policy-agree-btn {
+    flex: 1;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — 380px
+========================================================= */
+
+@media (max-width: 380px) {
+
+  .wrap {
+    width: calc(100% - 22px);
+  }
+
+  .checkout-heading h1 {
+    font-size: 29px;
+  }
+
+  .checkout-card,
+  .checkout-summary-card {
+    padding: 16px;
+  }
+
+  .form-group select {
+    font-size: 13px;
+  }
+
+  .policy-modal-body {
+    padding: 20px 16px;
+  }
+
+  .policy-modal-footer {
+    padding: 12px;
+  }
+}
+

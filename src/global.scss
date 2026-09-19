@@ -1,0 +1,1137 @@
+
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Global styles for the entire Botanique Ionic application.
+ */
+
+
+/* =====================================================
+   IONIC CORE CSS
+===================================================== */
+
+@import "@ionic/angular/css/core.css";
+
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+
+/* =====================================================
+   GOOGLE FONTS
+===================================================== */
+
+@import url(
+  'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap'
+);
+
+
+/* =====================================================
+   BOTANIQUE GLOBAL VARIABLES
+===================================================== */
+
+:root {
+
+  --botanique-bg: #f7f5ef;
+
+  --botanique-ink: #243126;
+
+  --botanique-green: #26352a;
+
+  --botanique-muted: #687469;
+
+  --botanique-cream: #fffdf8;
+
+}
+
+
+/* =====================================================
+   GLOBAL RESET
+===================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+
+  width: 100%;
+  height: 100%;
+
+  background: var(--botanique-bg);
+
+  color: var(--botanique-ink);
+
+  font-family: 'Work Sans', sans-serif;
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+
+/* =====================================================
+   GLOBAL WRAPPER
+===================================================== */
+
+.wrap {
+  width: min(1180px, calc(100% - 48px));
+
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+/* =====================================================
+   BOTANIQUE GLOBAL NAVBAR
+===================================================== */
+
+.site-header {
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 1000;
+
+  width: 100%;
+
+  background: rgba(247, 245, 239, 0.95);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  border-bottom: 1px solid rgba(36, 49, 38, 0.08);
+
+}
+
+
+/* =====================================================
+   NAVIGATION CONTAINER
+===================================================== */
+
+.nav {
+
+  position: relative;
+
+  min-height: 78px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 28px;
+
+}
+
+
+/* =====================================================
+   LOGO
+===================================================== */
+
+.logo {
+
+  order: 1;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  flex-shrink: 0;
+
+  color: var(--botanique-ink);
+
+  font-family: 'Fraunces', serif;
+
+  font-size: 25px;
+
+  font-weight: 500;
+
+  white-space: nowrap;
+
+}
+
+.logo-img {
+
+  width: 38px;
+  height: 38px;
+
+  display: block;
+
+  object-fit: contain;
+
+}
+
+
+/* =====================================================
+   NAVIGATION LINKS
+===================================================== */
+
+.nav-links {
+
+  order: 2;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 25px;
+
+  margin-left: auto;
+  margin-right: 125px;
+
+}
+
+.nav-links a {
+
+  position: relative;
+
+  padding: 8px 0;
+
+  color: var(--botanique-ink);
+
+  font-size: 14px;
+
+  font-weight: 500;
+
+  white-space: nowrap;
+
+  transition: color 0.2s ease;
+
+}
+
+.nav-links a::after {
+
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+
+  bottom: 1px;
+
+  width: 0;
+
+  height: 1.5px;
+
+  background: var(--botanique-ink);
+
+  transition: width 0.25s ease;
+
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+
+  width: 100%;
+
+}
+
+.nav-links a:hover {
+
+  color: var(--botanique-green);
+
+}
+
+
+/* =====================================================
+   NAVIGATION ACTIONS
+===================================================== */
+
+.nav-actions {
+
+  order: 3;
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  flex-shrink: 0;
+
+}
+
+
+/* =====================================================
+   SEARCH BUTTON
+===================================================== */
+
+.search-button {
+
+  width: 42px;
+  height: 42px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  color: var(--botanique-ink);
+
+  font-size: 26px;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+
+}
+
+.search-button:hover {
+
+  background: rgba(36, 49, 38, 0.07);
+
+  transform: translateY(-1px);
+
+}
+
+
+/* =====================================================
+   ICON BUTTONS
+===================================================== */
+
+.icon-link,
+.user-button {
+
+  position: relative;
+
+  width: 42px;
+  height: 42px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  color: var(--botanique-ink);
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+
+}
+
+.icon-link:hover,
+.user-button:hover {
+
+  background: rgba(36, 49, 38, 0.07);
+
+  transform: translateY(-1px);
+
+}
+
+
+/* =====================================================
+   NAVBAR SVG ICONS
+===================================================== */
+
+.nav-svg {
+
+  width: 21px;
+  height: 21px;
+
+  display: block;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 1.7;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+
+  pointer-events: none;
+
+}
+
+.wishlist-icon,
+.cart-icon {
+
+  width: 22px;
+  height: 22px;
+
+}
+
+.notification-icon {
+
+  width: 21px;
+  height: 21px;
+
+}
+
+
+/* =====================================================
+   USER ICON
+===================================================== */
+
+.user-button img {
+
+  width: 24px;
+  height: 24px;
+
+  display: block;
+
+  object-fit: contain;
+
+}
+
+
+/* =====================================================
+   ICON HOVER COLORS
+===================================================== */
+
+.wishlist-link:hover {
+
+  color: #5f705f;
+
+}
+
+.notification-link:hover {
+
+  color: #5f705f;
+
+}
+
+.cart-link:hover {
+
+  color: var(--botanique-green);
+
+}
+
+
+/* =====================================================
+   NAVBAR BADGES
+===================================================== */
+
+.cart-badge,
+.wishlist-badge,
+.notification-badge {
+
+  position: absolute;
+
+  top: 1px;
+  right: 0;
+
+  min-width: 17px;
+  height: 17px;
+
+  padding: 0 4px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  color: white;
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+  line-height: 1;
+
+  pointer-events: none;
+
+}
+
+.cart-badge {
+
+  background: var(--botanique-ink);
+
+}
+
+.wishlist-badge {
+
+  background: #6b4f4f;
+
+}
+
+.notification-badge {
+
+  background: #8b5e3c;
+
+}
+
+
+/* =====================================================
+   MOBILE MENU BUTTON
+===================================================== */
+
+.menu-toggle {
+
+  display: none;
+
+  width: 42px;
+  height: 42px;
+
+  padding: 9px;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: transparent;
+
+  cursor: pointer;
+
+}
+
+.menu-toggle span {
+
+  display: block;
+
+  width: 100%;
+
+  height: 1.5px;
+
+  margin: 5px 0;
+
+  background: var(--botanique-ink);
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+
+}
+
+
+/* =====================================================
+   LOGIN DROPDOWN
+===================================================== */
+
+.login-dropdown {
+
+  position: absolute;
+
+  top: calc(100% + 12px);
+
+  right: 0;
+
+  width: 330px;
+
+  padding: 24px;
+
+  background: var(--botanique-cream);
+
+  border: 1px solid rgba(36, 49, 38, 0.1);
+
+  border-radius: 16px;
+
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+
+  opacity: 0;
+
+  visibility: hidden;
+
+  pointer-events: none;
+
+  transform: translateY(-8px);
+
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+
+}
+
+.login-dropdown.show {
+
+  opacity: 1;
+
+  visibility: visible;
+
+  pointer-events: auto;
+
+  transform: translateY(0);
+
+}
+
+
+/* =====================================================
+   LOGIN DROPDOWN CONTENT
+===================================================== */
+
+.login-dropdown h3 {
+
+  margin: 0 0 5px;
+
+  color: var(--botanique-ink);
+
+  font-family: 'Fraunces', serif;
+
+  font-size: 23px;
+
+  font-weight: 500;
+
+}
+
+.login-dropdown > p {
+
+  margin: 0 0 18px;
+
+  color: var(--botanique-muted);
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+}
+
+
+/* =====================================================
+   DROPDOWN INPUTS
+===================================================== */
+
+.dropdown-input {
+
+  margin-bottom: 13px;
+
+}
+
+.dropdown-input label {
+
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--botanique-ink);
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+}
+
+.dropdown-input input {
+
+  width: 100%;
+
+  padding: 11px 12px;
+
+  border: 1px solid rgba(36, 49, 38, 0.16);
+
+  border-radius: 8px;
+
+  background: white;
+
+  outline: none;
+
+  color: var(--botanique-ink);
+
+  font-size: 13px;
+
+}
+
+.dropdown-input input:focus {
+
+  border-color: var(--botanique-green);
+
+}
+
+
+/* =====================================================
+   DROPDOWN OPTIONS
+===================================================== */
+
+.dropdown-options {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin: 10px 0 15px;
+
+  font-size: 11px;
+
+}
+
+.dropdown-options label {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  color: var(--botanique-muted);
+
+}
+
+.dropdown-options a {
+
+  color: var(--botanique-green);
+
+}
+
+
+/* =====================================================
+   DROPDOWN BUTTONS
+===================================================== */
+
+.dropdown-login,
+.dropdown-guest {
+
+  width: 100%;
+
+  padding: 11px 15px;
+
+  border-radius: 8px;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+}
+
+.dropdown-login {
+
+  border: 1px solid var(--botanique-green);
+
+  background: var(--botanique-green);
+
+  color: white;
+
+}
+
+.dropdown-guest {
+
+  border: 1px solid rgba(36, 49, 38, 0.16);
+
+  background: transparent;
+
+  color: var(--botanique-ink);
+
+}
+
+
+/* =====================================================
+   DROPDOWN DIVIDER
+===================================================== */
+
+.dropdown-divider {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin: 17px 0;
+
+}
+
+.dropdown-divider::before,
+.dropdown-divider::after {
+
+  content: "";
+
+  flex: 1;
+
+  height: 1px;
+
+  background: rgba(36, 49, 38, 0.1);
+
+}
+
+.dropdown-divider span {
+
+  color: var(--botanique-muted);
+
+  font-size: 10px;
+
+}
+
+
+/* =====================================================
+   SIGN UP
+===================================================== */
+
+.dropdown-signup {
+
+  text-align: center;
+
+  margin: 16px 0 0 !important;
+
+  font-size: 12px !important;
+
+}
+
+.dropdown-signup a {
+
+  color: var(--botanique-green);
+
+  font-weight: 600;
+
+}
+
+
+/* =====================================================
+   TABLET NAVBAR
+===================================================== */
+
+@media (max-width: 1100px) {
+
+  .nav {
+
+    gap: 16px;
+
+  }
+
+  .nav-links {
+
+    gap: 17px;
+
+  }
+
+  .nav-links a {
+
+    font-size: 13px;
+
+  }
+
+  .search-button {
+
+    display: none;
+
+  }
+
+}
+
+
+/* =====================================================
+   MOBILE NAVBAR
+===================================================== */
+
+@media (max-width: 800px) {
+
+  .wrap {
+
+    width: min(100% - 32px, 600px);
+
+  }
+
+  .nav {
+
+    min-height: 68px;
+
+    gap: 5px;
+
+  }
+
+
+  /* LOGO */
+
+  .logo {
+
+    order: 1;
+
+    font-size: 22px;
+
+    gap: 7px;
+
+  }
+
+  .logo-img {
+
+    width: 34px;
+    height: 34px;
+
+  }
+
+
+  /* ACTIONS */
+
+  .nav-actions {
+
+    order: 2;
+
+    margin-left: auto;
+
+    gap: 1px;
+
+  }
+
+
+  /* HAMBURGER */
+
+  .menu-toggle {
+
+    display: block;
+
+    order: 3;
+
+    flex-shrink: 0;
+
+  }
+
+
+  /* MOBILE LINKS */
+
+  .nav-links {
+
+    position: absolute;
+
+    top: 68px;
+
+    left: 0;
+    right: 0;
+
+    display: none;
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 0;
+
+    margin: 0;
+
+    padding: 15px 20px 20px;
+
+    background: var(--botanique-bg);
+
+    border-bottom: 1px solid rgba(36, 49, 38, 0.1);
+
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.06);
+
+  }
+
+  .nav-links.open {
+
+    display: flex;
+
+  }
+
+  .nav-links a {
+
+    padding: 12px 5px;
+
+    font-size: 14px;
+
+  }
+
+
+  /* MOBILE ICONS */
+
+  .icon-link,
+  .user-button {
+
+    width: 38px;
+    height: 38px;
+
+  }
+
+  .nav-svg {
+
+    width: 20px;
+    height: 20px;
+
+  }
+
+  .user-button img {
+
+    width: 22px;
+    height: 22px;
+
+  }
+
+
+  /* LOGIN DROPDOWN */
+
+  .login-dropdown {
+
+    position: fixed;
+
+    top: 78px;
+
+    left: 16px;
+    right: 16px;
+
+    width: auto;
+
+    max-width: none;
+
+    max-height: calc(100vh - 95px);
+
+    overflow-y: auto;
+
+  }
+
+}
+
+
+/* =====================================================
+   SMALL PHONES
+===================================================== */
+
+@media (max-width: 500px) {
+
+  .wrap {
+
+    width: calc(100% - 28px);
+
+  }
+
+  .nav {
+
+    gap: 2px;
+
+  }
+
+  .logo {
+
+    font-size: 20px;
+
+    gap: 6px;
+
+  }
+
+  .logo-img {
+
+    width: 31px;
+    height: 31px;
+
+  }
+
+  .nav-actions {
+
+    gap: 0;
+
+  }
+
+  .icon-link,
+  .user-button {
+
+    width: 35px;
+    height: 35px;
+
+  }
+
+  .nav-svg {
+
+    width: 19px;
+    height: 19px;
+
+  }
+
+  .wishlist-icon,
+  .cart-icon {
+
+    width: 20px;
+    height: 20px;
+
+  }
+
+  .notification-icon {
+
+    width: 19px;
+    height: 19px;
+
+  }
+
+  .user-button img {
+
+    width: 21px;
+    height: 21px;
+
+  }
+
+  .cart-badge,
+  .wishlist-badge,
+  .notification-badge {
+
+    top: 0;
+
+    right: -1px;
+
+    min-width: 15px;
+
+    height: 15px;
+
+    font-size: 9px;
+
+  }
+
+  .menu-toggle {
+
+    width: 38px;
+    height: 38px;
+
+    padding: 8px;
+
+  }
+
+  .login-dropdown {
+
+    top: 74px;
+
+    left: 14px;
+    right: 14px;
+
+  }
+
+}
+
+.user-icon {
+  width: 25px;
+  height: 25px;
+}
+

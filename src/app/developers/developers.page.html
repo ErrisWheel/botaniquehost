@@ -1,0 +1,1315 @@
+<div class="developers-scroll">
+
+<!-- HEADER / NAVBAR -->
+      <header class="site-header">
+
+        <nav
+          class="nav wrap"
+          aria-label="Main navigation"
+        >
+
+          <!--  LOGO -->
+          <a
+            class="logo"
+            href="#"
+            (click)="goHome($event)"
+          >
+
+            <img
+              src="assets/images/logo.png"
+              alt="Botanique Logo"
+              class="logo-img"
+            />
+
+            <span>Botanique</span>
+
+          </a>
+
+
+          <!--  MOBILE MENU BUTTON -->
+          <button
+            class="menu-toggle"
+            type="button"
+            aria-label="Open menu"
+            [attr.aria-expanded]="menuOpen"
+            (click)="toggleMenu()"
+          >
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+          </button>
+
+
+          <!--  NAVIGATION LINKS -->
+          <div
+            class="nav-links"
+            [class.open]="menuOpen"
+          >
+
+            <!-- HOME -->
+            <a
+              href="#"
+              (click)="goHome($event)"
+            >
+              Home
+            </a>
+
+
+            <!-- ABOUT -->
+            <a
+              href="#"
+              (click)="goToAbout($event)"
+            >
+              About Us
+            </a>
+
+
+            <!-- PRODUCT -->
+            <a
+              href="#"
+              (click)="goToProduct($event)"
+            >
+              Product
+            </a>
+
+
+            <!-- DEVELOPERS -->
+            <a
+            class="active"
+              href="#"
+              (click)="goToDevelopers($event)"
+            >
+              Developers
+            </a>
+
+
+            <!-- CONTACT - ACTIVE -->
+            <a
+              
+              href="#"
+              (click)="goToContact($event)"
+            >
+              Contact Us
+            </a>
+
+          </div>
+
+
+          <!--  NAV ACTIONS -->
+          <div class="nav-actions">
+
+
+            <!--  WISHLIST-->
+            <button
+              class="icon-link wishlist-link"
+              type="button"
+              title="Wishlist"
+              aria-label="Wishlist"
+              (click)="goToWishlist($event)"
+            >
+
+              <svg
+                class="nav-svg wishlist-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"
+                />
+
+              </svg>
+
+
+              <!-- WISHLIST BADGE -->
+              <span
+                class="wishlist-badge"
+                *ngIf="wishlistCount > 0"
+              >
+                {{ wishlistCount }}
+              </span>
+
+            </button>
+
+
+            <!-- NOTIFICATIONS -->
+            <button
+              class="icon-link notification-link"
+              type="button"
+              title="Notifications"
+              aria-label="Notifications"
+              (click)="goToNotifications($event)"
+            >
+
+              <svg
+                class="nav-svg notification-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+                />
+
+                <path
+                  d="M13.73 21a2 2 0 0 1-3.46 0"
+                />
+
+              </svg>
+
+
+              <!-- NOTIFICATION BADGE -->
+              <span
+                class="notification-badge"
+                *ngIf="notificationCount > 0"
+              >
+                {{ notificationCount }}
+              </span>
+
+            </button>
+
+
+            <!-- CART -->
+          <button
+        class="icon-link cart-link"
+        type="button"
+        title="Shopping Bag"
+        aria-label="Shopping bag"
+        (click)="goToCart($event)"
+      >
+        <svg
+          class="nav-svg cart-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <!-- Shopping Bag -->
+          <path
+            d="M5 8h14l1 13H4L5 8z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+
+          <!-- Bag Handle -->
+          <path
+            d="M8 8V6a4 4 0 0 1 8 0v2"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+
+        <span
+          class="cart-badge"
+          *ngIf="cartCount > 0"
+        >
+          {{ cartCount }}
+        </span>
+      </button>
+
+
+            <!-- ACCOUNT -->
+            <button
+        class="icon-link user-button"
+        type="button"
+         [title]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+         [attr.aria-label]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+        (click)="toggleLoginDropdown($event)"
+      >
+        <svg
+          class="nav-svg user-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="8"
+            r="3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          />
+
+          <path
+            d="M5 20c.8-4 3.3-6 7-6s6.2 2 7 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+
+
+            <!-- LOGIN DROPDOWN -->
+            <div
+              class="login-dropdown"
+              [class.show]="loginDropdownOpen"
+            >
+
+              <h3>
+                Welcome Back
+              </h3>
+
+
+              <p>
+                Login to your Botanique account
+              </p>
+
+
+              <!-- LOGIN FORM -->
+              <form
+                (ngSubmit)="login()"
+              >
+
+                <!-- EMAIL -->
+                <div class="dropdown-input">
+
+                  <label
+                    for="contactEmail"
+                  >
+                    Email Address
+                  </label>
+
+                  <input
+                    id="contactEmail"
+                    type="email"
+                    name="email"
+                    [(ngModel)]="email"
+                    placeholder="Enter your email"
+                    autocomplete="email"
+                    required
+                  />
+
+                </div>
+
+
+                <!-- PASSWORD -->
+                <div class="dropdown-input">
+
+                  <label
+                    for="contactPassword"
+                  >
+                    Password
+                  </label>
+
+                  <input
+                    id="contactPassword"
+                    type="password"
+                    name="password"
+                    [(ngModel)]="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                  />
+
+                </div>
+
+
+                <!-- OPTIONS -->
+                <div class="dropdown-options">
+
+                  <label>
+
+                    <input
+                      type="checkbox"
+                      name="rememberMe"
+                      [(ngModel)]="rememberMe"
+                    />
+
+                    <span>
+                      Remember me
+                    </span>
+
+                  </label>
+
+
+                  <a
+                    href="#"
+                    (click)="forgotPassword($event)"
+                  >
+                    Forgot Password?
+                  </a>
+
+                </div>
+
+
+                <!-- LOGIN BUTTON -->
+                <button
+                  class="dropdown-login"
+                  type="submit"
+                >
+                  Login
+                </button>
+
+              </form>
+
+
+              <!-- DIVIDER -->
+              <div class="dropdown-divider">
+
+                <span>
+                  OR
+                </span>
+
+              </div>
+
+
+              <!-- GUEST -->
+              <button
+                class="dropdown-guest"
+                type="button"
+                (click)="continueAsGuest()"
+              >
+                Continue as Guest
+              </button>
+
+
+              <!-- SIGN UP -->
+              <p class="dropdown-signup">
+
+                Don't have an account?
+
+                <a
+                  href="#"
+                  (click)="goToSignup($event)"
+                >
+                  Sign Up
+                </a>
+
+              </p>
+
+            </div>
+
+          </div>
+
+        </nav>
+
+      </header>
+
+
+
+
+  <!-- MAIN -->
+  <main>
+
+     <!-- ABOUT HERO -->
+    <section class="about-banner">
+
+      <img
+        src="https://images.pexels.com/photos/12059904/pexels-photo-12059904.jpeg?auto=compress&cs=tinysrgb&h=700&w=1800"
+        alt="Lush green leaves"
+      >
+
+      <div class="hero-content">
+
+        <h1>Developer's Profile</h1>
+
+        <p>
+          Discover who we are, where we came from,
+          and what inspires us to create a better future.
+        </p>
+
+      </div>
+
+      
+
+    </section>
+
+    <!-- DEVELOPERS HERO -->
+    <section class="developers-banner">
+
+      <div class="developers-hero-copy">
+
+        <span class="eyebrow">
+          Meet the team
+        </span>
+
+        <h1>
+          The people growing Botanique.
+        </h1>
+
+        <p>
+          Get to know the five developers behind the website—from visual design
+          and page development to content preparation, quality review, and
+          technical integration.
+        </p>
+
+
+        <div class="button-row">
+
+          <a
+            class="button button-dark"
+            href="#developerProfiles"
+            (click)="menuOpen = false"
+          >
+            Meet the developers
+          </a>
+
+          <a
+            class="text-link"
+            href="#"
+            (click)="goToContact($event)"
+          >
+            Contact us <span>→</span>
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- HERO PANEL -->
+      <div
+        class="developers-hero-panel"
+        aria-label="Botanique development team summary"
+      >
+
+        <span class="developers-panel-label">
+          Development Team
+        </span>
+
+        <strong>
+          05
+        </strong>
+
+        <p>
+          Web developers behind the Botanique experience
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- DEVELOPERS PROFILE SECTION -->
+    <section
+      class="developers-section"
+      id="developerProfiles"
+    >
+
+      <div class="wrap">
+
+        <!-- SECTION HEADING -->
+        <div class="developers-heading">
+
+          <p class="small-title">
+            The Team Behind Botanique
+          </p>
+
+          <h2>
+            Developers Profile
+          </h2>
+
+          <p>
+            Click on a profile to learn more about each
+            member of our development team.
+          </p>
+
+        </div>
+
+
+        <!-- DEVELOPER GRID -->
+        <div class="developers-grid">
+
+
+          <!--   DEVELOPER 1 -->
+          <article
+            class="developer-card"
+            role="button"
+            tabindex="0"
+            (click)="openDeveloper(developers[0])"
+            (keydown.enter)="openDeveloper(developers[0])"
+            (keydown.space)="openDeveloper(developers[0])"
+          >
+
+            <div class="developer-image">
+
+              <img
+                [src]="developers[0].image"
+                [alt]="developers[0].name"
+              />
+
+              <div class="developer-overlay">
+
+                <span>
+                  View Profile
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="developer-info">
+
+              <span class="developer-role">
+                {{ developers[0].role }}
+              </span>
+
+              <h3>
+                {{ developers[0].name }}
+              </h3>
+
+              <p>
+                {{ developers[0].shortDescription }}
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <!--   DEVELOPER 2 -->
+          <article
+            class="developer-card"
+            role="button"
+            tabindex="0"
+            (click)="openDeveloper(developers[1])"
+            (keydown.enter)="openDeveloper(developers[1])"
+            (keydown.space)="openDeveloper(developers[1])"
+          >
+
+            <div class="developer-image">
+
+              <img
+                [src]="developers[1].image"
+                [alt]="developers[1].name"
+              />
+
+              <div class="developer-overlay">
+
+                <span>
+                  View Profile
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="developer-info">
+
+              <span class="developer-role">
+                {{ developers[1].role }}
+              </span>
+
+              <h3>
+                {{ developers[1].name }}
+              </h3>
+
+              <p>
+                {{ developers[1].shortDescription }}
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <!--   DEVELOPER 3 -->
+          <article
+            class="developer-card"
+            role="button"
+            tabindex="0"
+            (click)="openDeveloper(developers[2])"
+            (keydown.enter)="openDeveloper(developers[2])"
+            (keydown.space)="openDeveloper(developers[2])"
+          >
+
+            <div class="developer-image">
+
+              <img
+                [src]="developers[2].image"
+                [alt]="developers[2].name"
+              />
+
+              <div class="developer-overlay">
+
+                <span>
+                  View Profile
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="developer-info">
+
+              <span class="developer-role">
+                {{ developers[2].role }}
+              </span>
+
+              <h3>
+                {{ developers[2].name }}
+              </h3>
+
+              <p>
+                {{ developers[2].shortDescription }}
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <!--   DEVELOPER 4 -->
+          <article
+            class="developer-card"
+            role="button"
+            tabindex="0"
+            (click)="openDeveloper(developers[3])"
+            (keydown.enter)="openDeveloper(developers[3])"
+            (keydown.space)="openDeveloper(developers[3])"
+          >
+
+            <div class="developer-image">
+
+              <img
+                [src]="developers[3].image"
+                [alt]="developers[3].name"
+              />
+
+              <div class="developer-overlay">
+
+                <span>
+                  View Profile
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="developer-info">
+
+              <span class="developer-role">
+                {{ developers[3].role }}
+              </span>
+
+              <h3>
+                {{ developers[3].name }}
+              </h3>
+
+              <p>
+                {{ developers[3].shortDescription }}
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <!--   DEVELOPER 5 -->
+          <article
+            class="developer-card"
+            role="button"
+            tabindex="0"
+            (click)="openDeveloper(developers[4])"
+            (keydown.enter)="openDeveloper(developers[4])"
+            (keydown.space)="openDeveloper(developers[4])"
+          >
+
+            <div class="developer-image">
+
+              <img
+                [src]="developers[4].image"
+                [alt]="developers[4].name"
+              />
+
+              <div class="developer-overlay">
+
+                <span>
+                  View Profile
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div class="developer-info">
+
+              <span class="developer-role">
+                {{ developers[4].role }}
+              </span>
+
+              <h3>
+                {{ developers[4].name }}
+              </h3>
+
+              <p>
+                {{ developers[4].shortDescription }}
+              </p>
+
+            </div>
+
+          </article>
+
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- DEVELOPER PROFILE MODAL -->
+  <div
+    class="developer-modal"
+    [class.show]="selectedDeveloper !== null"
+    (click)="closeDeveloper()"
+  >
+
+    <div
+      class="developer-modal-content"
+      (click)="$event.stopPropagation()"
+    >
+
+      <!-- CLOSE BUTTON -->
+      <button
+        class="modal-close"
+        type="button"
+        aria-label="Close developer profile"
+        (click)="closeDeveloper()"
+      >
+        ×
+      </button>
+
+
+      <!-- PROFILE -->
+      <div
+        class="modal-profile"
+        *ngIf="selectedDeveloper"
+      >
+
+
+        <!-- MODAL INFORMATION -->
+        <div class="modal-information">
+
+          <span class="developer-role">
+            {{ selectedDeveloper.role }}
+          </span>
+
+
+          <h2>
+            {{ selectedDeveloper.name }}
+          </h2>
+
+
+          <p class="modal-description">
+            {{ selectedDeveloper.description }}
+          </p>
+
+          <!--   DETAILS -->
+          <div class="developer-details">
+
+            <!-- BIRTHDATE -->
+
+            
+            <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.birth"
+            >
+
+              <span>
+                Date of Birth:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.birth }}
+              </strong>
+
+            </div>
+
+            <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.age"
+            >
+
+              <span>
+                Age:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.age }}
+              </strong>
+
+            </div>
+
+             <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.gender"
+            >
+
+              <span>
+                Gender:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.gender }}
+              </strong>
+
+            </div>
+
+             <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.nationality"
+            >
+
+              <span>
+                Nationality:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.nationality }}
+              </strong>
+
+            </div>
+
+            <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.address"
+            >
+
+              <span>
+                Address:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.address }}
+              </strong>
+
+            </div>
+
+            <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.number"
+            >
+
+              <span>
+                Phone Number:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.number }}
+              </strong>
+
+            </div>
+
+            <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.email"
+            >
+
+              <span>
+                Email Address:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.email }}
+              </strong>
+
+            </div>
+
+            <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.occupation"
+            >
+
+              <span>
+                Occupation:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.occupation }}
+              </strong>
+
+            </div>
+
+            <div
+              class="detail-item"
+              *ngIf="selectedDeveloper.education"
+            >
+
+              <span>
+                Education:
+              </span>
+
+              <strong>
+                {{ selectedDeveloper.education }}
+              </strong>
+
+            </div>
+
+            
+
+          
+          <!--   SKILLS -->
+          <div
+            class="developer-skills"
+            *ngIf="
+              selectedDeveloper.skills &&
+              selectedDeveloper.skills.length > 0
+            "
+          >
+
+            <h4>
+              Skills
+            </h4>
+
+
+            <div class="skill-list">
+
+              <span
+                *ngFor="let skill of selectedDeveloper.skills"
+              >
+                {{ skill }}
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+  <footer class="footer">
+
+    <div class="wrap footer-grid">
+
+      <!-- BRAND -->
+      <div>
+
+        <a
+          class="logo"
+          href="#"
+          (click)="goHome($event)"
+        >
+
+          <img
+            src="assets/images/logo.png"
+            alt="Botanique Logo"
+            class="logo-img"
+          />
+
+          Botanique
+
+        </a>
+
+        <p>
+          Plants for the way you live.
+        </p>
+
+      </div>
+
+
+      <!-- SHOP -->
+      <div>
+
+        <b>
+          Shop
+        </b>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          All plants
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Indoor
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Outdoor
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Accessories
+        </a>
+
+      </div>
+
+
+      <!-- COMPANY -->
+      <div>
+
+        <b>
+          Company
+        </b>
+
+        <a
+          href="#"
+          (click)="goToAbout($event)"
+        >
+          About Us
+        </a>
+
+        <a
+          href="#"
+          (click)="goToDevelopers($event)"
+        >
+          Developers
+        </a>
+
+        <a
+          href="#"
+          (click)="goToContact($event)"
+        >
+          Contact Us
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER BOTTOM -->
+    <div class="wrap footer-bottom">
+
+      <span>
+        © 2026 Botanique Plant Co.
+      </span>
+
+      <span>
+        Thoughtfully grown, beautifully lived.
+      </span>
+
+    </div>
+
+  </footer>
+
+  <!-- CART OVERLAY-->
+
+  <div
+    class="cart-overlay"
+    [class.show]="cartDrawerOpen"
+    (click)="closeCart()"
+  ></div>
+
+
+  <!-- CART DRAWER -->
+
+  <aside
+    class="cart-drawer"
+    [class.open]="cartDrawerOpen"
+    aria-label="Shopping cart"
+    [attr.aria-hidden]="!cartDrawerOpen"
+  >
+
+    <!-- CART HEADER -->
+    <div class="cart-drawer-header">
+
+      <div>
+        <span class="cart-eyebrow">
+          Your selection
+        </span>
+
+        <h2>
+          Your Cart
+        </h2>
+      </div>
+
+      <button
+        class="cart-close"
+        type="button"
+        aria-label="Close cart"
+        (click)="closeCart()"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <!-- EMPTY CART -->
+
+    <div
+      class="cart-empty"
+      *ngIf="cartItems.length === 0"
+    >
+
+      <div class="empty-cart-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="9"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <circle
+            cx="19"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <path
+            d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H6"
+          />
+        </svg>
+
+      </div>
+
+      <h3>
+        Your cart is empty
+      </h3>
+
+      <p>
+        Add something green and it will appear here.
+      </p>
+
+      <button
+        class="cart-shop-button"
+        type="button"
+        (click)="continueShopping($event)"
+      >
+        Shop Plants
+      </button>
+
+    </div>
+
+
+    <!-- CART ITEMS -->
+
+    <div
+      class="cart-items"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div
+        class="cart-item"
+        *ngFor="let item of cartItems"
+      >
+
+        <!-- IMAGE -->
+        <div class="cart-item-image">
+
+          <img
+            [src]="item.image"
+            [alt]="item.name || 'Plant'"
+          />
+
+        </div>
+
+
+        <!-- INFO -->
+        <div class="cart-item-info">
+
+          <h3>
+            {{ item.name }}
+          </h3>
+
+          <p class="cart-item-price">
+            {{ formatCartPrice(item.price || 0) }}
+          </p>
+
+
+          <!-- QUANTITY -->
+          <div class="cart-quantity">
+
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              (click)="decreaseQuantity(item)"
+            >
+              −
+            </button>
+
+            <span>
+              {{ item.quantity }}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              (click)="increaseQuantity(item)"
+            >
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- REMOVE -->
+        <button
+          class="cart-remove"
+          type="button"
+          aria-label="Remove item"
+          (click)="removeFromCart(item)"
+        >
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!--- CART FOOTER -->
+
+    <div
+      class="cart-drawer-footer"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div class="cart-total-row">
+
+        <span>
+          Subtotal
+        </span>
+
+        <strong>
+          {{ formatCartPrice(cartSubtotal) }}
+        </strong>
+
+      </div>
+
+      <p class="cart-note">
+        Taxes and delivery fees are calculated at checkout.
+      </p>
+
+      <button
+        class="cart-checkout-button"
+        type="button"
+        (click)="checkout($event)"
+      >
+        Continue to Checkout
+      </button>
+
+    </div>
+
+  </aside>
+
+  

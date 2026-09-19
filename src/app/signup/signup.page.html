@@ -1,0 +1,390 @@
+<div class="signup-scroll">
+
+  <!-- LEFT SIDE -->
+  <div class="image-section">
+
+    <div class="overlay"></div>
+
+    <div class="brand">
+      <img
+        src="assets/images/logo.png"
+        alt="Botanique Logo"
+        class="badge-logo"
+      />
+
+      <div class="brand-text">
+        <h1>BOTANIQUE</h1>
+        <p>Bring nature in the comfort of your own home.</p>
+      </div>
+    </div>
+
+    <div
+      class="plant-images"
+      [class.image-1-active]="hoveredImage === 0"
+      [class.image-2-active]="hoveredImage === 1"
+      [class.image-3-active]="hoveredImage === 2"
+    >
+
+      <div
+        class="plant-image"
+        (mouseenter)="setHoveredImage(0)"
+        (mouseleave)="clearHoveredImage()"
+        (click)="setHoveredImage(0)"
+      >
+        <img
+          src="https://media.architecturaldigest.com/photos/5dcde00380598800086215f6/16:9/w_2560%2Cc_limit/Osofsky_Oct19-5.jpg"
+          alt="Indoor plants"
+        >
+        <span class="image-label">INDOOR PLANTS</span>
+      </div>
+
+      <div
+        class="plant-image"
+        (mouseenter)="setHoveredImage(1)"
+        (mouseleave)="clearHoveredImage()"
+        (click)="setHoveredImage(1)"
+      >
+        <img
+          src="https://static.wixstatic.com/media/12c460_aaeabdba79b44c3fa0834ab51502b83d~mv2.png/v1/fill/w_980,h_653,al_c,q_90,usm_0.66_1.00_0.01,enc_avif,quality_auto/12c460_aaeabdba79b44c3fa0834ab51502b83d~mv2.png"
+          alt="Outdoor plants"
+        >
+        <span class="image-label">OUTDOOR PLANTS</span>
+      </div>
+
+      <div
+        class="plant-image"
+        (mouseenter)="setHoveredImage(2)"
+        (mouseleave)="clearHoveredImage()"
+        (click)="setHoveredImage(2)"
+      >
+        <img
+          src="https://www.rainbowgardens.biz/wp-content/uploads/2025/01/Scale-15-940x675.png"
+          alt="Plant care"
+        >
+        <span class="image-label">PLANT CARE</span>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- RIGHT SIDE -->
+  <div class="form-section">
+
+    <div class="auth-shell">
+
+      <div class="auth-card">
+
+        <div class="auth-card-head">
+          <span class="auth-leaf">🌿</span>
+
+          <div>
+            <h2>Create an Account</h2>
+            <p>Fill in your details to get started</p>
+          </div>
+        </div>
+
+
+        <form
+          #signupForm="ngForm"
+          (ngSubmit)="signup(signupForm)"
+        >
+
+          <!-- ACCOUNT INFO -->
+          <div class="auth-section-label">
+            Account Info
+          </div>
+
+          <div class="auth-grid">
+
+            <!-- FULL NAME -->
+            <div class="input-box">
+              <label>Full Name</label>
+
+              <input
+                type="text"
+                name="fullName"
+                [(ngModel)]="fullName"
+                placeholder="Juan Dela Cruz"
+                required
+              >
+            </div>
+
+
+            <!-- EMAIL -->
+            <div class="input-box">
+              <label>Email Address</label>
+
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="email"
+                placeholder="you@example.com"
+                required
+              >
+            </div>
+
+
+            <!-- PASSWORD -->
+            <div class="input-box password-box">
+              <label>Password</label>
+
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="Min. 6 characters"
+                minlength="6"
+                required
+              >
+
+              <button
+                type="button"
+                class="toggle-pass"
+                (click)="togglePassword()"
+                [attr.aria-label]="
+                  showPassword ? 'Hide password' : 'Show password'
+                "
+              >
+                <svg
+                  *ngIf="!showPassword"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+
+                <svg
+                  *ngIf="showPassword"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+
+
+            <!-- CONFIRM PASSWORD -->
+            <div class="input-box password-box">
+              <label>Confirm Password</label>
+
+              <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                name="confirmPassword"
+                [(ngModel)]="confirmPassword"
+                placeholder="Repeat password"
+                required
+              >
+
+              <button
+                type="button"
+                class="toggle-pass"
+                (click)="toggleConfirmPassword()"
+                [attr.aria-label]="
+                  showConfirmPassword
+                    ? 'Hide password'
+                    : 'Show password'
+                "
+              >
+                <svg
+                  *ngIf="!showConfirmPassword"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+
+                <svg
+                  *ngIf="showConfirmPassword"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                  <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+
+
+          <!-- ADDRESS INFO -->
+          <div class="auth-section-label">
+            Address Info
+          </div>
+
+          <div class="auth-grid">
+
+            <!-- PHONE -->
+            <div class="input-box">
+              <label>Phone Number</label>
+
+              <input
+                type="tel"
+                name="phone"
+                [(ngModel)]="phone"
+                placeholder="09123456789"
+                pattern="09[0-9]{9}"
+                maxlength="11"
+                required
+              >
+            </div>
+
+
+            <!-- STREET -->
+            <div class="input-box auth-span2">
+              <label>Street Address</label>
+
+              <input
+                type="text"
+                name="street"
+                [(ngModel)]="street"
+                placeholder="House/Building No., Street Name"
+                required
+              >
+            </div>
+
+
+            <!-- CITY -->
+            <div class="input-box">
+              <label>City</label>
+
+              <input
+                type="text"
+                name="city"
+                [(ngModel)]="city"
+                placeholder="City/Municipality"
+                required
+              >
+            </div>
+
+
+            <!-- PROVINCE -->
+            <div class="input-box">
+              <label>Province</label>
+
+              <input
+                type="text"
+                name="province"
+                [(ngModel)]="province"
+                placeholder="Province"
+                required
+              >
+            </div>
+
+
+            <!-- ZIP -->
+            <div class="input-box">
+              <label>ZIP Code</label>
+
+              <input
+                type="text"
+                name="zip"
+                [(ngModel)]="zip"
+                placeholder="4-digit ZIP"
+                pattern="[0-9]{4}"
+                maxlength="4"
+                required
+              >
+            </div>
+
+
+            <!-- REGION -->
+            <div class="input-box">
+              <label>Region</label>
+
+              <select
+                name="region"
+                [(ngModel)]="region"
+                required
+              >
+                <option value="">Select Region</option>
+                <option>NCR</option>
+                <option>CAR</option>
+                <option>Region I</option>
+                <option>Region II</option>
+                <option>Region III</option>
+                <option>Region IV-A</option>
+                <option>Region IV-B</option>
+                <option>Region V</option>
+                <option>Region VI</option>
+                <option>Region VII</option>
+                <option>Region VIII</option>
+                <option>Region IX</option>
+                <option>Region X</option>
+                <option>Region XI</option>
+                <option>Region XII</option>
+                <option>Region XIII</option>
+                <option>BARMM</option>
+              </select>
+            </div>
+
+          </div>
+
+
+          <!-- TERMS -->
+          <label class="auth-terms">
+
+            <input
+              type="checkbox"
+              name="terms"
+              [(ngModel)]="termsAccepted"
+              required
+            >
+
+            <span>
+              I agree to the
+              <a
+                href="#"
+                class="legal-link"
+                (click)="showTerms($event)"
+              >
+                Terms of Service
+              </a>
+              and
+              <a
+                href="#"
+                class="legal-link"
+                (click)="showPrivacy($event)"
+              >
+                Privacy Policy
+              </a>
+            </span>
+
+          </label>
+
+
+          <!-- SUBMIT -->
+          <button
+            class="auth-submit"
+            type="submit"
+          >
+            Create Account
+          </button>
+
+        </form>
+
+
+        <!-- LOGIN LINK -->
+        <p class="auth-redirect">
+          Already have an account?
+
+          <a
+            href="#"
+            (click)="goToLogin($event)"
+          >
+            Sign in
+          </a>
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
