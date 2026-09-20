@@ -2205,25 +2205,32 @@ export class ProfilePage implements OnInit {
 
   logout(): void {
 
-    localStorage.removeItem(
-      this.USER_KEY
-    );
+    localStorage.removeItem('botaniqueToken');
 
+    localStorage.removeItem('token');
+
+    localStorage.removeItem(this.USER_KEY);
+
+    localStorage.removeItem('botaniqueRememberMe');
 
     this.currentUser = null;
+
+    this.profileName = '';
+    this.profileEmail = '';
+    this.profileSince = '';
+
+    this.profileForm = {
+      name: '',
+      email: '',
+      phone: ''
+    };
 
     this.loginDropdownOpen = false;
     this.menuOpen = false;
 
+    alert('Logged out. See you soon! 👋');
 
-    alert(
-      'Logged out. See you soon! 👋'
-    );
-
-
-    this.router.navigateByUrl(
-      '/home'
-    );
+    this.router.navigateByUrl('/home');
 
   }
 
