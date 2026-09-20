@@ -2204,13 +2204,9 @@ export class ProfilePage implements OnInit {
   /* LOGOUT */
 
   logout(): void {
-
     localStorage.removeItem('botaniqueToken');
-
     localStorage.removeItem('token');
-
-    localStorage.removeItem(this.USER_KEY);
-
+    localStorage.removeItem('botaniqueUser');
     localStorage.removeItem('botaniqueRememberMe');
 
     this.currentUser = null;
@@ -2231,7 +2227,6 @@ export class ProfilePage implements OnInit {
     alert('Logged out. See you soon! 👋');
 
     this.router.navigateByUrl('/home');
-
   }
 
 
