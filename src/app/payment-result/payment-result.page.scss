@@ -1,0 +1,99 @@
+.pr-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f3f8f3;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pr-card {
+  width: 100%;
+  max-width: 520px;
+  padding: 36px 28px;
+  text-align: center;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(31, 61, 31, 0.12);
+
+  h1 {
+    margin: 16px 0 8px;
+    font-size: 1.5rem;
+    color: #1f3d1f;
+  }
+
+  p {
+    margin: 0 0 12px;
+    line-height: 1.55;
+    color: #3f5a3f;
+  }
+}
+
+.pr-logo {
+  height: 48px;
+  width: auto;
+}
+
+.pr-icon {
+  width: 64px;
+  height: 64px;
+  margin: 20px auto 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+
+  &.ok { background: #2e7d32; }
+  &.bad { background: #c62828; }
+  &.wait { background: #ef9a1a; }
+}
+
+.pr-spinner {
+  width: 52px;
+  height: 52px;
+  margin: 24px auto 0;
+  border: 5px solid #d7e8d7;
+  border-top-color: #2e7d32;
+  border-radius: 50%;
+  animation: pr-spin 0.9s linear infinite;
+}
+
+@keyframes pr-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pr-error {
+  color: #c62828 !important;
+}
+
+.pr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pr-btn {
+  padding: 10px 18px;
+  border: 1px solid #2e7d32;
+  border-radius: 999px;
+  background: #fff;
+  color: #2e7d32;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.primary {
+    background: #2e7d32;
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+}

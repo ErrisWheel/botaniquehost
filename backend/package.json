@@ -1,0 +1,46 @@
+{
+  "name": "botanique-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "prisma migrate deploy && npm run prisma:seed && tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "prisma migrate deploy && npm run prisma:seed && node dist/src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force && npm run prisma:seed",
+    "setup": "prisma migrate deploy && npm run prisma:seed",
+    "test": "tsx --test test/*.test.ts",
+    "maya:webhooks": "tsx scripts/register-maya-webhooks.ts",
+    "users:import-firebase": "tsx scripts/import-legacy-users-to-firebase.ts",
+    "accounts:audit": "tsx scripts/audit-accounts.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.0.0",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.17.2",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.3.1",
+    "@types/pdfkit": "^0.13.9",
+    "prisma": "^6.16.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

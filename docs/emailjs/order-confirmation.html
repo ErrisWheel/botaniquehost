@@ -1,0 +1,82 @@
+<!--
+  EmailJS template: "Botanique order confirmation"
+  Paste this whole file into the EmailJS template editor (Code Editor / "</>" mode).
+  See docs/SETUP.md section 3 for the dashboard fields (Subject, To Email, ...).
+  {{{order_items_html}}} uses THREE braces on purpose: it is HTML that the
+  server has already escaped. Every other variable uses two braces.
+-->
+<div style="margin:0;padding:24px 0;background:#f3f8f3;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">
+    <tr>
+      <td style="background:#2e7d32;padding:24px;text-align:center;">
+        <div style="font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:1px;">Botanique</div>
+        <div style="font-size:13px;color:#d7ecd8;margin-top:4px;">Plants &amp; accessories</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:28px 28px 8px 28px;">
+        <h1 style="margin:0 0 8px 0;font-size:22px;color:#1f3d1f;">Thank you for your order, {{customer_name}}!</h1>
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#3f5a3f;">
+          We've received your order and will start preparing it right away.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f8f3;border-radius:8px;">
+          <tr>
+            <td style="padding:14px 16px;font-size:13px;color:#3f5a3f;">
+              <div><strong>Order number:</strong> {{order_id}}</div>
+              <div><strong>Order date:</strong> {{order_date}}</div>
+              <div><strong>Payment method:</strong> {{payment_method}}</div>
+              <div><strong>Payment status:</strong> {{payment_status}}</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:8px 28px 0 28px;">
+        <h2 style="margin:0 0 6px 0;font-size:16px;color:#1f3d1f;">Your items</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <th align="left" style="padding:8px 0;border-bottom:2px solid #2e7d32;font-size:12px;color:#2e7d32;">PRODUCT</th>
+            <th align="center" style="padding:8px;border-bottom:2px solid #2e7d32;font-size:12px;color:#2e7d32;">QTY</th>
+            <th align="right" style="padding:8px 0;border-bottom:2px solid #2e7d32;font-size:12px;color:#2e7d32;">AMOUNT</th>
+          </tr>
+          {{{order_items_html}}}
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:12px 28px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#1f2d1f;">
+          <tr><td style="padding:3px 0;">Subtotal</td><td align="right">{{order_subtotal}}</td></tr>
+          <tr><td style="padding:3px 0;">Discount</td><td align="right">- {{order_discount}}</td></tr>
+          <tr><td style="padding:3px 0;">Shipping</td><td align="right">{{order_shipping}}</td></tr>
+          <tr><td style="padding:3px 0;">Tax (12%)</td><td align="right">{{order_tax}}</td></tr>
+          <tr>
+            <td style="padding:10px 0 0 0;border-top:1px solid #cfe3cf;font-size:16px;"><strong>Total</strong></td>
+            <td align="right" style="padding:10px 0 0 0;border-top:1px solid #cfe3cf;font-size:16px;"><strong>{{order_total}}</strong></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:8px 28px 20px 28px;">
+        <h2 style="margin:0 0 6px 0;font-size:16px;color:#1f3d1f;">Delivery</h2>
+        <div style="font-size:14px;line-height:1.6;color:#3f5a3f;">
+          <div><strong>Address:</strong> {{delivery_address}}</div>
+          <div><strong>Preferred date:</strong> {{delivery_date}}</div>
+          <div><strong>Instructions:</strong> {{delivery_instructions}}</div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px 28px 28px;border-top:1px solid #e6efe6;font-size:12px;line-height:1.6;color:#7a8f7a;text-align:center;">
+        Questions about your order? Reply to this email or contact {{support_email}}.<br />
+        &copy; Botanique
+      </td>
+    </tr>
+  </table>
+</div>

@@ -1,0 +1,1345 @@
+
+<div class="profile-scroll">
+<!-- HEADER / NAVBAR -->
+
+  <header class="site-header">
+
+    <nav class="nav wrap" aria-label="Main navigation">
+
+      <!--   LOGO -->
+
+      <a
+        class="logo"
+        href="#"
+        (click)="goHome($event)"
+      >
+        <img
+          src="assets/images/logo.png"
+          alt="Botanique Logo"
+          class="logo-img"
+        >
+
+        Botanique
+      </a>
+
+
+      <!--   MOBILE MENU -->
+
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Open menu"
+        [attr.aria-expanded]="menuOpen"
+        (click)="toggleMenu()"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+
+      <!--   NAVIGATION LINKS -->
+
+      <div
+        class="nav-links"
+        [class.open]="menuOpen"
+      >
+
+        <a
+          href="#"
+          (click)="goHome($event)"
+        >
+          Home
+        </a>
+
+        <a
+          href="#"
+          (click)="stayOnAbout($event)"
+        >
+          About Us
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Product
+        </a>
+
+        <a
+          href="#"
+          (click)="goToDevelopers($event)"
+        >
+          Developers
+        </a>
+
+        <a
+          href="#"
+          (click)="goToContact($event)"
+        >
+          Contact Us
+        </a>
+
+      </div>
+
+
+      <!--   NAVIGATION ACTIONS
+           
+           NO SEARCH ICON / NO SEARCH BAR -->
+
+      <div class="nav-actions">
+
+
+        <!-- WISHLIST -->
+
+        <button
+          class="icon-link wishlist-link"
+          type="button"
+          title="Wishlist"
+          aria-label="Wishlist"
+          (click)="goToWishlist($event)"
+        >
+
+          <svg
+            class="nav-svg wishlist-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"
+            />
+
+          </svg>
+
+          <span
+            class="wishlist-badge"
+            *ngIf="wishlistCount > 0"
+          >
+            {{ wishlistCount }}
+          </span>
+
+        </button>
+
+
+        <!-- NOTIFICATIONS -->
+
+        <button
+          class="icon-link notification-link"
+          type="button"
+          title="Notifications"
+          aria-label="Notifications"
+          (click)="goToNotifications($event)"
+        >
+
+          <svg
+            class="nav-svg notification-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+
+            <path
+              d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            />
+
+            <path
+              d="M13.73 21a2 2 0 0 1-3.46 0"
+            />
+
+          </svg>
+
+          <span
+            class="notification-badge"
+            *ngIf="notificationCount > 0"
+          >
+            {{ notificationCount }}
+          </span>
+
+        </button>
+
+
+        <!-- CART -->
+
+       <button
+  class="icon-link cart-link"
+  type="button"
+  title="Shopping Bag"
+  aria-label="Shopping bag"
+  (click)="goToCart($event)"
+>
+  <svg
+    class="nav-svg cart-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <!-- Shopping Bag -->
+    <path
+      d="M5 8h14l1 13H4L5 8z"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linejoin="round"
+    />
+
+    <!-- Bag Handle -->
+    <path
+      d="M8 8V6a4 4 0 0 1 8 0v2"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+    />
+  </svg>
+
+  <span
+    class="cart-badge"
+    *ngIf="cartCount > 0"
+  >
+    {{ cartCount }}
+  </span>
+</button>
+
+
+        <!-- ACCOUNT -->
+
+        <button
+  class="icon-link user-button"
+  type="button"
+   [title]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+   [attr.aria-label]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+  (click)="toggleLoginDropdown($event)"
+>
+  <svg
+    class="nav-svg user-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <circle
+      cx="12"
+      cy="8"
+      r="3.5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+    />
+
+    <path
+      d="M5 20c.8-4 3.3-6 7-6s6.2 2 7 6"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+    />
+  </svg>
+</button>
+
+
+        <!-- LOGIN DROPDOWN -->
+
+        <div
+          class="login-dropdown"
+          [class.show]="loginDropdownOpen"
+        >
+
+          <h3>
+            Welcome Back
+          </h3>
+
+          <p>
+            Login to your Botanique account
+          </p>
+
+
+          <form
+            (ngSubmit)="login()"
+          >
+
+            <!-- EMAIL -->
+
+            <div class="dropdown-input">
+
+              <label for="about-email">
+                Email Address
+              </label>
+
+              <input
+                id="about-email"
+                type="email"
+                name="email"
+                [(ngModel)]="email"
+                placeholder="Enter your email"
+                autocomplete="email"
+                required
+              >
+
+            </div>
+
+
+            <!-- PASSWORD -->
+
+            <div class="dropdown-input">
+
+              <label for="about-password">
+                Password
+              </label>
+
+              <input
+                id="about-password"
+                type="password"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              >
+
+            </div>
+
+
+            <!-- OPTIONS -->
+
+            <div class="dropdown-options">
+
+              <label>
+
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  [(ngModel)]="rememberMe"
+                >
+
+                <span>
+                  Remember me
+                </span>
+
+              </label>
+
+
+              <a
+                href="#"
+                (click)="forgotPassword($event)"
+              >
+                Forgot Password?
+              </a>
+
+            </div>
+
+
+            <!-- LOGIN -->
+
+            <button
+              class="dropdown-login"
+              type="submit"
+            >
+              Login
+            </button>
+
+          </form>
+
+
+          <!-- DIVIDER -->
+
+          <div class="dropdown-divider">
+
+            <span>
+              OR
+            </span>
+
+          </div>
+
+
+          <!-- GUEST -->
+
+          <button
+            class="dropdown-guest"
+            type="button"
+            (click)="continueAsGuest()"
+          >
+            Continue as Guest
+          </button>
+
+
+          <!-- SIGN UP -->
+
+          <p class="dropdown-signup">
+
+            Don't have an account?
+
+            <a
+              href="#"
+              (click)="goToSignup($event)"
+            >
+              Sign Up
+            </a>
+
+          </p>
+
+        </div>
+
+      </div>
+
+    </nav>
+
+  </header>
+
+
+
+  <!-- MAIN PROFILE CONTENT -->
+  <main class="wrap profile-page">
+
+    <h1 class="profile-title">
+      My Account
+    </h1>
+
+    <div class="profile-layout">
+
+      <!--   SIDEBAR -->
+      <aside class="profile-sidebar">
+
+        <div class="profile-id">
+
+          <span class="profile-avatar">
+            {{ getInitials(profileName) }}
+          </span>
+
+          <strong>
+            {{ profileName || '—' }}
+          </strong>
+
+          <small>
+            {{ profileEmail || '—' }}
+          </small>
+
+          <small
+            class="profile-since"
+            *ngIf="profileSince"
+          >
+            {{ profileSince }}
+          </small>
+
+        </div>
+
+
+        <nav class="profile-nav">
+
+          <button
+            type="button"
+            class="profile-nav-item"
+            [class.active]="activeTab === 'info'"
+            (click)="selectTab('info')"
+          >
+            <span>👤</span>
+            Profile Information
+          </button>
+
+          <button
+            type="button"
+            class="profile-nav-item"
+            [class.active]="activeTab === 'settings'"
+            (click)="selectTab('settings')"
+          >
+            <span>⚙️</span>
+            Account Settings
+          </button>
+
+          <button
+            type="button"
+            class="profile-nav-item"
+            [class.active]="activeTab === 'addresses'"
+            (click)="selectTab('addresses')"
+          >
+            <span>📍</span>
+            Delivery Addresses
+          </button>
+
+          <button
+            type="button"
+            class="profile-nav-item"
+            [class.active]="activeTab === 'orders'"
+            (click)="selectTab('orders')"
+          >
+            <span>🛍️</span>
+            Order History
+          </button>
+
+          <button
+            type="button"
+            class="profile-nav-item profile-logout"
+            (click)="logout()"
+          >
+            <span>⏻</span>
+            Logout
+          </button>
+
+        </nav>
+      </aside>
+
+
+      <!--   CONTENT -->
+      <section class="profile-content">
+
+
+        <!-- PROFILE INFORMATION -->
+        <div
+          class="profile-panel"
+          *ngIf="activeTab === 'info'"
+        >
+
+          <h2>
+            Profile Information
+          </h2>
+
+          <p class="panel-sub">
+            Keep your details fresh so your plants always find
+            their way home.
+          </p>
+
+
+          <form
+            class="profile-form"
+            (ngSubmit)="saveProfile()"
+          >
+
+            <div class="pf-grid">
+
+              <div class="input-box">
+                <label>Full Name</label>
+
+                <input
+                  type="text"
+                  [(ngModel)]="profileForm.name"
+                  name="profileName"
+                  required
+                />
+              </div>
+
+
+              <div class="input-box">
+                <label>Email Address</label>
+
+                <input
+                  type="email"
+                  [(ngModel)]="profileForm.email"
+                  name="profileEmail"
+                  required
+                />
+              </div>
+
+
+              <div class="input-box">
+                <label>Phone Number</label>
+
+                <input
+                  type="tel"
+                  [(ngModel)]="profileForm.phone"
+                  name="profilePhone"
+                />
+              </div>
+
+            </div>
+
+
+            <button
+              class="button button-dark"
+              type="submit"
+            >
+              💾 Save Changes
+            </button>
+
+          </form>
+
+
+          <p class="panel-sub info-note">
+            📍 Your delivery addresses now live under
+            <strong>Delivery Addresses</strong> —
+            manage them there and pick one at checkout.
+          </p>
+
+        </div>
+
+
+        <!-- DELIVERY ADDRESSES -->
+        <div
+          class="profile-panel"
+          *ngIf="activeTab === 'addresses'"
+        >
+
+          <h2>
+            Delivery Addresses
+          </h2>
+
+          <p class="panel-sub">
+            Manage where your plants get delivered.
+            Your default address is automatically selected
+            at checkout.
+          </p>
+
+
+          <!-- ADDRESS LIST -->
+          <div class="address-list">
+
+            <div
+              class="empty-state"
+              *ngIf="addresses.length === 0"
+            >
+              <div class="empty-icon">
+                📍
+              </div>
+
+              <h3>
+                No saved addresses
+              </h3>
+
+              <p>
+                Add an address so checkout is faster next time.
+              </p>
+            </div>
+
+
+            <div
+              class="address-card"
+              *ngFor="let address of addresses; let i = index"
+              [class.default-address]="address.isDefault"
+            >
+
+              <div class="address-card-top">
+
+                <div>
+                  <span class="address-label">
+                    {{ address.label || 'Address' }}
+                  </span>
+
+                  <span
+                    class="default-badge"
+                    *ngIf="address.isDefault"
+                  >
+                    Default
+                  </span>
+                </div>
+
+              </div>
+
+
+              <div class="address-details">
+
+                <strong>
+                  {{ address.name || profileName }}
+                </strong>
+
+                <span>
+                  {{ address.street }}
+                </span>
+
+                <span>
+                  {{ address.city }},
+                  {{ address.province }}
+                  {{ address.zip }}
+                </span>
+
+                <span *ngIf="address.region">
+                  {{ address.region }}
+                </span>
+
+                <span *ngIf="address.phone">
+                  {{ address.phone }}
+                </span>
+
+              </div>
+
+
+              <div class="address-actions">
+
+                <button
+                  type="button"
+                  class="small-button"
+                  (click)="editAddress(i)"
+                >
+                  Edit
+                </button>
+
+                <button
+                  type="button"
+                  class="small-button danger"
+                  (click)="deleteAddress(i)"
+                >
+                  Delete
+                </button>
+
+                <button
+                  type="button"
+                  class="small-button"
+                  *ngIf="!address.isDefault"
+                  (click)="setDefaultAddress(i)"
+                >
+                  Set Default
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <button
+            class="button button-dark"
+            type="button"
+            (click)="addAddress()"
+          >
+            ＋ Add New Address
+          </button>
+
+        </div>
+
+
+        <!-- ACCOUNT SETTINGS -->
+        <div
+          class="profile-panel"
+          *ngIf="activeTab === 'settings'"
+        >
+
+          <h2>
+            Account Settings
+          </h2>
+
+          <p class="panel-sub">
+            Manage your password and account actions.
+          </p>
+
+
+          <div class="settings-grid">
+
+
+            <!-- CHANGE PASSWORD -->
+            <form
+              class="settings-box"
+              (ngSubmit)="changePassword()"
+            >
+
+              <h3>
+                🔒 Change Password
+              </h3>
+
+
+              <div class="input-box password-box">
+
+                <label>
+                  Current Password
+                </label>
+
+                <input
+                  [type]="showCurrentPassword ? 'text' : 'password'"
+                  [(ngModel)]="passwordForm.current"
+                  name="currentPassword"
+                  required
+                />
+
+                <button
+                  type="button"
+                  class="toggle-pass"
+                  (click)="toggleCurrentPassword()"
+                  [attr.aria-label]="
+                    showCurrentPassword
+                      ? 'Hide password'
+                      : 'Show password'
+                  "
+                >
+                  {{ showCurrentPassword ? '🙈' : '👁' }}
+                </button>
+
+              </div>
+
+
+              <div class="input-box password-box">
+
+                <label>
+                  New Password
+                </label>
+
+                <input
+                  [type]="showNewPassword ? 'text' : 'password'"
+                  [(ngModel)]="passwordForm.newPassword"
+                  name="newPassword"
+                  placeholder="Min. 6 characters"
+                  required
+                />
+
+                <button
+                  type="button"
+                  class="toggle-pass"
+                  (click)="toggleNewPassword()"
+                  [attr.aria-label]="
+                    showNewPassword
+                      ? 'Hide password'
+                      : 'Show password'
+                  "
+                >
+                  {{ showNewPassword ? '🙈' : '👁' }}
+                </button>
+
+              </div>
+
+
+              <div class="input-box password-box">
+
+                <label>
+                  Confirm New Password
+                </label>
+
+                <input
+                  [type]="showConfirmPassword ? 'text' : 'password'"
+                  [(ngModel)]="passwordForm.confirm"
+                  name="confirmPassword"
+                  required
+                />
+
+                <button
+                  type="button"
+                  class="toggle-pass"
+                  (click)="toggleConfirmPassword()"
+                  [attr.aria-label]="
+                    showConfirmPassword
+                      ? 'Hide password'
+                      : 'Show password'
+                  "
+                >
+                  {{ showConfirmPassword ? '🙈' : '👁' }}
+                </button>
+
+              </div>
+
+
+              <button
+                class="button button-dark"
+                type="submit"
+              >
+                🔑 Change Password
+              </button>
+
+            </form>
+
+
+            <!-- DANGER ZONE -->
+            <div class="settings-box settings-danger">
+
+              <h3>
+                ⚠️ Danger Zone
+              </h3>
+
+              <p>
+                Deleting your account removes your profile
+                and order history permanently.
+              </p>
+
+              <button
+                class="button btn-danger-outline"
+                type="button"
+                (click)="deleteAccount()"
+              >
+                🗑️ Delete Account
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ORDER HISTORY -->
+        <div
+          class="profile-panel"
+          *ngIf="activeTab === 'orders'"
+        >
+
+          <h2>
+            Order History
+          </h2>
+
+          <p class="panel-sub">
+            Track and manage your recent orders.
+          </p>
+
+
+          <div class="orders-list">
+
+            <div
+              class="empty-state"
+              *ngIf="orders.length === 0"
+            >
+
+              <div class="empty-icon">
+                🛍️
+              </div>
+
+              <h3>
+                No orders yet
+              </h3>
+
+              <p>
+                Your completed orders will appear here.
+              </p>
+
+              <button
+                class="button button-dark"
+                type="button"
+                (click)="goToProduct($event)"
+              >
+                Shop Plants
+              </button>
+
+            </div>
+
+
+            <div
+              class="order-card"
+              *ngFor="let order of orders"
+            >
+
+              <div class="order-header">
+
+                <div>
+                  <small>
+                    Order #{{ order.orderNumber || order.id }}
+                  </small>
+
+                  <strong>
+                    {{ order.date }}
+                  </strong>
+                </div>
+
+                <span
+                  class="order-status"
+                  [class]="getOrderStatusClass(order.status)"
+                >
+                  {{ order.status }}
+                </span>
+
+              </div>
+
+
+              <div class="order-items">
+
+                <div
+                  class="order-item"
+                  *ngFor="let item of order.items"
+                >
+
+                  <div class="order-item-image">
+                    <img
+                      [src]="item.image"
+                      [alt]="item.name"
+                    />
+                  </div>
+
+                  <div class="order-item-info">
+
+                    <strong>
+                      {{ item.name }}
+                    </strong>
+
+                    <span>
+                      Qty: {{ item.quantity }}
+                    </span>
+
+                  </div>
+
+                  <strong class="order-item-price">
+                    ₱{{ item.price * item.quantity | number:'1.2-2' }}
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div class="order-footer">
+
+                <span>
+                  Total
+                </span>
+
+                <strong>
+                  ₱{{ order.total | number:'1.2-2' }}
+                </strong>
+
+                <button
+                  class="button button-dark"
+                  type="button"
+                  (click)="trackOrder(order.id)"
+                >
+                  Track Order
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+
+  <!-- FOOTER -->
+
+  <footer class="footer">
+
+    <div class="wrap footer-grid">
+
+
+      <!--   BRAND -->
+
+      <div>
+
+        <a
+          class="logo"
+          href="#"
+          (click)="goHome($event)"
+        >
+
+          <img
+            src="assets/images/logo.png"
+            alt="Botanique Logo"
+            class="logo-img"
+          >
+
+          Botanique
+
+        </a>
+
+        <p>
+          Plants for the way you live.
+        </p>
+
+      </div>
+
+
+      <!-- SHOP -->
+
+      <div>
+
+        <b>
+          Shop
+        </b>
+
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          All plants
+        </a>
+
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Indoor
+        </a>
+
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Outdoor
+        </a>
+
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Accessories
+        </a>
+
+      </div>
+
+
+      <!-- COMPANY -->
+
+      <div>
+
+        <b>
+          Company
+        </b>
+
+
+        <a
+          href="#"
+          (click)="stayOnAbout($event)"
+        >
+          About Us
+        </a>
+
+
+        <a
+          href="#"
+          (click)="goToDevelopers($event)"
+        >
+          Developers
+        </a>
+
+
+        <a
+          href="#"
+          (click)="goToContact($event)"
+        >
+          Contact Us
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER BOTTOM -->
+
+    <div class="wrap footer-bottom">
+
+      <span>
+        © 2026 Botanique Plant Co.
+      </span>
+
+      <span>
+        Thoughtfully grown, beautifully lived.
+      </span>
+
+    </div>
+
+  </footer>
+
+
+  <!-- CART OVERLAY -->
+
+  <div
+    class="cart-overlay"
+    [class.show]="cartDrawerOpen"
+    (click)="closeCart()"
+  ></div>
+
+
+  <!-- CART DRAWER -->
+
+  <aside
+    class="cart-drawer"
+    [class.open]="cartDrawerOpen"
+    aria-label="Shopping cart"
+    [attr.aria-hidden]="!cartDrawerOpen"
+  >
+
+
+    <!-- CART HEADER -->
+
+    <div class="cart-drawer-header">
+
+      <div>
+
+        <span class="cart-eyebrow">
+          Your collection
+        </span>
+
+        <h2>
+          Your Cart
+        </h2>
+
+      </div>
+
+
+      <button
+        class="cart-close"
+        type="button"
+        aria-label="Close cart"
+        (click)="closeCart()"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <!-- EMPTY CART -->
+
+    <div
+      class="cart-empty"
+      *ngIf="cartItems.length === 0"
+    >
+
+      <div class="empty-cart-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+
+          <circle
+            cx="9"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <circle
+            cx="19"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <path
+            d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H6"
+          ></path>
+
+        </svg>
+
+      </div>
+
+
+      <h3>
+        Your cart is empty
+      </h3>
+
+
+      <p>
+        Looks like you haven't added any plants yet.
+      </p>
+
+
+      <button
+        class="cart-shop-button"
+        type="button"
+        (click)="continueShopping($event)"
+      >
+        Shop Plants
+      </button>
+
+    </div>
+
+
+    <!-- CART ITEMS -->
+
+    <div
+      class="cart-items"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div
+        class="cart-item"
+        *ngFor="let item of cartItems"
+      >
+
+
+        <!-- IMAGE -->
+
+        <div class="cart-item-image">
+
+          <img
+            [src]="item.image"
+            [alt]="item.name || 'Product'"
+          >
+
+        </div>
+
+
+        <!-- INFORMATION -->
+
+        <div class="cart-item-info">
+
+          <h3>
+            {{ item.name }}
+          </h3>
+
+          <p class="cart-item-price">
+            {{ formatCartPrice(item.price || 0) }}
+          </p>
+
+
+          <!-- QUANTITY -->
+
+          <div class="cart-quantity">
+
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              (click)="decreaseQuantity(item)"
+            >
+              −
+            </button>
+
+            <span>
+              {{ item.quantity }}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              (click)="increaseQuantity(item)"
+            >
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- REMOVE -->
+
+        <button
+          class="cart-remove"
+          type="button"
+          aria-label="Remove item"
+          (click)="removeFromCart(item.id)"
+        >
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- CART FOOTER -->
+
+    <div
+      class="cart-drawer-footer"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div class="cart-total-row">
+
+        <span>
+          Subtotal
+        </span>
+
+        <strong>
+          {{ formatCartPrice(cartSubtotal) }}
+        </strong>
+
+      </div>
+
+
+      <p class="cart-note">
+        Taxes and delivery fees are calculated at checkout.
+      </p>
+
+
+      <button
+        class="cart-checkout-button"
+        type="button"
+        (click)="checkout($event)"
+      >
+        Continue to Checkout
+      </button>
+
+    </div>
+
+  </aside>
+
+</div>
+
