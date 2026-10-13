@@ -69,7 +69,11 @@ select {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(180deg, rgba(20, 35, 26, 0.30), rgba(20, 35, 26, 0.58));
+  background: linear-gradient(
+    180deg,
+    rgba(20, 35, 26, 0.3),
+    rgba(20, 35, 26, 0.58)
+  );
 }
 .contact-banner-content {
   position: relative;
@@ -113,7 +117,10 @@ select {
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
 }
 .login-dropdown.show {
   opacity: 1;
@@ -152,7 +159,10 @@ select {
   background: #fafbf9;
   color: var(--ink);
   font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 .dropdown-input input:focus {
   border-color: var(--moss);
@@ -190,7 +200,11 @@ select {
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .dropdown-login {
   border: 1px solid var(--ink);
@@ -261,7 +275,10 @@ select {
 .contact-title {
   margin: 0 0 12px;
   color: var(--ink);
-  font: 500 46px "Fraunces", Georgia, serif;
+  font:
+    500 46px "Fraunces",
+    Georgia,
+    serif;
   line-height: 1.15;
 }
 .contact-subtitle {
@@ -310,7 +327,10 @@ select {
 .contact-section-heading h2 {
   margin: 0 0 5px;
   color: var(--ink);
-  font: 500 21px "Fraunces", Georgia, serif;
+  font:
+    500 21px "Fraunces",
+    Georgia,
+    serif;
 }
 .contact-section-heading p {
   margin: 0;
@@ -354,7 +374,10 @@ select {
   background: var(--cream);
   color: var(--ink);
   font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 .contact-form-group input::placeholder,
 .contact-form-group textarea::placeholder {
@@ -394,7 +417,10 @@ select {
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .contact-submit-btn:hover {
   background: var(--moss-dark);
@@ -417,7 +443,10 @@ select {
 .contact-info-card h2 {
   margin: 0 0 25px;
   color: var(--ink);
-  font: 500 21px "Fraunces", Georgia, serif;
+  font:
+    500 21px "Fraunces",
+    Georgia,
+    serif;
 }
 /* CONTACT INFO LIST */
 .contact-info-list {
@@ -502,7 +531,6 @@ select {
 /* MAP SECTION */
 .map-section {
   padding: 70px 30px;
-  text-align: center;
   background: #f5f2e9;
 }
 .map-section .container {
@@ -511,7 +539,8 @@ select {
   margin: 0 auto;
 }
 .map-heading {
-  margin-bottom: 35px;
+  margin-bottom: 28px;
+  text-align: center;
 }
 .map-section .section-title {
   margin: 0 0 10px;
@@ -526,21 +555,97 @@ select {
   font-size: 14px;
   line-height: 1.6;
 }
+.map-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 28px;
+  background: #fffdf9;
+  border: 1px solid rgba(54, 72, 56, 0.1);
+  border-radius: 26px;
+  box-shadow: 0 16px 40px rgba(44, 60, 46, 0.08);
+}
+.map-card-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px 4px;
+}
+.map-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #56715d;
+}
+.map-card-copy h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(1.8rem, 2vw, 2.4rem);
+  font-weight: 600;
+}
+.map-address {
+  margin: 0;
+  color: #3f4c40;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.map-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+.map-action {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.map-action:hover {
+  transform: translateY(-1px);
+}
+.map-action.primary {
+  background: #324b35;
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(50, 75, 53, 0.18);
+}
+.map-action.secondary {
+  background: #edf5ec;
+  color: #223725;
+}
+.map-action.ghost {
+  background: transparent;
+  color: #314a35;
+  border: 1px solid rgba(49, 74, 53, 0.25);
+}
 /* MAP CONTAINER */
 .map-container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
 }
 .map-container .ratio {
   position: relative;
   width: 100%;
-  height: 500px;
+  height: 440px;
   overflow: hidden;
-  border-radius: 15px;
+  border-radius: 18px;
   background: #e8e5dc;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
 }
 .map-container iframe {
   display: block;
@@ -569,6 +674,13 @@ select {
   }
   .contact-banner h1 {
     font-size: 50px;
+  }
+  .map-card {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+  .map-card-copy {
+    align-items: flex-start;
   }
   .map-container {
     padding: 0;
@@ -725,6 +837,18 @@ select {
   .map-section p {
     margin-bottom: 25px;
     font-size: 12px;
+  }
+  .map-card {
+    padding: 18px 16px;
+  }
+  .map-card-copy h3 {
+    font-size: 1.6rem;
+  }
+  .map-actions {
+    flex-direction: column;
+  }
+  .map-action {
+    width: 100%;
   }
   .map-container .ratio {
     height: 330px;
@@ -955,7 +1079,9 @@ select {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
   z-index: 1990;
 }
 .cart-overlay.show {
@@ -1019,7 +1145,9 @@ select {
   font-size: 28px;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 .cart-close:hover {
   background: rgba(36, 49, 38, 0.08);
@@ -1206,7 +1334,9 @@ select {
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 .cart-checkout-button:hover,
 .cart-shop-button:hover {

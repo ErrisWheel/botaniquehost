@@ -1,28 +1,19 @@
 <div class="home-scroll">
-
-  
   <!-- HEADER / NAVBAR -->
 
   <header class="site-header">
-
     <nav class="nav wrap" aria-label="Main navigation">
-
       <!-- LOGO -->
 
-      <a
-        class="logo"
-        href="#"
-        (click)="goHome($event)"
-      >
+      <a class="logo" href="#" (click)="goHome($event)">
         <img
           src="assets/images/logo.png"
           alt="Botanique Logo"
           class="logo-img"
-        >
+        />
 
         Botanique
       </a>
-
 
       <!-- MOBILE MENU -->
 
@@ -38,61 +29,27 @@
         <span></span>
       </button>
 
-
       <!-- NAVIGATION LINKS -->
 
-      <div
-        class="nav-links"
-        [class.open]="menuOpen"
-      >
+      <div class="nav-links" [class.open]="menuOpen">
+        <a href="#" (click)="goHome($event)"> Home </a>
 
-        <a
-          href="#"
-          (click)="goHome($event)"
-        >
-          Home
-        </a>
+        <a href="#" (click)="goToAbout($event)"> About Us </a>
 
-        <a
-          
-          href="#"
-          (click)="goToAbout($event)"
-        >
-          About Us
-        </a>
+        <a href="#" (click)="goToProduct($event)"> Product </a>
 
-        <a
-          href="#"
-          (click)="goToProduct($event)"
-        >
-          Product
-        </a>
+        <a href="#" (click)="goToDevelopers($event)"> Developers </a>
 
-        <a
-          href="#"
-          (click)="goToDevelopers($event)"
-        >
-          Developers
-        </a>
-
-        <a
-        class="active"
-          href="#"
-          (click)="goToContact($event)"
-        >
+        <a class="active" href="#" (click)="goToContact($event)">
           Contact Us
         </a>
-
       </div>
-
 
       <!-- NAVIGATION ACTIONS
            
            NO SEARCH ICON / NO SEARCH BAR -->
 
       <div class="nav-actions">
-
-
         <!-- WISHLIST-->
 
         <button
@@ -102,28 +59,20 @@
           aria-label="Wishlist"
           (click)="goToWishlist($event)"
         >
-
           <svg
             class="nav-svg wishlist-icon"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-
             <path
               d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"
             />
-
           </svg>
 
-          <span
-            class="wishlist-badge"
-            *ngIf="wishlistCount > 0"
-          >
+          <span class="wishlist-badge" *ngIf="wishlistCount > 0">
             {{ wishlistCount }}
           </span>
-
         </button>
-
 
         <!-- NOTIFICATIONS-->
 
@@ -134,47 +83,31 @@
           aria-label="Notifications"
           (click)="goToNotifications($event)"
         >
-
           <svg
             class="nav-svg notification-icon"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
 
-            <path
-              d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
-            />
-
-            <path
-              d="M13.73 21a2 2 0 0 1-3.46 0"
-            />
-
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
 
-          <span
-            class="notification-badge"
-            *ngIf="notificationCount > 0"
-          >
+          <span class="notification-badge" *ngIf="notificationCount > 0">
             {{ notificationCount }}
           </span>
-
         </button>
-
 
         <!-- CART-->
 
-              <button
+        <button
           class="icon-link cart-link"
           type="button"
           title="Shopping Bag"
           aria-label="Shopping bag"
           (click)="goToCart($event)"
         >
-          <svg
-            class="nav-svg cart-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
+          <svg class="nav-svg cart-icon" viewBox="0 0 24 24" aria-hidden="true">
             <!-- Shopping Bag -->
             <path
               d="M5 8h14l1 13H4L5 8z"
@@ -194,27 +127,20 @@
             />
           </svg>
 
-          <span
-            class="cart-badge"
-            *ngIf="cartCount > 0"
-          >
+          <span class="cart-badge" *ngIf="cartCount > 0">
             {{ cartCount }}
           </span>
         </button>
         <!-- ACCOUNT -->
 
-                <button
+        <button
           class="icon-link user-button"
           type="button"
-           [title]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
-           [attr.aria-label]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+          [title]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+          [attr.aria-label]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
           (click)="toggleLoginDropdown($event)"
         >
-          <svg
-            class="nav-svg user-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
+          <svg class="nav-svg user-icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle
               cx="12"
               cy="8"
@@ -234,34 +160,18 @@
           </svg>
         </button>
 
-
         <!-- LOGIN DROPDOWN-->
 
-        <div
-          class="login-dropdown"
-          [class.show]="loginDropdownOpen"
-        >
+        <div class="login-dropdown" [class.show]="loginDropdownOpen">
+          <h3>Welcome Back</h3>
 
-          <h3>
-            Welcome Back
-          </h3>
+          <p>Login to your Botanique account</p>
 
-          <p>
-            Login to your Botanique account
-          </p>
-
-
-          <form
-            (ngSubmit)="login()"
-          >
-
+          <form (ngSubmit)="login()">
             <!-- EMAIL -->
 
             <div class="dropdown-input">
-
-              <label for="about-email">
-                Email Address
-              </label>
+              <label for="about-email"> Email Address </label>
 
               <input
                 id="about-email"
@@ -271,18 +181,13 @@
                 placeholder="Enter your email"
                 autocomplete="email"
                 required
-              >
-
+              />
             </div>
-
 
             <!-- PASSWORD -->
 
             <div class="dropdown-input">
-
-              <label for="about-password">
-                Password
-              </label>
+              <label for="about-password"> Password </label>
 
               <input
                 id="about-password"
@@ -292,62 +197,37 @@
                 placeholder="Enter your password"
                 autocomplete="current-password"
                 required
-              >
-
+              />
             </div>
-
 
             <!-- OPTIONS -->
 
             <div class="dropdown-options">
-
               <label>
-
                 <input
                   type="checkbox"
                   name="rememberMe"
                   [(ngModel)]="rememberMe"
-                >
+                />
 
-                <span>
-                  Remember me
-                </span>
-
+                <span> Remember me </span>
               </label>
 
-
-              <a
-                href="#"
-                (click)="forgotPassword($event)"
-              >
+              <a href="#" (click)="forgotPassword($event)">
                 Forgot Password?
               </a>
-
             </div>
-
 
             <!-- LOGIN -->
 
-            <button
-              class="dropdown-login"
-              type="submit"
-            >
-              Login
-            </button>
-
+            <button class="dropdown-login" type="submit">Login</button>
           </form>
-
 
           <!-- DIVIDER -->
 
           <div class="dropdown-divider">
-
-            <span>
-              OR
-            </span>
-
+            <span> OR </span>
           </div>
-
 
           <!-- GUEST -->
 
@@ -359,33 +239,19 @@
             Continue as Guest
           </button>
 
-
           <!-- SIGN UP -->
 
           <p class="dropdown-signup">
-
             Don't have an account?
 
-            <a
-              href="#"
-              (click)="goToSignup($event)"
-            >
-              Sign Up
-            </a>
-
+            <a href="#" (click)="goToSignup($event)"> Sign Up </a>
           </p>
-
         </div>
-
       </div>
-
     </nav>
-
   </header>
 
-
   <section class="contact-banner">
-
     <img
       src="https://img.magnific.com/free-photo/close-up-textured-beautiful-natural-monstera-leaves_169016-11832.jpg?semt=ais_hybrid&w=740&q=80"
       alt="Lush green Monstera leaves"
@@ -394,89 +260,51 @@
     <div class="contact-banner-overlay"></div>
 
     <div class="contact-banner-content">
+      <span class="contact-banner-eyebrow"> BOTANIQUE </span>
 
-      <span class="contact-banner-eyebrow">
-        BOTANIQUE
-      </span>
-
-      <h1>
-        Contact Us
-      </h1>
+      <h1>Contact Us</h1>
 
       <p>
-        We’re here to help with your plants,
-        orders, and everything in between.
+        We’re here to help with your plants, orders, and everything in between.
       </p>
-
     </div>
-
   </section>
 
   <main class="contact-page">
-
     <!-- CONTACT HEADING -->
     <section class="contact-hero wrap">
+      <span class="contact-eyebrow"> GET IN TOUCH </span>
 
-      <span class="contact-eyebrow">
-        GET IN TOUCH
-      </span>
-
-      <h1 class="contact-title">
-        We’d Love to Hear From You
-      </h1>
+      <h1 class="contact-title">We’d Love to Hear From You</h1>
 
       <p class="contact-subtitle">
-        Have a question about our plants, orders, or care tips?
-        Drop us a message!
+        Have a question about our plants, orders, or care tips? Drop us a
+        message!
       </p>
-
     </section>
 
     <section class="contact-content wrap">
-
       <!-- CONTACT FORM -->
 
       <div class="contact-form-container">
-
-        <form
-          #contactForm="ngForm"
-          (ngSubmit)="submitContactForm(contactForm)"
-        >
-
+        <form #contactForm="ngForm" (ngSubmit)="submitContactForm(contactForm)">
           <div class="contact-form-card">
-
             <!-- SECTION HEADING -->
             <div class="contact-section-heading">
-
-              <span class="contact-step">
-                01
-              </span>
+              <span class="contact-step"> 01 </span>
 
               <div>
+                <h2>Send Us a Message</h2>
 
-                <h2>
-                  Send Us a Message
-                </h2>
-
-                <p>
-                  Fill out the form below and we’ll reply
-                  within 24 hours.
-                </p>
-
+                <p>Fill out the form below and we’ll reply within 24 hours.</p>
               </div>
-
             </div>
-
 
             <!-- FORM GRID -->
             <div class="contact-form-grid">
-
               <!-- FULL NAME -->
               <div class="contact-form-group">
-
-                <label for="contactName">
-                  Full Name
-                </label>
+                <label for="contactName"> Full Name </label>
 
                 <input
                   type="text"
@@ -486,16 +314,11 @@
                   [(ngModel)]="contact.name"
                   required
                 />
-
               </div>
-
 
               <!-- EMAIL -->
               <div class="contact-form-group">
-
-                <label for="contactFormEmail">
-                  Email Address
-                </label>
+                <label for="contactFormEmail"> Email Address </label>
 
                 <input
                   type="email"
@@ -505,21 +328,14 @@
                   [(ngModel)]="contact.email"
                   required
                 />
-
               </div>
-
 
               <!-- PHONE -->
               <div class="contact-form-group">
-
                 <label for="contactPhone">
-
                   Phone Number
 
-                  <span>
-                    (Optional)
-                  </span>
-
+                  <span> (Optional) </span>
                 </label>
 
                 <input
@@ -529,16 +345,11 @@
                   placeholder="09XX XXX XXXX"
                   [(ngModel)]="contact.phone"
                 />
-
               </div>
-
 
               <!-- SUBJECT -->
               <div class="contact-form-group">
-
-                <label for="contactSubject">
-                  Subject
-                </label>
+                <label for="contactSubject"> Subject </label>
 
                 <select
                   id="contactSubject"
@@ -546,41 +357,23 @@
                   [(ngModel)]="contact.subject"
                   required
                 >
+                  <option value="" disabled>Select a topic</option>
 
-                  <option
-                    value=""
-                    disabled
-                  >
-                    Select a topic
-                  </option>
+                  <option value="general">General Inquiry</option>
 
-                  <option value="general">
-                    General Inquiry
-                  </option>
+                  <option value="order">Order Support & Tracking</option>
 
-                  <option value="order">
-                    Order Support & Tracking
-                  </option>
-
-                  <option value="plant-care">
-                    Plant Care Advice
-                  </option>
+                  <option value="plant-care">Plant Care Advice</option>
 
                   <option value="services">
                     Custom Services & Consultations
                   </option>
-
                 </select>
-
               </div>
-
 
               <!-- MESSAGE -->
               <div class="contact-form-group contact-full">
-
-                <label for="contactMessage">
-                  Your Message
-                </label>
+                <label for="contactMessage"> Your Message </label>
 
                 <textarea
                   id="contactMessage"
@@ -590,353 +383,230 @@
                   [(ngModel)]="contact.message"
                   required
                 ></textarea>
-
               </div>
-
             </div>
-
 
             <!-- SUBMIT -->
             <div class="contact-submit">
-
-              <button
-                type="submit"
-                class="contact-submit-btn"
-              >
+              <button type="submit" class="contact-submit-btn">
                 Send Message →
               </button>
-
             </div>
-
           </div>
-
         </form>
-
       </div>
-
 
       <!-- CONTACT INFORMATION -->
 
       <aside class="contact-info-card">
-
-        <h2>
-          Contact Information
-        </h2>
-
+        <h2>Contact Information</h2>
 
         <div class="contact-info-list">
-
           <!-- ADDRESS -->
           <div class="contact-info-item">
-
             <div class="contact-info-icon">
               <i class="fa-solid fa-location-dot"></i>
             </div>
 
             <div>
-
-              <strong>
-                Visit Our Store
-              </strong>
+              <strong> Visit Our Store </strong>
 
               <p>
                 123 Botanical Avenue, Suite 101<br />
                 Quezon City, Metro Manila
               </p>
-
             </div>
-
           </div>
-
 
           <div class="contact-divider"></div>
 
-
           <!-- PHONE -->
           <div class="contact-info-item">
-
             <div class="contact-info-icon">
               <i class="fa-solid fa-phone"></i>
             </div>
 
             <div>
+              <strong> Call or Text </strong>
 
-              <strong>
-                Call or Text
-              </strong>
-
-              <p>
-                +63 912 345 6789
-              </p>
-
+              <p>+63 912 345 6789</p>
             </div>
-
           </div>
-
 
           <div class="contact-divider"></div>
 
-
           <!-- EMAIL -->
           <div class="contact-info-item">
-
             <div class="contact-info-icon">
               <i class="fa-solid fa-envelope"></i>
             </div>
 
             <div>
+              <strong> Email Us </strong>
 
-              <strong>
-                Email Us
-              </strong>
-
-              <p>
-                botaniqueg2@gmail.com
-              </p>
-
+              <p>botaniqueg2@gmail.com</p>
             </div>
-
           </div>
-
 
           <div class="contact-divider"></div>
 
-
           <!-- HOURS -->
           <div class="contact-info-item">
-
             <div class="contact-info-icon">
               <i class="fa-solid fa-clock"></i>
             </div>
 
             <div>
-
-              <strong>
-                Business Hours
-              </strong>
+              <strong> Business Hours </strong>
 
               <p>
                 Mon - Sat: 9:00 AM - 6:00 PM<br />
                 Sunday: 10:00 AM - 4:00 PM
               </p>
-
             </div>
-
           </div>
-
         </div>
-
 
         <!-- QUICK HELP -->
         <div class="contact-help-box">
-
-          <div class="contact-help-icon">
-            🌿
-          </div>
+          <div class="contact-help-icon">🌿</div>
 
           <div>
-
-            <strong>
-              Need quick answers?
-            </strong>
+            <strong> Need quick answers? </strong>
 
             <p>
-              Check out our services page for custom
-              consultations and maintenance packages.
+              Check out our services page for custom consultations and
+              maintenance packages.
             </p>
 
-            <a
-              href="/developers"
-              (click)="goToDevelopers($event)"
-            >
+            <a href="/developers" (click)="goToDevelopers($event)">
               View Developers
             </a>
-
           </div>
-
         </div>
-
       </aside>
-
     </section>
 
     <section class="map-section">
-
       <div class="container">
-
         <div class="map-heading">
+          <h2 class="section-title">Visit Botanique</h2>
 
-          <h2 class="section-title">
-            Find Us
-          </h2>
-
-          <p>
-            Visit our plant shop for the fresh plant goods
-          </p>
-
+          <p>Find your next plant favorite in Quezon City.</p>
         </div>
 
+        <div class="map-card">
+          <div class="map-card-copy">
+            <p class="map-label">Our location</p>
+            <h3>Botaniqueh</h3>
+            <p class="map-address">
+              123 Botanical Avenue, Suite 101, Quezon City, Metro Manila
+            </p>
 
-        <div class="map-container">
-
-          <div class="ratio">
-
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3151.835434509374!2d144.9537353153167!3d-37.81627997975171!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad65d43f3f3f3f3%3A0x3f3f3f3f3f3f3f3f!2sBakery%20Street!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus"
-              allowfullscreen
-              referrerpolicy="no-referrer-when-downgrade"
-            ></iframe>
-
+            <div class="map-actions">
+              <button
+                type="button"
+                class="map-action primary"
+                (click)="openDirections()"
+              >
+                Get directions
+              </button>
+              <button
+                type="button"
+                class="map-action secondary"
+                (click)="useMyLocation()"
+              >
+                Use my location
+              </button>
+              <button
+                type="button"
+                class="map-action ghost"
+                (click)="copyAddress()"
+              >
+                Copy address
+              </button>
+            </div>
           </div>
 
+          <div class="map-container">
+            <div class="ratio">
+              <iframe
+                title="Botanique map"
+                src="https://maps.google.com/maps?q=938%20Aurora%20Boulevard%20Cubao%20Quezon%20City&t=&z=14&ie=UTF8&iwloc=&output=embed"
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+          </div>
         </div>
-
       </div>
-
     </section>
-
   </main>
 
- <!-- FOOTER -->
+  <!-- FOOTER -->
 
   <footer class="footer">
-
     <div class="wrap footer-grid">
-
-
       <!-- BRAND -->
 
       <div>
-
-        <a
-          class="logo"
-          href="#"
-          (click)="goHome($event)"
-        >
-
+        <a class="logo" href="#" (click)="goHome($event)">
           <img
             src="assets/images/logo.png"
             alt="Botanique Logo"
             class="logo-img"
-          >
+          />
 
           Botanique
-
         </a>
 
-        <p>
-          Plants for the way you live.
-        </p>
-
+        <p>Plants for the way you live.</p>
       </div>
-
 
       <!-- SHOP -->
 
       <div>
+        <b> Shop </b>
 
-        <b>
-          Shop
-        </b>
+        <a href="#" (click)="goToProduct($event)"> All plants </a>
 
+        <a href="#" (click)="goToProduct($event)"> Indoor </a>
 
-        <a
-          href="#"
-          (click)="goToProduct($event)"
-        >
-          All plants
-        </a>
+        <a href="#" (click)="goToProduct($event)"> Outdoor </a>
 
-
-        <a
-          href="#"
-          (click)="goToProduct($event)"
-        >
-          Indoor
-        </a>
-
-
-        <a
-          href="#"
-          (click)="goToProduct($event)"
-        >
-          Outdoor
-        </a>
-
-
-        <a
-          href="#"
-          (click)="goToProduct($event)"
-        >
-          Accessories
-        </a>
-
+        <a href="#" (click)="goToProduct($event)"> Accessories </a>
       </div>
-
 
       <!-- COMPANY -->
 
       <div>
+        <b> Company </b>
 
-        <b>
-          Company
-        </b>
+        <a href="#" (click)="goToAbout($event)"> About Us </a>
 
+        <a href="#" (click)="goToDevelopers($event)"> Developers </a>
 
-        <a
-          href="#"
-          (click)="goToAbout($event)"
-        >
-          About Us
-        </a>
-
-
-        <a
-          href="#"
-          (click)="goToDevelopers($event)"
-        >
-          Developers
-        </a>
-
-
-        <a
-          href="#"
-          (click)="goToContact($event)"
-        >
-          Contact Us
-        </a>
-
+        <a href="#" (click)="goToContact($event)"> Contact Us </a>
       </div>
-
     </div>
-
 
     <!-- FOOTER BOTTOM -->
 
     <div class="wrap footer-bottom">
+      <span> © 2026 Botanique Plant Co. </span>
 
-      <span>
-        © 2026 Botanique Plant Co.
-      </span>
-
-      <span>
-        Thoughtfully grown, beautifully lived.
-      </span>
-
+      <span> Thoughtfully grown, beautifully lived. </span>
     </div>
-
   </footer>
 
-
-  <===
-       CART OVERL==== -->
+  <=== CART OVERL==== -->
 
   <div
     class="cart-overlay"
     [class.show]="cartDrawerOpen"
     (click)="closeCart()"
   ></div>
-
 
   <!-- CART DRAWER -->
 
@@ -946,24 +616,14 @@
     aria-label="Shopping cart"
     [attr.aria-hidden]="!cartDrawerOpen"
   >
-
-
     <!-- CART HEADER -->
 
     <div class="cart-drawer-header">
-
       <div>
+        <span class="cart-eyebrow"> Your collection </span>
 
-        <span class="cart-eyebrow">
-          Your collection
-        </span>
-
-        <h2>
-          Your Cart
-        </h2>
-
+        <h2>Your Cart</h2>
       </div>
-
 
       <button
         class="cart-close"
@@ -973,54 +633,26 @@
       >
         ×
       </button>
-
     </div>
-
 
     <!-- EMPTY CART -->
 
-    <div
-      class="cart-empty"
-      *ngIf="cartItems.length === 0"
-    >
-
+    <div class="cart-empty" *ngIf="cartItems.length === 0">
       <div class="empty-cart-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="9" cy="20" r="1.5"></circle>
 
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-
-          <circle
-            cx="9"
-            cy="20"
-            r="1.5"
-          ></circle>
-
-          <circle
-            cx="19"
-            cy="20"
-            r="1.5"
-          ></circle>
+          <circle cx="19" cy="20" r="1.5"></circle>
 
           <path
             d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H6"
           ></path>
-
         </svg>
-
       </div>
 
+      <h3>Your cart is empty</h3>
 
-      <h3>
-        Your cart is empty
-      </h3>
-
-
-      <p>
-        Looks like you haven't added any plants yet.
-      </p>
-
+      <p>Looks like you haven't added any plants yet.</p>
 
       <button
         class="cart-shop-button"
@@ -1029,52 +661,28 @@
       >
         Shop Plants
       </button>
-
     </div>
-
 
     <!-- CART ITEM -->
 
-    <div
-      class="cart-items"
-      *ngIf="cartItems.length > 0"
-    >
-
-      <div
-        class="cart-item"
-        *ngFor="let item of cartItems"
-      >
-
-
+    <div class="cart-items" *ngIf="cartItems.length > 0">
+      <div class="cart-item" *ngFor="let item of cartItems">
         <!-- IMAGE -->
 
         <div class="cart-item-image">
-
-          <img
-            [src]="item.image"
-            [alt]="item.name || 'Product'"
-          >
-
+          <img [src]="item.image" [alt]="item.name || 'Product'" />
         </div>
-
 
         <!-- INFORMATION -->
 
         <div class="cart-item-info">
+          <h3>{{ item.name }}</h3>
 
-          <h3>
-            {{ item.name }}
-          </h3>
-
-          <p class="cart-item-price">
-            {{ formatCartPrice(item.price || 0) }}
-          </p>
-
+          <p class="cart-item-price">{{ formatCartPrice(item.price || 0) }}</p>
 
           <!-- QUANTITY -->
 
           <div class="cart-quantity">
-
             <button
               type="button"
               aria-label="Decrease quantity"
@@ -1083,9 +691,7 @@
               −
             </button>
 
-            <span>
-              {{ item.quantity }}
-            </span>
+            <span> {{ item.quantity }} </span>
 
             <button
               type="button"
@@ -1094,11 +700,8 @@
             >
               +
             </button>
-
           </div>
-
         </div>
-
 
         <!-- REMOVE -->
 
@@ -1110,36 +713,21 @@
         >
           ×
         </button>
-
       </div>
-
     </div>
-
 
     <!-- CART FOOTE -->
 
-    <div
-      class="cart-drawer-footer"
-      *ngIf="cartItems.length > 0"
-    >
-
+    <div class="cart-drawer-footer" *ngIf="cartItems.length > 0">
       <div class="cart-total-row">
+        <span> Subtotal </span>
 
-        <span>
-          Subtotal
-        </span>
-
-        <strong>
-          {{ formatCartPrice(cartSubtotal) }}
-        </strong>
-
+        <strong> {{ formatCartPrice(cartSubtotal) }} </strong>
       </div>
-
 
       <p class="cart-note">
         Taxes and delivery fees are calculated at checkout.
       </p>
-
 
       <button
         class="cart-checkout-button"
@@ -1148,8 +736,6 @@
       >
         Continue to Checkout
       </button>
-
     </div>
-
   </aside>
 </div>
