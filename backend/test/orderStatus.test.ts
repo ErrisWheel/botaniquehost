@@ -9,7 +9,8 @@ import {
     changeOrderStatus,
     checkTransition,
     paymentStatusAfterCancel,
-    orderStatusLabel
+    orderStatusLabel,
+    type OrderState
 } from '../src/services/orderStatus.js';
 
 // MOCKED: in-memory FakeDb, not Postgres. Proves the application's rules and
@@ -107,7 +108,7 @@ test('an order can progress through all six fulfilment statuses in order', async
         assert.equal(db.orders[0].status, next);
     }
     assert.equal(db.orders[0].paymentStatus, 'PAID', 'COD is marked paid on delivery');
-    assert.deepEqual(allowedNextStatuses(db.orders[0]), []);
+    assert.deepEqual(allowedNextStatuses(db.orders[0] as OrderState), []);
 });
 
 test('an invalid move is a 409 and changes nothing', async () => {
