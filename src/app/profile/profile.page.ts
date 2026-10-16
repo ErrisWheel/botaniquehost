@@ -1892,7 +1892,13 @@ export class ProfilePage implements OnInit {
       this.loadCurrentUser();
       void this.loadOrders();
 
+      // Match the dedicated login page: admins go straight to the dashboard,
+      // while customers go to the storefront. Navigation also dismisses the
+      // account login dropdown instead of leaving it open over the page.
       alert(`Welcome back, ${user.fullName || 'to Botanique'}!`);
+      await this.router.navigateByUrl(
+        user.role === 'ADMIN' ? '/admin' : '/home'
+      );
     } catch (error: any) {
       console.error('Login error:', error);
       alert(error?.message || 'Unable to log in. Please try again.');
