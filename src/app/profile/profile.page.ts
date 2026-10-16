@@ -2,6 +2,8 @@ import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
+import { ApiError } from '../shared/api.service';
+import { OrdersService } from '../shared/orders.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -57,6 +59,7 @@ interface CartItem {
 export class ProfilePage implements OnInit {
 
   private readonly authService = inject(AuthService);
+  private readonly ordersService = inject(OrdersService);
 
   /* NAVIGATION */
 
@@ -131,7 +134,9 @@ export class ProfilePage implements OnInit {
 
   orders: Order[] = [];
 
-  private readonly ORDER_KEY = 'botaniqueOrders';
+  // Order history states (shown with the existing empty-state styling).
+  ordersLoading = false;
+  ordersError = '';
 
 
   /* CART */
@@ -168,7 +173,7 @@ export class ProfilePage implements OnInit {
 
     this.loadAddresses();
 
-    this.loadOrders();
+    void this.loadOrders();
 
     this.loadCart();
 
@@ -180,11 +185,12 @@ export class ProfilePage implements OnInit {
 
   }
 
-  // Ionic can reuse this page instead of constructing a new component.
-  // Refresh server-backed data whenever the profile becomes visible again.
+  // Ionic keeps this page alive in its navigation stack, so ngOnInit does NOT
+  // run again when the customer comes back (for example after checkout).
+  // Refresh server-backed data every time the profile becomes active.
   ionViewWillEnter(): void {
     this.loadCurrentUser();
-    this.loadOrders();
+    void this.loadOrders();
     this.loadAddresses();
     this.loadCart();
     this.updateCartCount();
@@ -341,21 +347,7 @@ export class ProfilePage implements OnInit {
             };
 
 
-            localStorage.removeItem(
-              'botaniqueToken'
-            );
-
-            localStorage.removeItem(
-              'token'
-            );
-
-            alert(
-              'Your session has expired. Please log in again.'
-            );
-
-            this.router.navigateByUrl(
-              '/login'
-            );
+            void this.endExpiredSession();
 
           }
 
@@ -487,10 +479,7 @@ export class ProfilePage implements OnInit {
       console.error('Unable to save profile:', error);
 
       if (error?.status === 401) {
-        localStorage.removeItem('botaniqueToken');
-        localStorage.removeItem('token');
-        alert('Your session has expired. Please log in again.');
-        await this.router.navigateByUrl('/login');
+        await this.endExpiredSession();
         return;
       }
 
@@ -516,7 +505,7 @@ export class ProfilePage implements OnInit {
     this.activeTab = tab;
 
     if (tab === 'orders') {
-      this.loadOrders();
+      void this.loadOrders();
     }
 
     this.menuOpen = false;
@@ -1003,290 +992,243 @@ export class ProfilePage implements OnInit {
 
   /* ORDERS */
 
-  loadOrders(): void {
+  /**
+   * Loads the signed-in customer's orders from the API (never from a browser
+   * copy). Safe to call repeatedly: OrdersService shares a request that is
+   * already running, discards outdated responses, and always uses a fresh
+   * Firebase ID token.
+   */
+  async loadOrders(force = false): Promise<void> {
 
-    const token =
-      localStorage.getItem('botaniqueToken') ||
-      localStorage.getItem('token');
-
-
-    if (!token) {
+    if (!this.authService.isLoggedIn) {
 
       this.orders = [];
+      this.ordersError = '';
+      this.ordersLoading = false;
 
       return;
 
     }
 
-    // Load the last confirmed server response immediately. The API below
-    // remains authoritative, but this makes order history resilient to page
-    // reuse and brief backend/network delays.
-    try {
-      const raw = localStorage.getItem(this.ORDER_KEY);
-      const cached = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(cached)) {
-        this.orders = cached;
-      }
-    } catch {
-      // Ignore malformed local order history.
+    this.ordersLoading = true;
+    this.ordersError = '';
+
+    // Show what we already know for THIS user while the refresh runs.
+    if (this.orders.length === 0) {
+      this.orders = this.ordersService.cached.map(
+        (order) => this.toDisplayOrder(order)
+      );
     }
 
+    try {
 
-    const headers =
-      new HttpHeaders({
-        Authorization:
-          `Bearer ${token}`
-      });
+      const orders = await this.ordersService.load(force);
 
+      this.orders = orders.map(
+        (order) => this.toDisplayOrder(order)
+      );
 
-    this.http
-      .get<any[]>(
-        `${this.API_URL}/orders`,
-        { headers }
-      )
-      .subscribe({
+    } catch (error: any) {
 
-        next: (orders) => {
+      console.error(
+        'Unable to load orders:',
+        error
+      );
 
-          if (
-            !Array.isArray(orders)
-          ) {
+      if (
+        error instanceof ApiError &&
+        error.isUnauthorized &&
+        this.authService.isLoggedIn
+      ) {
 
-            this.orders = [];
+        this.orders = [];
 
-            return;
+        await this.endExpiredSession();
 
-          }
+        return;
 
+      }
 
-          this.orders =
-            orders.map(
-              (order: any) => {
+      this.ordersError =
+        error instanceof ApiError
+          ? error.message
+          : 'We could not load your orders. Please try again.';
 
-                const items =
-                  Array.isArray(
-                    order?.items
-                  )
-                    ? order.items.map(
-                        (item: any) => ({
+    } finally {
 
-                          name:
-                            item?.productName ||
-                            item?.name ||
-                            'Product',
+      this.ordersLoading = false;
 
-                          image:
-                            item?.image ||
-                            item?.product?.image ||
-                            '',
+    }
 
-                          price:
-                            Number(
-                              item?.unitPrice ??
-                              item?.price ??
-                              0
-                            ),
+  }
 
-                          quantity:
-                            Number(
-                              item?.quantity ||
-                              1
-                            )
+  retryOrders(): void {
 
-                        })
-                      )
-                    : [];
+    void this.loadOrders(true);
 
+  }
 
-                const calculatedTotal =
-                  items.reduce(
-                    (
-                      total: number,
-                      item: OrderItem
-                    ) =>
-                      total +
-                      (
-                        item.price *
-                        item.quantity
-                      ),
-                    0
-                  );
+  /** Maps one API order to the shape this page displays. */
+  private toDisplayOrder(order: any): Order {
 
+    const items: OrderItem[] =
+      Array.isArray(order?.items)
+        ? order.items.map(
+            (item: any) => ({
 
-                return {
+              name:
+                item?.productName ||
+                item?.name ||
+                'Product',
 
-                  id:
-                    String(
-                      order?.id ||
-                      order?.orderNumber ||
-                      ''
-                    ),
+              image:
+                item?.image ||
+                item?.product?.image ||
+                '',
 
-                  orderNumber:
-                    String(
-                      order?.orderNumber ||
-                      order?.id ||
-                      ''
-                    ),
+              price:
+                Number(
+                  item?.unitPrice ??
+                  item?.price ??
+                  0
+                ),
 
-                  date:
-                    order?.createdAt ||
-                    '',
+              quantity:
+                Number(
+                  item?.quantity ||
+                  1
+                )
 
-                  status:
-                    this.normalizeOrderStatus(
-                      order?.status
-                    ),
+            })
+          )
+        : [];
 
-                  total:
-                    Number(
-                      order?.total ??
-                      calculatedTotal
-                    ),
+    const calculatedTotal =
+      items.reduce(
+        (total: number, item: OrderItem) =>
+          total + (item.price * item.quantity),
+        0
+      );
 
-                  items
+    return {
 
-                };
+      id:
+        String(
+          order?.id ||
+          order?.orderNumber ||
+          ''
+        ),
 
-              }
-            );
+      orderNumber:
+        String(
+          order?.orderNumber ||
+          order?.id ||
+          ''
+        ),
 
-          // Persist the real server orders as a display cache. The next
-          // request still refreshes from /api/orders, so this is not a
-          // substitute for the database.
-          try {
-            localStorage.setItem(
-              this.ORDER_KEY,
-              JSON.stringify(this.orders)
-            );
-          } catch {
-            // Ignore storage quota/serialization errors.
-          }
+      date:
+        order?.createdAt ||
+        '',
 
-        },
+      status:
+        this.normalizeOrderStatus(
+          order?.status
+        ),
 
-        error: (error) => {
+      total:
+        Number(
+          order?.total ??
+          calculatedTotal
+        ),
 
-          console.error(
-            'Unable to load orders:',
-            error
-          );
+      items
 
+    };
 
-          // Keep the cached order history on transient failures.
-          // Only a 401 means the authenticated session is invalid.
-          if (
-            error?.status === 401
-          ) {
-            this.orders = [];
+  }
 
-            localStorage.removeItem(
-              'botaniqueToken'
-            );
+  /**
+   * The API says this login is no longer valid even after a forced token
+   * refresh. Sign out properly (Firebase + cached data) instead of only
+   * deleting a localStorage key, then send the customer to the login page.
+   */
+  private async endExpiredSession(): Promise<void> {
 
-            localStorage.removeItem(
-              'token'
-            );
+    this.currentUser = null;
+    this.orders = [];
 
-            alert(
-              'Your session has expired. Please log in again.'
-            );
+    await this.authService.logout().catch(() => undefined);
 
-            this.router.navigateByUrl(
-              '/login'
-            );
+    alert(
+      'Your session has expired. Please log in again.'
+    );
 
-          }
-
-        }
-
-      });
+    await this.router.navigateByUrl('/login');
 
   }
 
   /* NORMALIZE ORDER STATUS */
-
-  private normalizeOrderStatus(
-    status?: string
-  ): string {
-
-    const value =
-      String(
-        status || 'PENDING'
-      )
-        .trim()
-        .toLowerCase()
-        .replace(/-/g, '_')
-        .replace(/\s+/g, '_');
-
+  private normalizeOrderStatus(status?: string): string {
+    const value = String(status || 'PENDING')
+      .trim()
+      .toLowerCase()
+      .replace(/-/g, '_')
+      .replace(/\s+/g, '_');
 
     switch (value) {
-
       case 'pending':
         return 'Pending';
-
       case 'processing':
       case 'confirmed':
       case 'preparing':
         return 'Processing';
-
+      case 'processed':
+        return 'Processed';
+      case 'sorting':
+      case 'order_is_being_sorted':
+      case 'being_sorted':
+        return 'Order is being sorted';
       case 'shipped':
       case 'in_transit':
       case 'intransit':
-        return 'Shipped';
-
+      case 'on_delivery':
       case 'out_for_delivery':
       case 'outfordelivery':
       case 'delivery':
-        return 'Out for Delivery';
-
+        return 'On delivery';
       case 'delivered':
       case 'complete':
       case 'completed':
         return 'Delivered';
-
       case 'cancelled':
       case 'canceled':
       case 'cancel':
         return 'Cancelled';
-
       default:
         return 'Pending';
-
     }
-
   }
 
   /* ORDER STATUS */
-
-  getOrderStatusClass(
-    status: string
-  ): string {
-
-    switch (
-      status?.toLowerCase()
-    ) {
-
+  getOrderStatusClass(status: string): string {
+    switch (status?.toLowerCase()) {
       case 'delivered':
         return 'status-delivered';
-
       case 'cancelled':
       case 'canceled':
         return 'status-cancelled';
-
       case 'processing':
         return 'status-processing';
-
+      case 'processed':
+      case 'order is being sorted':
+        return 'status-shipped';
+      case 'on delivery':
       case 'shipped':
         return 'status-shipped';
-
       default:
         return 'status-pending';
-
     }
-
   }
-
 
   /* PASSWORD */
 
@@ -1448,7 +1390,7 @@ export class ProfilePage implements OnInit {
 
     localStorage.removeItem(this.USER_KEY);
     localStorage.removeItem(this.ADDRESS_KEY);
-    localStorage.removeItem(this.ORDER_KEY);
+    this.ordersService.reset();
 
     this.currentUser = null;
 
@@ -1728,14 +1670,14 @@ export class ProfilePage implements OnInit {
   /* TRACK ORDER */
 
   trackOrder(orderId: string): void {
-    if (!orderId) {
+    const selectedOrderId = String(orderId || '').trim();
+    if (!selectedOrderId) {
       return;
     }
 
-    this.router.navigate(
-      ['/track-order'],
-      { queryParams: { id: orderId } }
-    );
+    // Put the selected database order ID in the route itself. This avoids a
+    // cached Track Order page accidentally retaining a previous/latest order.
+    void this.router.navigate(['/track-order', selectedOrderId]);
   }
 
 
@@ -1948,7 +1890,7 @@ export class ProfilePage implements OnInit {
       this.password = '';
       this.closeLoginDropdown();
       this.loadCurrentUser();
-      this.loadOrders();
+      void this.loadOrders();
 
       alert(`Welcome back, ${user.fullName || 'to Botanique'}!`);
     } catch (error: any) {

@@ -35,6 +35,16 @@ const USER_KEY = 'botaniqueUser';
 const LEGACY_KEYS = ['token', 'botaniqueRememberMe'];
 
 /**
+ * Per-customer data that older versions copied into localStorage. Orders are
+ * no longer cached in the browser at all (they are always loaded from the
+ * API), so these keys are deleted on every logout, on every identity change
+ * and once at start-up to clear leftovers from earlier versions. Without this
+ * a second customer on the same browser could briefly see the first one's
+ * orders.
+ */
+const USER_DATA_KEYS = ['botaniqueOrders', 'botaniqueLastOrder'];
+
+/**
  * Single place that talks to Firebase Authentication.
  *
  * Firebase owns passwords, sessions and persistence. The backend only ever
@@ -47,9 +57,24 @@ const LEGACY_KEYS = ['token', 'botaniqueRememberMe'];
 export class AuthService {
   private readonly auth: Auth;
 
+  /** Callbacks run whenever the session ends or the signed-in user changes. */
+  private readonly sessionClearedListeners = new Set<() => void>();
+
+  /** undefined = no auth event seen yet; null = signed out; string = Firebase uid. */
+  private lastUid: string | null | undefined = undefined;
+
   constructor() {
     const app = getApps()[0] ?? initializeApp(environment.firebase);
     this.auth = getAuth(app);
+  }
+
+  /**
+   * Lets in-memory caches (e.g. OrdersService) wipe themselves when the
+   * session ends or a different account signs in. Returns an unsubscribe fn.
+   */
+  onSessionCleared(listener: () => void): () => void {
+    this.sessionClearedListeners.add(listener);
+    return () => this.sessionClearedListeners.delete(listener);
   }
 
   get currentUser(): User | null {
@@ -78,8 +103,19 @@ export class AuthService {
       );
     }
 
+    // Orders are never cached in the browser now; delete old copies.
+    USER_DATA_KEYS.forEach((k) => localStorage.removeItem(k));
+
     // Keep the mirrored token fresh (Firebase refreshes it about hourly).
     onIdTokenChanged(this.auth, async (user) => {
+      const uid = user?.uid ?? null;
+      const previous = this.lastUid;
+      this.lastUid = uid;
+
+      // A different account signed in without a logout in between (for
+      // example from another tab): drop everything cached for the old one.
+      if (previous && uid && previous !== uid) this.purgeUserData();
+
       if (user) {
         try {
           localStorage.setItem(TOKEN_KEY, await user.getIdToken());
@@ -303,6 +339,19 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
+    this.purgeUserData();
+  }
+
+  /** Removes per-customer cached data and tells in-memory caches to reset. */
+  private purgeUserData(): void {
+    USER_DATA_KEYS.forEach((k) => localStorage.removeItem(k));
+    this.sessionClearedListeners.forEach((listener) => {
+      try {
+        listener();
+      } catch (e) {
+        console.warn('[auth] session-cleared listener failed:', e);
+      }
+    });
   }
 
   private friendlyError(e: unknown): string {

@@ -47,3 +47,7 @@ serviceAccount*.json
 *-service-account*.json
 .tmp-build/
 tsconfig.check.json
+
+# Generated test-admin credentials - never commit or share
+Botanique-Admin-Test-Credentials*.txt
+*-Test-Credentials*.txt

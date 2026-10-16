@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../shared/auth.service';
+import { OrdersService } from '../shared/orders.service';
 
 type Phase =
   | 'checking'
@@ -44,6 +45,7 @@ export class PaymentResultPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly ordersService = inject(OrdersService);
 
   phase: Phase = 'checking';
   orderId = '';
@@ -115,6 +117,11 @@ export class PaymentResultPage implements OnInit, OnDestroy {
 
       this.orderNumber = data.orderNumber;
       this.total = data.total;
+
+      // The order's payment / status may have changed (paid, cancelled,
+      // expired): make Order History and Track Order load fresh data.
+      this.ordersService.invalidate();
+
       this.apply(data);
     } catch {
       this.phase = 'error';

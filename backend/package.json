@@ -4,18 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "prisma migrate deploy && npm run prisma:seed && tsx watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "prisma migrate deploy && npm run prisma:seed && node dist/src/server.js",
+    "start": "node dist/src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force && npm run prisma:seed",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
     "setup": "prisma migrate deploy && npm run prisma:seed",
     "test": "tsx --test test/*.test.ts",
     "maya:webhooks": "tsx scripts/register-maya-webhooks.ts",
     "users:import-firebase": "tsx scripts/import-legacy-users-to-firebase.ts",
-    "accounts:audit": "tsx scripts/audit-accounts.ts"
+    "accounts:audit": "tsx scripts/audit-accounts.ts",
+    "admins:provision": "tsx scripts/provision-team-admins.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

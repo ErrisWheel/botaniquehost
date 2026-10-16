@@ -31,6 +31,8 @@ model User {
   notifications  Notification[]
   auditLogs      AuditLog[]
   resetTokens    PasswordResetToken[]
+
+  @@index([role, isSuspended])
 }
 
 model PasswordResetToken {
@@ -99,6 +101,9 @@ model Product {
   orderItems    OrderItem[]
   wishlistItems WishlistItem[]
   reviews       Review[]
+
+  @@index([status])
+  @@index([categoryId])
 }
 
 model ProductImage {
@@ -158,6 +163,12 @@ model Order {
   mayaPaymentId   String?
   mayaPaymentStatus String?
   paidAt          DateTime?
+  // Set once when the order is cancelled (any path: admin, Maya cancel/expiry).
+  cancelledAt     DateTime?
+  // Set exactly once, atomically, when the reserved stock of a cancelled order
+  // is given back. A second cancellation/callback can therefore never restock
+  // the same order twice.
+  stockRestoredAt DateTime?
   // Confirmation e-mail bookkeeping (EmailJS). NULL = never attempted.
   // SENDING | SENT | FAILED. Guarantees at-most-once sending per order.
   confirmationEmailStatus      String?
@@ -179,6 +190,12 @@ model Order {
   items   OrderItem[]
   returns ReturnRequest[]
   paymentEvents PaymentEvent[]
+
+  // Customer order history, admin lists, filters and revenue/status counts.
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([paymentStatus])
+  @@index([createdAt])
 }
 
 // One row per distinct *verified* payment state transition. The unique eventKey
@@ -208,6 +225,9 @@ model OrderItem {
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model ReturnRequest {
@@ -301,4 +321,7 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
 }

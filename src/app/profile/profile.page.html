@@ -865,7 +865,51 @@
 
             <div
               class="empty-state"
-              *ngIf="orders.length === 0"
+              *ngIf="ordersLoading && orders.length === 0"
+            >
+
+              <div class="empty-icon">
+                🛍️
+              </div>
+
+              <h3>
+                Loading your orders…
+              </h3>
+
+            </div>
+
+
+            <div
+              class="empty-state"
+              *ngIf="!ordersLoading && ordersError"
+            >
+
+              <div class="empty-icon">
+                ⚠️
+              </div>
+
+              <h3>
+                We couldn't load your orders
+              </h3>
+
+              <p>
+                {{ ordersError }}
+              </p>
+
+              <button
+                class="button button-dark"
+                type="button"
+                (click)="retryOrders()"
+              >
+                Try Again
+              </button>
+
+            </div>
+
+
+            <div
+              class="empty-state"
+              *ngIf="!ordersLoading && !ordersError && orders.length === 0"
             >
 
               <div class="empty-icon">

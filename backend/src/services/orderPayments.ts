@@ -4,6 +4,7 @@ import { env, mayaConfigured } from '../config.js';
 import { audit } from '../utils/audit.js';
 import { computePricing } from '../utils/order.js';
 import { notify } from './notifications.js';
+import { restockOrder } from './inventory.js';
 import { sendOrderConfirmation } from './orderEmail.js';
 import {
     createCheckout,
@@ -418,6 +419,7 @@ async function applyFinalCancel(
                 data: {
                     paymentStatus: verdict,
                     status: 'CANCELLED',
+                    cancelledAt: new Date(),
                     mayaPaymentId: paymentId || undefined,
                     mayaPaymentStatus: mayaStatus
                 }
@@ -425,21 +427,10 @@ async function applyFinalCancel(
 
             if (upd.count === 1) {
                 first = true;
-                // Return the reserved stock exactly once.
-                for (const i of order.items) {
-                    await tx.product.update({
-                        where: { id: i.productId },
-                        data: { stock: { increment: i.quantity } }
-                    });
-                    await tx.product.updateMany({
-                        where: {
-                            id: i.productId,
-                            status: 'OUT_OF_STOCK',
-                            stock: { gt: 0 }
-                        },
-                        data: { status: 'ACTIVE' }
-                    });
-                }
+                // Return the reserved stock exactly once. The claim on
+                // `stockRestoredAt` also protects against an administrator
+                // having cancelled (and restocked) the same order already.
+                await restockOrder(tx, order);
             }
         });
     } catch (e) {

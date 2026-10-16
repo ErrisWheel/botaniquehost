@@ -2101,3 +2101,46 @@
   }
 
 }
+
+/* Updated six-stage order statuses */
+.status-pill.status-pending {
+  background: #fff6df;
+  border-color: #ead9a5;
+  color: #735c20;
+}
+
+.status-pill.status-processed,
+.status-pill.status-sorting {
+  background: #eef3ee;
+  border-color: #d1dbd1;
+  color: #405842;
+}
+
+.status-pill.status-on-delivery {
+  background: #edf4ef;
+  border-color: #cbdccf;
+  color: #355b40;
+}
+
+.status-cancelled-note {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #e1d4d4;
+  border-radius: 10px;
+  background: #f4eeee;
+  color: #775555;
+}
+
+/* CUSTOMER ORDER LIST */
+.tracked-orders-list{display:grid;gap:18px;margin:0 0 36px}
+.tracked-order-card{padding:24px 26px;border:1px solid var(--line);border-radius:18px;background:var(--white)}
+.tracked-order-top,.tracked-order-bottom{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.tracked-order-main{display:grid;gap:7px}
+.tracked-order-date{color:var(--muted);font-size:13px}
+.tracked-order-status{display:inline-flex;align-items:center;justify-content:center;max-width:100%;padding:8px 12px;border-radius:999px;background:#f1f3ed;color:var(--ink-2);font-size:12px;font-weight:700;text-align:center}
+.tracked-order-status.status-delivered{background:#e4f3df;color:#35652f}
+.tracked-order-status.status-cancelled{background:#fde8e6;color:#963c36}
+.tracked-order-bottom{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.tracked-order-meta{display:grid;gap:5px;color:var(--muted);font-size:13px}
+.tracked-order-meta strong{color:var(--ink);font-size:18px}
+@media(max-width:600px){.tracked-order-card{padding:18px}.tracked-order-top,.tracked-order-bottom{align-items:flex-start;flex-direction:column}.tracked-order-bottom .primary-button{width:100%}}

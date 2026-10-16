@@ -11,8 +11,8 @@ cd botanique-backend
 npm install
 Copy-Item .env.example .env
 npx prisma generate
-npx prisma migrate dev --name init
-npm run prisma:seed
+npx prisma migrate deploy   # NOT run automatically by dev/start
+npm run prisma:seed          # only creates missing rows
 npm run dev
 ```
 
@@ -32,7 +32,7 @@ Authentication is Firebase Authentication. There is no default admin password an
 - `/api/reviews` ratings/reviews
 - `/api/support` contact/support tickets
 - `/api/notifications` customer/admin notifications
-- `/api/admin` users, admins, inventory, analytics, audit trail
+- `/api/admin` dashboard statistics, orders (search/filter/detail/validated status), products (inventory list), accounts, sales analytics, audit trail - see `docs/ADMIN_AND_MIGRATION.md`
 - `/api/cms` pages and promotions
 - `/api/settings` platform configuration
 

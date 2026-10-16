@@ -6,6 +6,8 @@ import { computePricing } from '../src/utils/order.js';
 import { FakeDb } from './fakeDb.js';
 import { createMayaCheckoutForOrder, reconcileMayaOrder } from '../src/services/orderPayments.js';
 import { sendOrderConfirmation } from '../src/services/orderEmail.js';
+import { changeOrderStatus, allowedNextStatuses, isRefundDue } from '../src/services/orderStatus.js';
+import { markRefunded } from '../src/services/adminOrders.js';
 
 // MOCKED: Prisma is replaced by an in-memory fake, Maya & EmailJS HTTP calls
 // by a fake fetch. These tests prove the application's idempotency/security
@@ -226,6 +228,86 @@ test('money arriving AFTER cancellation is flagged, not silently resurrected, no
     assert.equal(order().status, 'CANCELLED');
     assert.ok(db.audits.some((a) => a.action === 'PAID_AFTER_CANCEL'));
     assert.equal(calls.email.length, 0);
+});
+
+/* ------------- administrator cancel x Maya callbacks (no double restock, no lost money) ------------- */
+
+test('admin cancels an unpaid Maya order, then Maya reports expiry/cancel: stock returned ONCE', async () => {
+    started();
+    await changeOrderStatus(db, { orderId: 'o1', next: 'CANCELLED' });
+    assert.equal(db.products[0].stock, 10);
+
+    for (const verdict of ['PAYMENT_EXPIRED', 'PAYMENT_CANCELLED']) {
+        mayaPayments = [statusOf(verdict)];
+        await Promise.all([reconcileMayaOrder('o1'), reconcileMayaOrder('o1')]);
+    }
+
+    assert.equal(db.products[0].stock, 10, 'not 12 or 14');
+    assert.equal(order().status, 'CANCELLED');
+});
+
+test('Maya cancels first, then an administrator cancels the same order: no second restock', async () => {
+    started(); mayaPayments = [statusOf('PAYMENT_CANCELLED')];
+    await reconcileMayaOrder('o1');
+    assert.equal(db.products[0].stock, 10);
+
+    const r = await changeOrderStatus(db, { orderId: 'o1', next: 'CANCELLED' });
+    assert.equal(r.changed, false);
+    assert.equal(db.products[0].stock, 10);
+});
+
+test('money arrives AFTER an admin cancelled: stays cancelled, stock not restocked again, refund is owed and can be confirmed once', async () => {
+    started();
+    await changeOrderStatus(db, { orderId: 'o1', next: 'CANCELLED' });
+    assert.equal(order().paymentStatus, 'CANCELLED');
+    assert.equal(db.products[0].stock, 10);
+
+    mayaPayments = [success()];
+    await Promise.all([reconcileMayaOrder('o1'), reconcileMayaOrder('o1')]);
+
+    assert.equal(order().status, 'CANCELLED', 'not resurrected');
+    assert.equal(order().paymentStatus, 'PAID', 'the money really arrived and is recorded');
+    assert.equal(db.products[0].stock, 10, 'goods are not sold, stock unchanged');
+    assert.equal(db.audits.filter((a) => a.action === 'PAID_AFTER_CANCEL').length, 1);
+    assert.equal(calls.email.length, 0, 'no order confirmation for a cancelled order');
+
+    // the dashboard sees a refund is owed, revenue does not count it, nothing can advance it
+    assert.equal(isRefundDue(order() as any), true);
+    assert.deepEqual(allowedNextStatuses(order() as any), []);
+
+    assert.deepEqual(await markRefunded(db, 'admin-1', 'o1'), { ok: true });
+    assert.equal(order().paymentStatus, 'REFUNDED');
+    const again: any = await markRefunded(db, 'admin-1', 'o1');
+    assert.equal(again.ok, false);
+    assert.equal(again.reason, 'NOT_REFUNDABLE');
+});
+
+test('admin cancels a PAID order: refund pending; Maya success webhooks replayed later never flip it back to PAID', async () => {
+    started(); mayaPayments = [success()];
+    await reconcileMayaOrder('o1');
+    assert.equal(order().paymentStatus, 'PAID');
+
+    await changeOrderStatus(db, { orderId: 'o1', next: 'CANCELLED' });
+    assert.equal(order().paymentStatus, 'REFUND_PENDING');
+    assert.equal(db.products[0].stock, 10);
+
+    await Promise.all([reconcileMayaOrder('o1'), reconcileMayaOrder('o1')]);
+
+    assert.equal(order().paymentStatus, 'REFUND_PENDING', 'the replayed payment event is recognised as already processed');
+    assert.equal(db.products[0].stock, 10);
+    assert.equal(db.events.filter((e) => e.status === 'PAYMENT_SUCCESS').length, 1);
+
+    assert.deepEqual(await markRefunded(db, 'admin-1', 'o1'), { ok: true });
+    assert.equal(order().paymentStatus, 'REFUNDED');
+});
+
+test('an order that is not cancelled-and-paid cannot be marked refunded', async () => {
+    started(); mayaPayments = [success()];
+    await reconcileMayaOrder('o1');
+    const r: any = await markRefunded(db, 'admin-1', 'o1');
+    assert.equal(r.ok, false);
+    assert.equal(order().paymentStatus, 'PAID');
+    assert.equal(((await markRefunded(db, 'admin-1', 'missing')) as any).reason, 'NOT_FOUND');
 });
 
 /* ----------------------------- e-mail behaviour ----------------------------- */

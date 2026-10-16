@@ -49,3 +49,29 @@ export async function verifyFirebaseIdToken(
 ): Promise<DecodedIdToken> {
     return firebaseAuth().verifyIdToken(idToken, true);
 }
+
+/**
+ * Keeps the Firebase login in step with a suspension in the database.
+ * The database flag is what the API enforces on every request (see
+ * middleware/auth.ts), so this is defence in depth: a disabled Firebase user
+ * cannot sign in or refresh tokens at all. Never throws; the caller decides
+ * what to do with the outcome.
+ */
+export async function setFirebaseAccountDisabled(
+    uid: string | null | undefined,
+    disabled: boolean
+): Promise<'ok' | 'skipped' | 'failed'> {
+    if (!uid || !firebaseConfigured) return 'skipped';
+
+    try {
+        const fb = firebaseAuth();
+        await fb.updateUser(uid, { disabled });
+        if (disabled) await fb.revokeRefreshTokens(uid);
+        return 'ok';
+    } catch (e: any) {
+        if (e?.code === 'auth/user-not-found') return 'ok';
+        // Log the error code only; never the message or credentials.
+        console.error('[firebase] could not update account state:', e?.code ?? 'unknown');
+        return 'failed';
+    }
+}

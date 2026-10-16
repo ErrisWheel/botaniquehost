@@ -1,10 +1,24 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { prisma } from '../db.js';
 import { auth, admin } from '../middleware/auth.js';
 import { audit } from '../utils/audit.js';
+import { httpError } from '../utils/httpError.js';
+import { statusForStock } from '../services/inventory.js';
+import {
+    productCreateSchema,
+    productUpdateSchema,
+    stockAdjustSchema
+} from '../services/productRules.js';
 
 const r = Router();
+
+/** Statuses the PUBLIC storefront API may expose. INACTIVE products stay hidden. */
+const PUBLIC_STATUSES = ['ACTIVE', 'OUT_OF_STOCK'];
+
+const intIn = (raw: unknown, def: number, min: number, max: number) => {
+    const n = Number.parseInt(String(raw ?? ''), 10);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+};
 
 r.get('/', async (req, res, next) => {
     try {
@@ -14,31 +28,37 @@ r.get('/', async (req, res, next) => {
             minPrice,
             maxPrice,
             status,
-            sort = 'newest',
-            page = '1',
-            limit = '24'
+            sort = 'newest'
         } = req.query as any;
 
+        // Never let an anonymous visitor list hidden (INACTIVE) products by
+        // passing ?status=INACTIVE. Administrators use GET /api/admin/products.
+        const wanted = typeof status === 'string' ? status : 'ACTIVE';
         const where: any = {
-            status: status || 'ACTIVE'
+            status: PUBLIC_STATUSES.includes(wanted) ? wanted : 'ACTIVE'
         };
 
-        if (q)
+        if (typeof q === 'string' && q.trim())
             where.OR = [
-                { name: { contains: q } },
-                { scientific: { contains: q } },
-                { description: { contains: q } }
+                { name: { contains: q.trim(), mode: 'insensitive' } },
+                { scientific: { contains: q.trim(), mode: 'insensitive' } },
+                { description: { contains: q.trim(), mode: 'insensitive' } }
             ];
 
-        if (category)
+        if (typeof category === 'string' && category)
             where.category = {
                 slug: category
             };
 
-        if (minPrice || maxPrice)
+        const min = Number(minPrice);
+        const max = Number(maxPrice);
+        if (
+            (minPrice && Number.isFinite(min)) ||
+            (maxPrice && Number.isFinite(max))
+        )
             where.price = {
-                ...(minPrice ? { gte: +minPrice } : {}),
-                ...(maxPrice ? { lte: +maxPrice } : {})
+                ...(minPrice && Number.isFinite(min) ? { gte: min } : {}),
+                ...(maxPrice && Number.isFinite(max) ? { lte: max } : {})
             };
 
         const orderBy: any =
@@ -50,7 +70,10 @@ r.get('/', async (req, res, next) => {
                         ? { name: 'asc' }
                         : { createdAt: 'desc' };
 
-        const skip = (+page - 1) * +limit;
+        // Bounded paging: a huge ?limit used to load the whole table.
+        const limit = intIn(req.query.limit, 24, 1, 100);
+        const page = intIn(req.query.page, 1, 1, 100_000);
+        const skip = (page - 1) * limit;
 
         const [items, total] = await Promise.all([
             prisma.product.findMany({
@@ -65,7 +88,7 @@ r.get('/', async (req, res, next) => {
                 },
                 orderBy,
                 skip,
-                take: +limit
+                take: limit
             }),
             prisma.product.count({ where })
         ]);
@@ -73,8 +96,8 @@ r.get('/', async (req, res, next) => {
         res.json({
             items,
             total,
-            page: +page,
-            limit: +limit
+            page,
+            limit
         });
     } catch (e) {
         next(e);
@@ -85,6 +108,7 @@ r.get('/:id', async (req, res, next) => {
     try {
         const p = await prisma.product.findFirst({
             where: {
+                status: { in: PUBLIC_STATUSES },
                 OR: [
                     { id: req.params.id },
                     { slug: req.params.id }
@@ -128,46 +152,22 @@ r.get('/:id', async (req, res, next) => {
 
 r.post('/', auth, admin, async (req: any, res, next) => {
     try {
-        const b = z
-            .object({
-                slug: z.string(),
-                name: z.string(),
-                scientific: z.string().optional(),
-                categoryId: z.string(),
-                subcategory: z.string().default(''),
-                price: z.number().nonnegative(),
-                description: z.string(),
-                benefits: z.string().optional(),
-                image: z.string().optional(),
-                stock: z.number().int().nonnegative().default(0),
-                lowStockThreshold: z
-                    .number()
-                    .int()
-                    .nonnegative()
-                    .default(5),
-                care: z.any().optional(),
-                details: z.any().optional(),
-                lifespan: z.string().optional(),
-                where: z.string().optional(),
-                origin: z.string().optional(),
-                propagation: z.string().optional(),
-                hybrid: z.string().optional(),
-                status: z
-                    .enum([
-                        'ACTIVE',
-                        'INACTIVE',
-                        'OUT_OF_STOCK'
-                    ])
-                    .default('ACTIVE'),
-                images: z.array(z.string()).optional()
-            })
-            .parse(req.body);
+        const b = productCreateSchema.parse(req.body);
 
         const { images, ...data } = b;
+
+        const category = await prisma.category.findUnique({
+            where: { id: data.categoryId },
+            select: { id: true }
+        });
+        if (!category)
+            throw httpError(400, 'categoryId: unknown category', 'UNKNOWN_CATEGORY');
 
         const p = await prisma.product.create({
             data: {
                 ...data,
+                // 0 stock can never be ACTIVE; an administrator's INACTIVE stays.
+                status: statusForStock(data.status, data.stock),
                 images: images
                     ? {
                           create: images.map(
@@ -185,7 +185,8 @@ r.post('/', auth, admin, async (req: any, res, next) => {
             req.user.id,
             'CREATE',
             'Product',
-            p.id
+            p.id,
+            { name: p.name, price: p.price, stock: p.stock }
         );
 
         res.status(201).json(p);
@@ -196,45 +197,40 @@ r.post('/', auth, admin, async (req: any, res, next) => {
 
 r.patch('/:id', auth, admin, async (req: any, res, next) => {
     try {
-        const b = z
-            .object({
-                name: z.string().optional(),
-                description: z.string().optional(),
-                price: z.number().nonnegative().optional(),
-                stock: z.number().int().nonnegative().optional(),
-                status: z
-                    .enum([
-                        'ACTIVE',
-                        'INACTIVE',
-                        'OUT_OF_STOCK'
-                    ])
-                    .optional(),
-                categoryId: z.string().optional(),
-                subcategory: z.string().optional(),
-                image: z.string().optional(),
-                benefits: z.string().optional(),
-                care: z.any().optional(),
-                details: z.any().optional(),
-                lifespan: z.string().optional(),
-                where: z.string().optional(),
-                origin: z.string().optional(),
-                propagation: z.string().optional(),
-                hybrid: z.string().optional()
-            })
-            .parse(req.body);
+        const b = productUpdateSchema.parse(req.body);
 
-        const p = await prisma.product.update({
-            where: {
-                id: req.params.id
-            },
-            data: b
+        const p = await prisma.$transaction(async (tx) => {
+            const current = await tx.product.findUnique({
+                where: { id: req.params.id }
+            });
+            if (!current) throw httpError(404, 'Product not found', 'NOT_FOUND');
+
+            if (b.categoryId) {
+                const category = await tx.category.findUnique({
+                    where: { id: b.categoryId },
+                    select: { id: true }
+                });
+                if (!category)
+                    throw httpError(400, 'categoryId: unknown category', 'UNKNOWN_CATEGORY');
+            }
+
+            const stock = b.stock ?? current.stock;
+            // Keep status consistent with stock; INACTIVE is only changed
+            // when the administrator says so explicitly.
+            const wantedStatus = b.status ?? current.status;
+
+            return tx.product.update({
+                where: { id: current.id },
+                data: { ...b, status: statusForStock(wantedStatus, stock) }
+            });
         });
 
         await audit(
             req.user.id,
             'UPDATE',
             'Product',
-            p.id
+            p.id,
+            b
         );
 
         res.json(p);
@@ -243,22 +239,109 @@ r.patch('/:id', auth, admin, async (req: any, res, next) => {
     }
 });
 
+/**
+ * Atomic stock adjustment (+received / -removed). Unlike sending an absolute
+ * `stock` in PATCH, this cannot overwrite a sale that happened a moment ago.
+ */
+r.post('/:id/stock', auth, admin, async (req: any, res, next) => {
+    try {
+        const { delta } = stockAdjustSchema.parse(req.body);
+
+        const p = await prisma.$transaction(async (tx) => {
+            const moved = await tx.product.updateMany({
+                where: {
+                    id: req.params.id,
+                    // never below zero
+                    ...(delta < 0 ? { stock: { gte: -delta } } : {})
+                },
+                data: { stock: { increment: delta } }
+            });
+
+            if (moved.count !== 1) {
+                const exists = await tx.product.findUnique({
+                    where: { id: req.params.id },
+                    select: { stock: true }
+                });
+                if (!exists) throw httpError(404, 'Product not found', 'NOT_FOUND');
+                throw httpError(
+                    409,
+                    `Only ${exists.stock} in stock; cannot remove ${-delta}.`,
+                    'INSUFFICIENT_STOCK'
+                );
+            }
+
+            const fresh = await tx.product.findUniqueOrThrow({
+                where: { id: req.params.id }
+            });
+
+            const status = statusForStock(fresh.status, fresh.stock);
+            return status === fresh.status
+                ? fresh
+                : tx.product.update({
+                      where: { id: fresh.id },
+                      data: { status }
+                  });
+        });
+
+        await audit(req.user.id, 'ADJUST_STOCK', 'Product', p.id, {
+            delta,
+            stock: p.stock
+        });
+
+        res.json(p);
+    } catch (e) {
+        next(e);
+    }
+});
+
+/**
+ * Safe removal. A product that appears in any order is NEVER deleted (that
+ * would orphan or corrupt order history): it is deactivated instead and
+ * disappears from the shop. A product with no order history is removed for
+ * real, together with its carts/wishlist entries.
+ */
 r.delete('/:id', auth, admin, async (req: any, res, next) => {
     try {
-        await prisma.product.delete({
-            where: {
-                id: req.params.id
+        const result = await prisma.$transaction(async (tx) => {
+            const p = await tx.product.findUnique({
+                where: { id: req.params.id },
+                select: { id: true, name: true }
+            });
+            if (!p) throw httpError(404, 'Product not found', 'NOT_FOUND');
+
+            const sold = await tx.orderItem.count({
+                where: { productId: p.id }
+            });
+
+            if (sold > 0) {
+                await tx.product.update({
+                    where: { id: p.id },
+                    data: { status: 'INACTIVE' }
+                });
+                await tx.cartItem.deleteMany({ where: { productId: p.id } });
+                return { deactivated: true, orderLines: sold };
             }
+
+            await tx.cartItem.deleteMany({ where: { productId: p.id } });
+            await tx.wishlistItem.deleteMany({ where: { productId: p.id } });
+            await tx.product.delete({ where: { id: p.id } });
+            return { deactivated: false, orderLines: 0 };
         });
 
         await audit(
             req.user.id,
-            'DELETE',
+            result.deactivated ? 'DEACTIVATE' : 'DELETE',
             'Product',
-            req.params.id
+            req.params.id,
+            result
         );
 
-        res.json({ message: 'Product deleted' });
+        res.json({
+            message: result.deactivated
+                ? 'Product is part of existing orders, so it was deactivated instead of deleted.'
+                : 'Product deleted',
+            ...result
+        });
     } catch (e) {
         next(e);
     }

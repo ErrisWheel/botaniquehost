@@ -364,9 +364,9 @@
       <button
         class="back-button"
         type="button"
-        (click)="goBack()"
+        (click)="isDetailView ? showAllOrders() : goBack()"
       >
-        ← Back to My Orders
+        {{ isDetailView ? '← Back to All Orders' : '← Back to My Orders' }}
       </button>
 
 
@@ -414,21 +414,13 @@
                 All Orders
               </option>
 
-              <option value="Processing">
-                Processing
-              </option>
-
-              <option value="Shipped">
-                Shipped
-              </option>
-
-              <option value="Delivered">
-                Delivered
-              </option>
-
-              <option value="Cancelled">
-                Cancelled
-              </option>
+              <option value="Pending">Pending</option>
+              <option value="Processing">Processing</option>
+              <option value="Processed">Processed</option>
+              <option value="Order is being sorted">Order is being sorted</option>
+              <option value="On delivery">On delivery</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
 
             </select>
 
@@ -439,11 +431,61 @@
       </section>
 
 
+      <ng-container *ngIf="isDetailView; else orderListView">
+
+      <!-- LOADING -->
+
+      <section
+        class="not-found-card"
+        *ngIf="!order && orderLoading"
+      >
+
+        <div class="not-found-icon">
+          📦
+        </div>
+
+        <h2>
+          Loading your order…
+        </h2>
+
+      </section>
+
+
+      <!-- LOAD ERROR -->
+
+      <section
+        class="not-found-card"
+        *ngIf="!order && !orderLoading && orderError"
+      >
+
+        <div class="not-found-icon">
+          ⚠️
+        </div>
+
+        <h2>
+          We couldn't load your order
+        </h2>
+
+        <p>
+          {{ orderError }}
+        </p>
+
+        <button
+          class="primary-button"
+          type="button"
+          (click)="retryLoadOrder()"
+        >
+          Try Again
+        </button>
+
+      </section>
+
+
       <!-- ORDER NOT FOUND -->
 
       <section
         class="not-found-card"
-        *ngIf="!order"
+        *ngIf="!order && !orderLoading && !orderError"
       >
 
         <div class="not-found-icon">
@@ -562,186 +604,81 @@
           </div>
 
 
-          <!-- TIMELINE -->
+          <!-- Six-stage fulfilment timeline. Cancellation remains a separate terminal outcome. -->
           <div class="timeline">
-
-
-            <!-- PROCESSING-->
-
-            <div
-              class="timeline-step"
-              [class.completed]="isStepCompleted('processing')"
-              [class.current]="isCurrentStep('processing')"
-            >
-
+            <div class="timeline-step" [class.completed]="isStepCompleted('pending')" [class.current]="isCurrentStep('pending')">
               <div class="timeline-marker">
-
-                <span
-                  *ngIf="isStepCompleted('processing')"
-                >
-                  ✓
-                </span>
-
-                <span
-                  *ngIf="!isStepCompleted('processing')"
-                >
-                  1
-                </span>
-
+                <span *ngIf="isStepCompleted('pending')">✓</span>
+                <span *ngIf="!isStepCompleted('pending')">1</span>
               </div>
-
               <div class="timeline-content">
-
-                <strong>
-                  Order Processing
-                </strong>
-
-                <p>
-                  Your order has been received and is being prepared.
-                </p>
-
+                <strong>Pending</strong>
+                <p>Your order has been received and is awaiting processing or payment confirmation.</p>
               </div>
-
             </div>
+            <div class="timeline-line" [class.filled]="isStepReached('processing')"></div>
 
-
-            <!-- CONNECTOR -->
-            <div
-              class="timeline-line"
-              [class.filled]="isStepReached('shipped')"
-            ></div>
-
-
-            <!-- SHIPPED  -->
-
-            <div
-              class="timeline-step"
-              [class.completed]="isStepCompleted('shipped')"
-              [class.current]="isCurrentStep('shipped')"
-            >
-
+            <div class="timeline-step" [class.completed]="isStepCompleted('processing')" [class.current]="isCurrentStep('processing')">
               <div class="timeline-marker">
-
-                <span
-                  *ngIf="isStepCompleted('shipped')"
-                >
-                  ✓
-                </span>
-
-                <span
-                  *ngIf="!isStepCompleted('shipped')"
-                >
-                  2
-                </span>
-
+                <span *ngIf="isStepCompleted('processing')">✓</span>
+                <span *ngIf="!isStepCompleted('processing')">2</span>
               </div>
-
               <div class="timeline-content">
-
-                <strong>
-                  Shipped
-                </strong>
-
-                <p>
-                  Your order has left our facility and is on its way.
-                </p>
-
+                <strong>Processing</strong>
+                <p>Your order is being prepared by the Botanique team.</p>
               </div>
-
             </div>
+            <div class="timeline-line" [class.filled]="isStepReached('processed')"></div>
 
-
-            <!-- CONNECTOR -->
-            <div
-              class="timeline-line"
-              [class.filled]="isStepReached('out_for_delivery')"
-            ></div>
-
-
-            <!-- OUT FOR DELIVERY-->
-
-            <div
-              class="timeline-step"
-              [class.completed]="isStepCompleted('out_for_delivery')"
-              [class.current]="isCurrentStep('out_for_delivery')"
-            >
-
+            <div class="timeline-step" [class.completed]="isStepCompleted('processed')" [class.current]="isCurrentStep('processed')">
               <div class="timeline-marker">
-
-                <span
-                  *ngIf="isStepCompleted('out_for_delivery')"
-                >
-                  ✓
-                </span>
-
-                <span
-                  *ngIf="!isStepCompleted('out_for_delivery')"
-                >
-                  3
-                </span>
-
+                <span *ngIf="isStepCompleted('processed')">✓</span>
+                <span *ngIf="!isStepCompleted('processed')">3</span>
               </div>
-
               <div class="timeline-content">
-
-                <strong>
-                  Out for Delivery
-                </strong>
-
-                <p>
-                  Your Botanique order is with the delivery rider.
-                </p>
-
+                <strong>Processed</strong>
+                <p>Your order has been prepared and is ready for sorting.</p>
               </div>
-
             </div>
+            <div class="timeline-line" [class.filled]="isStepReached('sorting')"></div>
 
-
-            <!-- CONNECTOR -->
-            <div
-              class="timeline-line"
-              [class.filled]="isStepReached('delivered')"
-            ></div>
-
-
-            <!-- DELIVERED -->
-
-            <div
-              class="timeline-step"
-              [class.completed]="isStepCompleted('delivered')"
-              [class.current]="isCurrentStep('delivered')"
-            >
-
+            <div class="timeline-step" [class.completed]="isStepCompleted('sorting')" [class.current]="isCurrentStep('sorting')">
               <div class="timeline-marker">
-
-                <span
-                  *ngIf="isStepCompleted('delivered')"
-                >
-                  ✓
-                </span>
-
-                <span
-                  *ngIf="!isStepCompleted('delivered')"
-                >
-                  4
-                </span>
-
+                <span *ngIf="isStepCompleted('sorting')">✓</span>
+                <span *ngIf="!isStepCompleted('sorting')">4</span>
               </div>
-
               <div class="timeline-content">
-
-                <strong>
-                  Delivered
-                </strong>
-
-                <p>
-                  Your order has been delivered. Enjoy your plants!
-                </p>
-
+                <strong>Order is being sorted</strong>
+                <p>Your parcel is being sorted and organized for delivery.</p>
               </div>
-
             </div>
+            <div class="timeline-line" [class.filled]="isStepReached('on_delivery')"></div>
 
+            <div class="timeline-step" [class.completed]="isStepCompleted('on_delivery')" [class.current]="isCurrentStep('on_delivery')">
+              <div class="timeline-marker">
+                <span *ngIf="isStepCompleted('on_delivery')">✓</span>
+                <span *ngIf="!isStepCompleted('on_delivery')">5</span>
+              </div>
+              <div class="timeline-content">
+                <strong>On delivery</strong>
+                <p>Your order is with the delivery rider and on its way to you.</p>
+              </div>
+            </div>
+            <div class="timeline-line" [class.filled]="isStepReached('delivered')"></div>
+
+            <div class="timeline-step" [class.completed]="isStepCompleted('delivered')" [class.current]="isCurrentStep('delivered')">
+              <div class="timeline-marker">
+                <span *ngIf="isStepCompleted('delivered')">✓</span>
+                <span *ngIf="!isStepCompleted('delivered')">6</span>
+              </div>
+              <div class="timeline-content">
+                <strong>Delivered</strong>
+                <p>Your order has been delivered. Enjoy your plants!</p>
+              </div>
+            </div>
+            <p class="status-cancelled-note" *ngIf="normalizeStatus(order.status) === 'Cancelled'">
+              This order has been cancelled. The fulfilment timeline no longer advances.
+            </p>
           </div>
 
         </section>
@@ -1017,6 +954,50 @@
         </div>
 
       </ng-container>
+
+      </ng-container>
+
+      <ng-template #orderListView>
+        <section class="not-found-card" *ngIf="ordersLoading && orders.length === 0">
+          <div class="not-found-icon">📦</div>
+          <h2>Loading your orders…</h2>
+          <p>Your orders will appear here as soon as they load.</p>
+        </section>
+
+        <section class="not-found-card" *ngIf="!ordersLoading && ordersError">
+          <div class="not-found-icon">⚠️</div>
+          <h2>We couldn't load your orders</h2>
+          <p>{{ ordersError }}</p>
+          <button class="primary-button" type="button" (click)="retryLoadOrders()">Try Again</button>
+        </section>
+
+        <section class="not-found-card" *ngIf="!ordersLoading && !ordersError && filteredOrders.length === 0">
+          <div class="not-found-icon">📦</div>
+          <h2>{{ statusFilter === 'all' ? 'No orders yet' : 'No matching orders' }}</h2>
+          <p>{{ statusFilter === 'all' ? 'Your orders will appear here after you place an order.' : 'There are no orders with the selected status.' }}</p>
+        </section>
+
+        <section class="tracked-orders-list" *ngIf="filteredOrders.length > 0">
+          <article class="tracked-order-card" *ngFor="let listedOrder of filteredOrders">
+            <div class="tracked-order-top">
+              <div class="tracked-order-main">
+                <span class="summary-label">ORDER NUMBER</span>
+                <strong class="order-number">{{ listedOrder.orderNumber || listedOrder.id }}</strong>
+                <span class="tracked-order-date">Placed {{ formatDate(listedOrder.date) }}</span>
+              </div>
+              <span class="tracked-order-status" [ngClass]="getOrderStatusClass(listedOrder.status)">{{ listedOrder.status }}</span>
+            </div>
+
+            <div class="tracked-order-bottom">
+              <div class="tracked-order-meta">
+                <span>{{ listedOrder.items.length }} {{ listedOrder.items.length === 1 ? 'line item' : 'line items' }}</span>
+                <strong>{{ formatPrice(listedOrder.total) }}</strong>
+              </div>
+              <button class="primary-button" type="button" (click)="trackOrder(listedOrder.id)">Track order</button>
+            </div>
+          </article>
+        </section>
+      </ng-template>
 
     </div>
 

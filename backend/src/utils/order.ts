@@ -7,7 +7,9 @@ export const orderNumber = () =>
         .replaceAll('-', '')}-${crypto
         .randomBytes(4)
         .toString('hex')
-        .slice(0, 6)
+        // 8 hex characters (4 billion values per day). The old 6 characters
+        // collided too often: orderNumber is UNIQUE, so a collision made a
+        // customer's checkout fail.
         .toUpperCase()}`;
 
 /**

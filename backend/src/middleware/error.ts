@@ -1,5 +1,41 @@
 import type { NextFunction, Request, Response } from 'express';
 
+/** Prisma error codes that mean "conflict" / "missing", not "server bug". */
+export function mapDatabaseError(
+    err: any
+): { status: number; message: string; code: string } | null {
+    switch (err?.code) {
+        case 'P2002':
+            return {
+                status: 409,
+                message: 'A record with these details already exists.',
+                code: 'ALREADY_EXISTS'
+            };
+        case 'P2003':
+            return {
+                status: 409,
+                message:
+                    'This record is still used by other data and cannot be changed this way.',
+                code: 'IN_USE'
+            };
+        case 'P2025':
+            return {
+                status: 404,
+                message: 'Record not found.',
+                code: 'NOT_FOUND'
+            };
+        case 'P2034':
+            return {
+                status: 409,
+                message:
+                    'That change conflicted with another one made at the same moment. Please try again.',
+                code: 'CONCURRENT_CHANGE'
+            };
+        default:
+            return null;
+    }
+}
+
 export function errorHandler(
     err: any,
     _req: Request,
@@ -16,6 +52,10 @@ export function errorHandler(
             code: 'VALIDATION_ERROR'
         });
     }
+
+    // Known database conditions are the caller's situation, not a crash.
+    const db = mapDatabaseError(err);
+    if (db) return res.status(db.status).json({ message: db.message, code: db.code });
 
     const status = err.statusCode || 500;
     console.error(err);

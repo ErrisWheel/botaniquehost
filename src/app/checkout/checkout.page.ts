@@ -1,6 +1,7 @@
 import { environment } from '../../environments/environment';
 import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
+import { OrdersService } from '../shared/orders.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -49,6 +50,11 @@ interface CheckoutData {
 export class CheckoutPage implements OnInit {
 
   private readonly authService = inject(AuthService);
+  private readonly ordersService = inject(OrdersService);
+
+  // True while an order is being submitted: blocks double clicks, which would
+  // otherwise run two cart syncs and two order requests at the same time.
+  placingOrder = false;
 
   
   // NAVBAR
@@ -1176,6 +1182,18 @@ philippineRegions: string[] = [
 
 
   async placeOrder(): Promise<void> {
+    if (this.placingOrder) return;
+
+    this.placingOrder = true;
+
+    try {
+      await this.submitOrder();
+    } finally {
+      this.placingOrder = false;
+    }
+  }
+
+  private async submitOrder(): Promise<void> {
     // -----------------------------
     // LOGIN CHECK
     // -----------------------------
@@ -1318,14 +1336,13 @@ philippineRegions: string[] = [
         }
       );
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       // -----------------------------
       // TOKEN EXPIRED / INVALID
       // -----------------------------
       if (response.status === 401) {
-        localStorage.removeItem('botaniqueToken');
-        localStorage.removeItem('token');
+        await this.authService.logout().catch(() => undefined);
 
         const alert = await this.alertController.create({
           header: 'Session Expired',
@@ -1351,44 +1368,12 @@ philippineRegions: string[] = [
       }
 
       // -----------------------------
-      // SAVE REAL ORDER LOCALLY
+      // ORDER HISTORY MUST REFRESH
       // -----------------------------
-      localStorage.setItem(
-        'botaniqueLastOrder',
-        JSON.stringify(data)
-      );
-
-      // Keep a local display cache as a fallback for the profile page while
-      // the authoritative order remains in the backend database.
-      try {
-        const rawOrders = localStorage.getItem('botaniqueOrders');
-        const cachedOrders = rawOrders ? JSON.parse(rawOrders) : [];
-        const history = Array.isArray(cachedOrders) ? cachedOrders : [];
-        const localOrder = {
-          id: String(data.id || data.orderNumber || ''),
-          orderNumber: String(data.orderNumber || data.id || ''),
-          date: data.createdAt || new Date().toISOString(),
-          status: data.status || 'PENDING',
-          total: Number(data.total || 0),
-          items: Array.isArray(data.items)
-            ? data.items.map((item: any) => ({
-                name: item?.productName || item?.product?.name || 'Product',
-                image: item?.product?.image || item?.image || '',
-                price: Number(item?.unitPrice ?? item?.price ?? 0),
-                quantity: Number(item?.quantity || 1)
-              }))
-            : []
-        };
-        const filtered = history.filter((item: any) =>
-          String(item?.id || '') !== localOrder.id
-        );
-        localStorage.setItem(
-          'botaniqueOrders',
-          JSON.stringify([localOrder, ...filtered])
-        );
-      } catch {
-        // Local cache is optional; the backend order is already committed.
-      }
+      // Orders are never cached in the browser. Drop the in-memory snapshot
+      // and mark any request that started before this order as outdated so
+      // Order History / Track Order load the new order from the API.
+      this.ordersService.invalidate();
 
       // -----------------------------
       // DO NOT MANUALLY CLEAR

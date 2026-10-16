@@ -5,171 +5,648 @@
       <p class="eyebrow">BOTANIQUE</p>
       <h1>Admin Dashboard</h1>
       <p class="subtitle">
-        Manage customers and monitor the store.
+        Manage orders, products and accounts, and monitor the store.
       </p>
     </div>
 
     <div class="header-actions">
-      <button type="button" (click)="refresh()">
-        Refresh
-      </button>
-
-      <button type="button" (click)="goHome()">
-        Store
-      </button>
-
-      <button type="button" (click)="logout()">
-        Logout
-      </button>
+      <button type="button" (click)="refresh()">Refresh</button>
+      <button type="button" (click)="goHome()">Store</button>
+      <button type="button" (click)="logout()">Logout</button>
     </div>
   </header>
 
-  <div
-    class="error-box"
-    *ngIf="error"
-  >
-    {{ error }}
+  <nav class="tabs" aria-label="Admin sections">
+    <button type="button" [class.active]="tab === 'overview'" (click)="setTab('overview')">Overview</button>
+    <button type="button" [class.active]="tab === 'orders'" (click)="setTab('orders')">Orders</button>
+    <button type="button" [class.active]="tab === 'products'" (click)="setTab('products')">Products</button>
+    <button type="button" [class.active]="tab === 'accounts'" (click)="setTab('accounts')">Accounts</button>
+  </nav>
+
+  <div class="notice" [class.ok]="notice.kind === 'ok'" [class.error-box]="notice.kind === 'error'" *ngIf="notice" role="status">
+    {{ notice.text }}
+    <button type="button" class="link" (click)="notice = null">Dismiss</button>
   </div>
 
-  <div
-    class="loading"
-    *ngIf="loading"
-  >
-    Loading admin dashboard...
-  </div>
+  <!-- ============================== OVERVIEW ============================== -->
+  <ng-container *ngIf="tab === 'overview'">
 
-  <ng-container *ngIf="!loading">
+    <div class="error-box" *ngIf="statsError">
+      {{ statsError }}
+      <button type="button" class="link" (click)="loadStats()">Try again</button>
+    </div>
 
-    <section class="stats">
+    <div class="loading" *ngIf="statsLoading && !stats">Loading dashboard...</div>
 
-      <article class="stat-card">
-        <span>Orders</span>
-        <strong>{{ dashboard.orders }}</strong>
-      </article>
+    <ng-container *ngIf="stats">
 
-      <article class="stat-card">
-        <span>Revenue</span>
-        <strong>
-          ₱{{ dashboard.revenue | number:'1.2-2' }}
-        </strong>
-      </article>
+      <section class="stats">
+        <article class="stat-card">
+          <span>Orders</span>
+          <strong>{{ stats.totals.orders }}</strong>
+        </article>
 
-      <article class="stat-card">
-        <span>Customers</span>
-        <strong>{{ dashboard.customers }}</strong>
-      </article>
+        <article class="stat-card">
+          <span>Revenue (paid, net of refunds)</span>
+          <strong>₱{{ stats.totals.revenue | number:'1.2-2' }}</strong>
+          <small>{{ stats.totals.revenueOrders }} paid orders</small>
+        </article>
 
-      <article class="stat-card">
-        <span>Products</span>
-        <strong>{{ dashboard.products }}</strong>
-      </article>
+        <article class="stat-card">
+          <span>Customers</span>
+          <strong>{{ stats.totals.customers }}</strong>
+        </article>
 
-      <article class="stat-card">
-        <span>Low Stock</span>
-        <strong>{{ dashboard.lowStock }}</strong>
-      </article>
+        <article class="stat-card">
+          <span>Products</span>
+          <strong>{{ stats.totals.products }}</strong>
+        </article>
 
+        <article class="stat-card" [class.warn]="stats.inventory.lowStock + stats.inventory.outOfStock > 0">
+          <span>Low / out of stock</span>
+          <strong>{{ stats.inventory.lowStock + stats.inventory.outOfStock }}</strong>
+          <small>{{ stats.inventory.outOfStock }} out of stock</small>
+        </article>
+
+        <article class="stat-card" [class.warn]="stats.pendingRefunds.count > 0">
+          <span>Refunds due</span>
+          <strong>{{ stats.pendingRefunds.count }}</strong>
+          <small>₱{{ stats.pendingRefunds.amount | number:'1.2-2' }}</small>
+        </article>
+      </section>
+
+      <div class="two-col">
+
+        <section class="panel">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">ORDERS</p>
+              <h2>By status</h2>
+            </div>
+          </div>
+          <ul class="bars">
+            <li *ngFor="let s of orderStatuses">
+              <span class="bar-label">{{ orderStatusLabel(s) }}</span>
+              <span class="bar-track">
+                <span class="bar-fill" [style.width.%]="stats.totals.orders ? (statusCount(s) / stats.totals.orders) * 100 : 0"></span>
+              </span>
+              <strong>{{ statusCount(s) }}</strong>
+            </li>
+          </ul>
+          <p class="hint">
+            Revenue counts only orders that are <strong>paid</strong> and <strong>not cancelled</strong>;
+            recorded refunds are subtracted.
+          </p>
+        </section>
+
+        <section class="panel">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">INVENTORY</p>
+              <h2>Needs attention</h2>
+            </div>
+            <span class="user-count">{{ stats.inventory.inStock }} in stock · {{ stats.inventory.inactive }} hidden</span>
+          </div>
+          <div class="empty" *ngIf="stats.lowStockProducts.length === 0">Everything is well stocked.</div>
+          <div class="table-wrapper" *ngIf="stats.lowStockProducts.length > 0">
+            <table class="compact">
+              <thead>
+                <tr><th>Product</th><th>Stock</th><th>State</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of stats.lowStockProducts">
+                  <td><strong>{{ p.name }}</strong></td>
+                  <td>{{ p.stock }} <small>(alert at {{ p.lowStockThreshold }})</small></td>
+                  <td>
+                    <span class="status" [class.suspended]="p.state === 'OUT_OF_STOCK'" [class.low]="p.state === 'LOW_STOCK'">
+                      {{ stockLabel(p.state) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">LATEST</p>
+            <h2>Recent orders</h2>
+          </div>
+        </div>
+        <div class="empty" *ngIf="stats.recentOrders.length === 0">No orders yet.</div>
+        <div class="table-wrapper" *ngIf="stats.recentOrders.length > 0">
+          <table>
+            <thead>
+              <tr><th>Order</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th><th></th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let o of stats.recentOrders">
+                <td><strong>{{ o.orderNumber }}</strong></td>
+                <td>{{ o.user?.fullName || 'Deleted account' }}</td>
+                <td>₱{{ o.total | number:'1.2-2' }}</td>
+                <td><span class="status pay-{{ o.paymentStatus }}">{{ paymentLabel(o.paymentStatus) }}</span></td>
+                <td><span class="role">{{ orderStatusLabel(o.status) }}</span></td>
+                <td>{{ o.createdAt | date:'medium' }}</td>
+                <td><button type="button" (click)="openOrderFromOverview(o.id)">Open</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">AUDIT</p>
+            <h2>Recent activity</h2>
+          </div>
+        </div>
+        <div class="empty" *ngIf="stats.recentActivity.length === 0">No activity recorded yet.</div>
+        <ul class="activity" *ngIf="stats.recentActivity.length > 0">
+          <li *ngFor="let a of stats.recentActivity">
+            <strong>{{ a.action }}</strong> {{ a.entity }}
+            <span class="muted">by {{ a.user?.fullName || 'system' }} · {{ a.createdAt | date:'medium' }}</span>
+          </li>
+        </ul>
+      </section>
+
+    </ng-container>
+  </ng-container>
+
+  <!-- =============================== ORDERS =============================== -->
+  <ng-container *ngIf="tab === 'orders'">
+
+    <section class="panel">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">FULFILMENT & PAYMENT</p>
+          <h2>Orders</h2>
+        </div>
+        <span class="user-count">{{ ordersTotal }} found</span>
+      </div>
+
+      <div class="filters">
+        <input type="search" placeholder="Order no., customer name or e-mail" [(ngModel)]="orderFilters.q" (keyup.enter)="applyOrderFilters()" aria-label="Search orders" />
+        <select [(ngModel)]="orderFilters.status" (change)="applyOrderFilters()" aria-label="Order status">
+          <option value="">All statuses</option>
+          <option *ngFor="let s of orderStatuses" [value]="s">{{ orderStatusLabel(s) }}</option>
+        </select>
+        <select [(ngModel)]="orderFilters.paymentStatus" (change)="applyOrderFilters()" aria-label="Payment status">
+          <option value="">All payments</option>
+          <option *ngFor="let s of paymentStatuses" [value]="s">{{ paymentLabel(s) }}</option>
+        </select>
+        <select [(ngModel)]="orderFilters.paymentMethod" (change)="applyOrderFilters()" aria-label="Payment method">
+          <option value="">Any method</option>
+          <option value="COD">Cash on delivery</option>
+          <option value="MAYA">Maya</option>
+        </select>
+        <label class="date">From <input type="date" [(ngModel)]="orderFilters.from" (change)="applyOrderFilters()" /></label>
+        <label class="date">To <input type="date" [(ngModel)]="orderFilters.to" (change)="applyOrderFilters()" /></label>
+        <button type="button" (click)="applyOrderFilters()">Search</button>
+        <button type="button" (click)="clearOrderFilters()">Clear</button>
+      </div>
+
+      <div class="error-box inline" *ngIf="ordersError">
+        {{ ordersError }}
+        <button type="button" class="link" (click)="loadOrders()">Try again</button>
+      </div>
+      <div class="loading" *ngIf="ordersLoading && orders.length === 0">Loading orders...</div>
+      <div class="empty" *ngIf="!ordersLoading && !ordersError && orders.length === 0">No orders match these filters.</div>
+
+      <div class="table-wrapper" *ngIf="orders.length > 0" [class.dim]="ordersLoading">
+        <table>
+          <thead>
+            <tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Placed</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of orders" [class.selected]="selectedOrder?.id === o.id">
+              <td><strong>{{ o.orderNumber }}</strong><br /><small>{{ o.paymentMethod === 'MAYA' ? 'Maya' : 'Cash on delivery' }}</small></td>
+              <td>{{ customerName(o) }}<br /><small>{{ customerEmail(o) }}</small></td>
+              <td>{{ o._count?.items ?? 0 }}</td>
+              <td>₱{{ o.total | number:'1.2-2' }}</td>
+              <td>
+                <span class="status pay-{{ o.paymentStatus }}">{{ paymentLabel(o.paymentStatus) }}</span>
+                <span class="status suspended" *ngIf="o.refundDue">Refund due</span>
+              </td>
+              <td><span class="role">{{ orderStatusLabel(o.status) }}</span></td>
+              <td>{{ o.createdAt | date:'medium' }}</td>
+              <td><button type="button" (click)="openOrder(o.id)">Details</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager" *ngIf="ordersTotal > pageSize">
+        <button type="button" [disabled]="ordersPage <= 1 || ordersLoading" (click)="goOrders(-1)">Previous</button>
+        <span>Page {{ ordersPage }} of {{ pages(ordersTotal) }}</span>
+        <button type="button" [disabled]="ordersPage >= pages(ordersTotal) || ordersLoading" (click)="goOrders(1)">Next</button>
+      </div>
     </section>
 
-    <section class="users-section">
+    <!-- order detail -->
+    <section class="panel detail" *ngIf="orderLoading || orderError || selectedOrder">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">ORDER</p>
+          <h2>{{ selectedOrder?.orderNumber || 'Loading...' }}</h2>
+        </div>
+        <button type="button" (click)="closeOrder()">Close</button>
+      </div>
 
+      <div class="loading" *ngIf="orderLoading">Loading order...</div>
+      <div class="error-box inline" *ngIf="orderError">{{ orderError }}</div>
+
+      <div class="detail-body" *ngIf="selectedOrder as o">
+
+        <div class="detail-grid">
+          <div>
+            <h3>Customer</h3>
+            <p>
+              <strong>{{ customerName(o) }}</strong><br />
+              {{ o.customerJson?.email || o.user?.email }}<br />
+              {{ o.customerJson?.phone || o.user?.phone }}
+            </p>
+            <p class="muted">
+              {{ o.customerJson?.streetAddress || o.customerJson?.address }}<br />
+              {{ o.customerJson?.city }} {{ o.customerJson?.province }} {{ o.customerJson?.zip }}
+            </p>
+          </div>
+
+          <div>
+            <h3>Payment</h3>
+            <p>
+              {{ o.paymentMethod === 'MAYA' ? 'Maya' : 'Cash on delivery' }}<br />
+              <span class="status pay-{{ o.paymentStatus }}">{{ paymentLabel(o.paymentStatus) }}</span>
+            </p>
+            <p class="muted" *ngIf="o.paidAt">Paid {{ o.paidAt | date:'medium' }}</p>
+            <p class="muted" *ngFor="let ev of o.paymentEvents">Maya: {{ ev.status }} · {{ ev.createdAt | date:'short' }}</p>
+          </div>
+
+          <div>
+            <h3>Fulfilment</h3>
+            <p><span class="role">{{ orderStatusLabel(o.status) }}</span></p>
+            <p class="muted" *ngIf="o.cancelledAt">Cancelled {{ o.cancelledAt | date:'medium' }}</p>
+            <p class="muted" *ngIf="o.stockRestoredAt">Stock returned to shelves {{ o.stockRestoredAt | date:'medium' }}</p>
+
+            <div class="actions" *ngIf="o.allowedStatuses.length > 0">
+              <button
+                type="button"
+                *ngFor="let next of o.allowedStatuses"
+                [class.danger]="next === 'CANCELLED'"
+                [disabled]="orderBusy"
+                (click)="changeOrderStatus(o, next)"
+              >
+                {{ next === 'CANCELLED' ? 'Cancel order' : 'Mark ' + orderStatusLabel(next) }}
+              </button>
+            </div>
+            <p class="muted" *ngIf="o.allowedStatuses.length === 0">
+              No further status changes are possible.
+              <ng-container *ngIf="o.paymentMethod === 'MAYA' && o.paymentStatus !== 'PAID' && o.status === 'PENDING'">
+                A Maya order can only be processed once payment is confirmed.
+              </ng-container>
+            </p>
+
+            <div class="actions" *ngIf="o.refundDue">
+              <button type="button" [disabled]="orderBusy" (click)="markRefunded(o)">Mark refund as sent</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="compact">
+            <thead><tr><th>Item</th><th>Qty</th><th>Unit price</th><th>Line total</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let i of o.items">
+                <td>{{ i.productName }}</td>
+                <td>{{ i.quantity }}</td>
+                <td>₱{{ i.unitPrice | number:'1.2-2' }}</td>
+                <td>₱{{ i.lineTotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <dl class="totals">
+          <div><dt>Subtotal</dt><dd>₱{{ o.subtotal | number:'1.2-2' }}</dd></div>
+          <div *ngIf="o.discount"><dt>Discount</dt><dd>−₱{{ o.discount | number:'1.2-2' }}</dd></div>
+          <div><dt>Shipping</dt><dd>₱{{ o.shipping | number:'1.2-2' }}</dd></div>
+          <div><dt>Tax</dt><dd>₱{{ o.tax | number:'1.2-2' }}</dd></div>
+          <div class="grand"><dt>Total</dt><dd>₱{{ o.total | number:'1.2-2' }}</dd></div>
+        </dl>
+
+        <div *ngIf="o.returns.length > 0">
+          <h3>Return requests</h3>
+          <ul class="activity">
+            <li *ngFor="let r of o.returns">
+              <strong>{{ r.status }}</strong> — {{ r.reason }}
+              <span class="muted" *ngIf="r.refundAmount">refund ₱{{ r.refundAmount | number:'1.2-2' }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h3>Activity</h3>
+          <p class="muted" *ngIf="o.activity.length === 0">No administrator activity recorded for this order.</p>
+          <ul class="activity" *ngIf="o.activity.length > 0">
+            <li *ngFor="let a of o.activity">
+              <strong>{{ a.action }}</strong>
+              <span class="muted">by {{ a.user?.fullName || 'system' }} · {{ a.createdAt | date:'medium' }}</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+  </ng-container>
+
+  <!-- ============================== PRODUCTS ============================== -->
+  <ng-container *ngIf="tab === 'products'">
+
+    <section class="panel">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">CATALOGUE & INVENTORY</p>
+          <h2>Products</h2>
+        </div>
+        <div class="header-actions">
+          <span class="user-count">{{ productsTotal }} found</span>
+          <button type="button" (click)="newProduct()">New product</button>
+        </div>
+      </div>
+
+      <p class="hint">
+        Prices and stock saved here are what checkout charges and reserves. The storefront's product pages
+        are currently built from the app's bundled catalogue, so changes to name, description or image
+        appear there only after that catalogue is updated.
+      </p>
+
+      <div class="filters">
+        <input type="search" placeholder="Name, slug or scientific name" [(ngModel)]="productFilters.q" (keyup.enter)="applyProductFilters()" aria-label="Search products" />
+        <select [(ngModel)]="productFilters.stock" (change)="applyProductFilters()" aria-label="Stock filter">
+          <option value="all">All stock levels</option>
+          <option value="in">In stock</option>
+          <option value="low">Low stock</option>
+          <option value="out">Out of stock</option>
+          <option value="inactive">Hidden</option>
+        </select>
+        <select [(ngModel)]="productFilters.sort" (change)="applyProductFilters()" aria-label="Sort">
+          <option value="name">Name</option>
+          <option value="stock_asc">Stock: low to high</option>
+          <option value="stock_desc">Stock: high to low</option>
+          <option value="price_asc">Price: low to high</option>
+          <option value="price_desc">Price: high to low</option>
+          <option value="newest">Newest</option>
+        </select>
+        <button type="button" (click)="applyProductFilters()">Search</button>
+      </div>
+
+      <div class="error-box inline" *ngIf="productsError">
+        {{ productsError }}
+        <button type="button" class="link" (click)="loadProducts()">Try again</button>
+      </div>
+      <div class="loading" *ngIf="productsLoading && products.length === 0">Loading products...</div>
+      <div class="empty" *ngIf="!productsLoading && !productsError && products.length === 0">No products match these filters.</div>
+
+      <div class="table-wrapper" *ngIf="products.length > 0" [class.dim]="productsLoading">
+        <table>
+          <thead>
+            <tr><th>Product</th><th>Price</th><th>Stock</th><th>Adjust stock</th><th>Visibility</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of products">
+              <td>
+                <strong>{{ p.name }}</strong><br />
+                <small>{{ p.slug }} · {{ p.category?.name }}</small>
+              </td>
+              <td>₱{{ p.price | number:'1.2-2' }}</td>
+              <td>
+                {{ p.stock }}
+                <span class="status" [class.suspended]="p.stockState === 'OUT_OF_STOCK'" [class.low]="p.stockState === 'LOW_STOCK'" [class.active]="p.stockState === 'IN_STOCK'">
+                  {{ stockLabel(p.stockState) }}
+                </span>
+              </td>
+              <td class="adjust">
+                <input type="number" step="1" placeholder="+10 / -3" [(ngModel)]="stockDeltas[p.id]" (keyup.enter)="adjustStock(p)" [attr.aria-label]="'Stock change for ' + p.name" />
+                <button type="button" [disabled]="productBusyId === p.id" (click)="adjustStock(p)">Apply</button>
+              </td>
+              <td>
+                <span class="status" [class.active]="p.status !== 'INACTIVE'" [class.suspended]="p.status === 'INACTIVE'">
+                  {{ p.status === 'INACTIVE' ? 'Hidden' : 'Visible' }}
+                </span>
+              </td>
+              <td class="row-actions">
+                <button type="button" (click)="editProduct(p)">Edit</button>
+                <button type="button" [disabled]="productBusyId === p.id" (click)="setProductActive(p, p.status === 'INACTIVE')">
+                  {{ p.status === 'INACTIVE' ? 'Show' : 'Hide' }}
+                </button>
+                <button type="button" class="danger" [disabled]="productBusyId === p.id" (click)="removeProduct(p)">
+                  {{ p.orderLines > 0 ? 'Deactivate' : 'Delete' }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager" *ngIf="productsTotal > pageSize">
+        <button type="button" [disabled]="productsPage <= 1 || productsLoading" (click)="goProducts(-1)">Previous</button>
+        <span>Page {{ productsPage }} of {{ pages(productsTotal) }}</span>
+        <button type="button" [disabled]="productsPage >= pages(productsTotal) || productsLoading" (click)="goProducts(1)">Next</button>
+      </div>
+    </section>
+
+    <section class="panel detail" *ngIf="productForm as f">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">{{ f.id ? 'EDIT' : 'NEW' }}</p>
+          <h2>{{ f.id ? f.name || 'Product' : 'New product' }}</h2>
+        </div>
+        <button type="button" (click)="cancelProductForm()">Cancel</button>
+      </div>
+
+      <div class="form-grid">
+        <label>Name
+          <input type="text" [(ngModel)]="f.name" maxlength="120" />
+        </label>
+        <label>Slug <small>(cannot be changed later)</small>
+          <input type="text" [(ngModel)]="f.slug" [disabled]="!!f.id" maxlength="80" placeholder="monstera-deliciosa" />
+        </label>
+        <label>Scientific name
+          <input type="text" [(ngModel)]="f.scientific" maxlength="160" />
+        </label>
+        <label>Category
+          <select [(ngModel)]="f.categoryId">
+            <option *ngFor="let c of categories" [value]="c.id">{{ c.name }}</option>
+          </select>
+        </label>
+        <label>Subcategory
+          <input type="text" [(ngModel)]="f.subcategory" maxlength="80" />
+        </label>
+        <label>Price (₱, whole pesos)
+          <input type="number" min="1" step="1" [(ngModel)]="f.price" />
+        </label>
+        <label *ngIf="!f.id">Starting stock
+          <input type="number" min="0" step="1" [(ngModel)]="f.stock" />
+        </label>
+        <label *ngIf="f.id">Current stock
+          <input type="number" [ngModel]="f.stock" disabled />
+          <small>Change it with “Adjust stock” in the list.</small>
+        </label>
+        <label>Low-stock alert at
+          <input type="number" min="0" step="1" [(ngModel)]="f.lowStockThreshold" />
+        </label>
+        <label>Image URL or path
+          <input type="text" [(ngModel)]="f.image" maxlength="500" placeholder="https://… or assets/…" />
+        </label>
+        <label>Visibility
+          <select [(ngModel)]="f.status">
+            <option value="ACTIVE">Visible in the shop</option>
+            <option value="INACTIVE">Hidden</option>
+          </select>
+        </label>
+        <label class="wide">Description
+          <textarea rows="4" [(ngModel)]="f.description" maxlength="5000"></textarea>
+        </label>
+      </div>
+
+      <div class="error-box inline" *ngIf="productFormError">{{ productFormError }}</div>
+
+      <div class="actions">
+        <button type="button" class="primary" [disabled]="productSaving" (click)="saveProduct()">
+          {{ productSaving ? 'Saving...' : (f.id ? 'Save changes' : 'Create product') }}
+        </button>
+        <button type="button" (click)="cancelProductForm()">Cancel</button>
+      </div>
+    </section>
+
+  </ng-container>
+
+  <!-- ============================== ACCOUNTS ============================== -->
+  <ng-container *ngIf="tab === 'accounts'">
+
+    <section class="panel">
       <div class="section-header">
         <div>
           <p class="eyebrow">ACCOUNTS</p>
           <h2>Users</h2>
         </div>
-
-        <span class="user-count">
-          {{ users.length }} total
-        </span>
+        <div class="header-actions">
+          <span class="user-count">{{ accountsTotal }} found</span>
+          <button type="button" (click)="newAccount()">New account</button>
+        </div>
       </div>
 
-      <div
-        class="empty"
-        *ngIf="users.length === 0"
-      >
-        No users found.
+      <div class="filters">
+        <input type="search" placeholder="Name or e-mail" [(ngModel)]="accountFilters.q" (keyup.enter)="applyAccountFilters()" aria-label="Search accounts" />
+        <select [(ngModel)]="accountFilters.role" (change)="applyAccountFilters()" aria-label="Role">
+          <option value="">All roles</option>
+          <option value="CUSTOMER">Customers</option>
+          <option value="ADMIN">Administrators</option>
+        </select>
+        <select [(ngModel)]="accountFilters.suspended" (change)="applyAccountFilters()" aria-label="Status">
+          <option value="">Any status</option>
+          <option value="false">Active</option>
+          <option value="true">Suspended</option>
+        </select>
+        <button type="button" (click)="applyAccountFilters()">Search</button>
       </div>
 
-      <div
-        class="table-wrapper"
-        *ngIf="users.length > 0"
-      >
+      <div class="error-box inline" *ngIf="accountsError">
+        {{ accountsError }}
+        <button type="button" class="link" (click)="loadAccounts()">Try again</button>
+      </div>
+      <div class="loading" *ngIf="accountsLoading && accounts.length === 0">Loading accounts...</div>
+      <div class="empty" *ngIf="!accountsLoading && !accountsError && accounts.length === 0">No accounts match these filters.</div>
+
+      <div class="table-wrapper" *ngIf="accounts.length > 0" [class.dim]="accountsLoading">
         <table>
-
           <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Action</th>
-            </tr>
+            <tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Orders</th><th>Created</th><th>Actions</th></tr>
           </thead>
-
           <tbody>
-
-            <tr *ngFor="let user of users">
-
+            <tr *ngFor="let user of accounts">
+              <td><strong>{{ user.fullName }}</strong> <small *ngIf="isMe(user)">(you)</small></td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.phone || '—' }}</td>
+              <td><span class="role" [class.admin]="isAdmin(user)">{{ user.role }}</span></td>
               <td>
-                <strong>{{ user.fullName }}</strong>
-              </td>
-
-              <td>
-                {{ user.email }}
-              </td>
-
-              <td>
-                {{ user.phone || '—' }}
-              </td>
-
-              <td>
-                <span
-                  class="role"
-                  [class.admin]="isAdmin(user)"
-                >
-                  {{ user.role }}
-                </span>
-              </td>
-
-              <td>
-                <span
-                  class="status"
-                  [class.suspended]="user.isSuspended"
-                  [class.active]="!user.isSuspended"
-                >
+                <span class="status" [class.suspended]="user.isSuspended" [class.active]="!user.isSuspended">
                   {{ user.isSuspended ? 'Suspended' : 'Active' }}
                 </span>
               </td>
-
-              <td>
-                {{ user.createdAt | date:'medium' }}
-              </td>
-
-              <td>
-                <button
-                  type="button"
-                  class="suspend-button"
-                  [disabled]="isAdmin(user)"
-                  (click)="toggleSuspension(user)"
-                >
-                  {{
-                    user.isSuspended
-                      ? 'Unsuspend'
-                      : 'Suspend'
-                  }}
+              <td>{{ user.orderCount }}</td>
+              <td>{{ user.createdAt | date:'medium' }}</td>
+              <td class="row-actions">
+                <button type="button" class="suspend-button" [disabled]="isMe(user) || accountBusyId === user.id" (click)="toggleSuspension(user)">
+                  {{ user.isSuspended ? 'Reactivate' : 'Suspend' }}
                 </button>
+                <button type="button" [disabled]="isMe(user) || accountBusyId === user.id" (click)="changeRole(user)">
+                  {{ isAdmin(user) ? 'Make customer' : 'Make admin' }}
+                </button>
+                <button type="button" class="danger" [disabled]="isMe(user) || accountBusyId === user.id" (click)="deleteAccount(user)">Delete</button>
               </td>
-
             </tr>
-
           </tbody>
-
         </table>
       </div>
 
+      <p class="hint">
+        You cannot change your own role, suspend or delete yourself, and the last active administrator is
+        always protected. Deleting an account keeps its orders.
+      </p>
+
+      <div class="pager" *ngIf="accountsTotal > pageSize">
+        <button type="button" [disabled]="accountsPage <= 1 || accountsLoading" (click)="goAccounts(-1)">Previous</button>
+        <span>Page {{ accountsPage }} of {{ pages(accountsTotal) }}</span>
+        <button type="button" [disabled]="accountsPage >= pages(accountsTotal) || accountsLoading" (click)="goAccounts(1)">Next</button>
+      </div>
+    </section>
+
+    <section class="panel detail" *ngIf="accountForm as f">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">NEW</p>
+          <h2>New account</h2>
+        </div>
+        <button type="button" (click)="cancelAccountForm()">Cancel</button>
+      </div>
+
+      <p class="hint">
+        No password is entered here. The person sets their own with “Forgot password” on the login page,
+        using the e-mail address below.
+      </p>
+
+      <div class="form-grid">
+        <label>E-mail
+          <input type="email" [(ngModel)]="f.email" maxlength="254" autocomplete="off" />
+        </label>
+        <label>Full name
+          <input type="text" [(ngModel)]="f.fullName" maxlength="120" />
+        </label>
+        <label>Phone (optional)
+          <input type="tel" [(ngModel)]="f.phone" maxlength="40" />
+        </label>
+        <label>Role
+          <select [(ngModel)]="f.role">
+            <option value="CUSTOMER">Customer</option>
+            <option value="ADMIN">Administrator</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="error-box inline" *ngIf="accountFormError">{{ accountFormError }}</div>
+
+      <div class="actions">
+        <button type="button" class="primary" [disabled]="accountSaving" (click)="saveAccount()">
+          {{ accountSaving ? 'Creating...' : 'Create account' }}
+        </button>
+        <button type="button" (click)="cancelAccountForm()">Cancel</button>
+      </div>
     </section>
 
   </ng-container>

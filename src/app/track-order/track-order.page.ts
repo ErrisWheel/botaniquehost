@@ -1,10 +1,12 @@
 import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
+import { ApiError } from '../shared/api.service';
+import { OrdersService } from '../shared/orders.service';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { combineLatest } from 'rxjs';
 
 /* =========================================================
    ORDER ITEM
@@ -69,6 +71,8 @@ interface CartItem {
 export class TrackOrderPage implements OnInit {
 
   private readonly authService = inject(AuthService);
+  private readonly ordersService = inject(OrdersService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   /* NAVBAR */
 
@@ -91,10 +95,33 @@ export class TrackOrderPage implements OnInit {
   /* ORDER */
 
   order: Order | null = null;
+  orders: Order[] = [];
+  ordersLoading = false;
+  ordersError = '';
+  private ordersLoaded = false;
 
   private orderId = '';
+  private ordersSeq = 0;
+  private skipFirstViewEnterRefresh = true;
 
-  private readonly ORDER_KEY = 'botaniqueOrders';
+  get isDetailView(): boolean {
+    return !!this.orderId;
+  }
+
+  get filteredOrders(): Order[] {
+    if (this.statusFilter === 'all') return this.orders;
+    return this.orders.filter(
+      item => this.normalizeStatus(item.status) === this.statusFilter
+    );
+  }
+
+  // Lookup state. The template shows loading / error / not-found separately.
+  orderLoading = false;
+  orderError = '';
+
+  // Newest lookup wins: slower, older responses are ignored.
+  private loadSeq = 0;
+  private pendingLoad: { key: string; promise: Promise<void> } | null = null;
 
   private readonly API_URL = `${environment.apiUrl}`;
   /* STATUS FILTER */
@@ -128,8 +155,7 @@ export class TrackOrderPage implements OnInit {
 
   constructor(
     private router: Router,
-    private route: ActivatedRoute,
-    private http: HttpClient
+    private route: ActivatedRoute
   ) {}
 
 
@@ -137,13 +163,41 @@ export class TrackOrderPage implements OnInit {
 
   ngOnInit(): void {
 
-    this.route.queryParams.subscribe(params => {
+    // Support both the explicit /track-order/:orderId route (used by Profile
+    // history) and older ?id= links (checkout/payment result). Watching both
+    // streams keeps the selected order correct when Ionic reuses a page.
+    combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(
+      ([params, queryParams]) => {
+        const nextId = String(
+          params.get('orderId') || queryParams.get('id') || ''
+        ).trim();
+        const changed = nextId !== this.orderId;
 
-      this.orderId = params['id'] || '';
+        if (!changed) {
+          if (!nextId && !this.ordersLoaded && !this.ordersLoading && !this.ordersError) {
+            void this.loadOrders(true);
+          }
+          return;
+        }
 
-      this.loadOrder();
+        this.orderId = nextId;
 
-    });
+        if (nextId) {
+          // Clear the previous detail immediately. Never leave the newest order
+          // visible while the requested historical order is being fetched.
+          this.order = null;
+          this.orderLoading = true;
+          this.orderError = '';
+          this.cdr.markForCheck();
+          void this.loadOrder(true);
+        } else {
+          this.order = null;
+          this.orderLoading = false;
+          if (this.orders.length === 0 || this.ordersLoaded) void this.loadOrders(true);
+          this.cdr.markForCheck();
+        }
+      }
+    );
 
 
     /* CART */
@@ -165,460 +219,256 @@ export class TrackOrderPage implements OnInit {
   }
 
 
+  // Ionic keeps this page in its navigation stack, so ngOnInit does not run
+  // again when the customer returns (e.g. after payment or from the profile).
+  // Reload every time the page becomes active so status changes show up
+  // without a manual reload.
+  ionViewWillEnter(): void {
+    // ngOnInit handles the first entry; refresh fresh data on later visits.
+    if (this.skipFirstViewEnterRefresh) {
+      this.skipFirstViewEnterRefresh = false;
+    } else if (this.orderId) {
+      void this.loadOrder(true);
+    } else {
+      void this.loadOrders(true);
+    }
+
+    this.loadCart();
+    this.updateCartCount();
+    this.updateWishlistCount();
+    this.updateNotificationCount();
+  }
+
+
   /* LOAD ORDER */
 
-  loadOrder(): void {
-    const token =
-      localStorage.getItem('botaniqueToken') ||
-      localStorage.getItem('token');
+  /**
+   * Loads the order named by ?id= (database id or order number). Calls for the
+   * same order that arrive while one is running share it, and a newer lookup
+   * always replaces an older one. The no-id route shows the full order list.
+   */
+  loadOrder(force = false): Promise<void> {
 
-    if (!token) {
+    const key = this.orderId;
+
+    if (!force && this.pendingLoad?.key === key) {
+      return this.pendingLoad.promise;
+    }
+
+    const seq = ++this.loadSeq;
+
+    const promise: Promise<void> =
+      this.fetchOrder(key, seq).finally(() => {
+        if (this.pendingLoad?.promise === promise) {
+          this.pendingLoad = null;
+        }
+      });
+
+    this.pendingLoad = { key, promise };
+
+    return promise;
+
+  }
+
+  retryLoadOrder(): void {
+
+    void this.loadOrder(true);
+
+  }
+
+  private async fetchOrder(
+    identifier: string,
+    seq: number
+  ): Promise<void> {
+
+    if (!this.authService.isLoggedIn) {
+
       this.order = null;
+      this.orderLoading = false;
 
       alert(
         'Please log in to view your order.'
       );
 
-      this.router.navigateByUrl('/login');
+      await this.router.navigateByUrl('/login');
+
       return;
+
     }
 
-    const headers =
-      new HttpHeaders({
-        Authorization:
-          `Bearer ${token}`
-      });
-
-    /*
-     * The checkout page may send either the database order ID
-     * or an order number. Try the specific-order endpoint first.
-     * If that does not work, load the customer's orders and find
-     * the matching order by ID or order number.
-     */
-    if (this.orderId) {
-      this.loadSpecificOrder(
-        this.orderId,
-        headers
-      );
-      return;
-    }
-
-    /* No ID = load the latest order */
-    this.loadLatestOrder(headers);
-  }
-
-  private loadSpecificOrder(
-    identifier: string,
-    headers: HttpHeaders
-  ): void {
-    const requestedId = String(identifier).trim();
-
-    this.http
-      .get<any>(
-        `${this.API_URL}/orders/${encodeURIComponent(requestedId)}`,
-        { headers }
-      )
-      .subscribe({
-        next: (response) => {
-          /*
-           * Some APIs return { order: {...} } while others return
-           * the order object directly.
-           */
-          const rawOrder =
-            response?.order ||
-            response?.data ||
-            response;
-
-          if (
-            rawOrder &&
-            (
-              rawOrder.id !== undefined ||
-              rawOrder.orderNumber !== undefined
-            )
-          ) {
-            this.order =
-              this.normalizeOrder(rawOrder);
-
-            return;
-          }
-
-          /*
-           * If the endpoint returned an unexpected shape, fall back
-           * to the customer's order list.
-           */
-          this.findOrderInList(
-            requestedId,
-            headers
-          );
-        },
-
-        error: (error) => {
-          console.error(
-            'Unable to load order by ID:',
-            error
-          );
-
-          /*
-           * A mismatch between order ID and order number should not
-           * make the Track Order page say "order not found".
-           * Search the authenticated customer's orders instead.
-           */
-          if (
-            error?.status === 401
-          ) {
-            this.handleUnauthorized();
-            return;
-          }
-
-          this.findOrderInList(
-            requestedId,
-            headers
-          );
-        }
-      });
-  }
-
-  private loadLatestOrder(
-    headers: HttpHeaders
-  ): void {
-    this.http
-      .get<any>(
-        `${this.API_URL}/orders`,
-        { headers }
-      )
-      .subscribe({
-        next: (response) => {
-          const orders =
-            this.extractOrders(response);
-
-          if (orders.length === 0) {
-            this.order = null;
-            return;
-          }
-
-          /*
-           * Use createdAt when available so the newest order is
-           * actually selected even if the API does not return
-           * newest-first.
-           */
-          orders.sort(
-            (a: any, b: any) => {
-              const aTime =
-                new Date(
-                  a?.createdAt || 0
-                ).getTime();
-
-              const bTime =
-                new Date(
-                  b?.createdAt || 0
-                ).getTime();
-
-              return bTime - aTime;
-            }
-          );
-
-          this.order =
-            this.normalizeOrder(
-              orders[0]
-            );
-        },
-
-        error: (error) => {
-          console.error(
-            'Unable to load orders:',
-            error
-          );
-
-          if (
-            error?.status === 401
-          ) {
-            this.handleUnauthorized();
-            return;
-          }
-
-          this.order = null;
-
-          alert(
-            'Unable to load your orders.'
-          );
-        }
-      });
-  }
-
-  private findOrderInList(
-    identifier: string,
-    headers: HttpHeaders
-  ): void {
-    this.http
-      .get<any>(
-        `${this.API_URL}/orders`,
-        { headers }
-      )
-      .subscribe({
-        next: (response) => {
-          const orders =
-            this.extractOrders(response);
-
-          const wanted =
-            String(identifier)
-              .trim()
-              .toLowerCase();
-
-          const found =
-            orders.find(
-              (item: any) => {
-                const id =
-                  String(
-                    item?.id ?? ''
-                  )
-                    .trim()
-                    .toLowerCase();
-
-                const orderNumber =
-                  String(
-                    item?.orderNumber ?? ''
-                  )
-                    .trim()
-                    .toLowerCase();
-
-                return (
-                  id === wanted ||
-                  orderNumber === wanted
-                );
-              }
-            );
-
-          if (found) {
-            this.order =
-              this.normalizeOrder(
-                found
-              );
-
-            /*
-             * Replace the URL with the actual database ID once we
-             * have found the order. This also prevents a future
-             * refresh from repeating an order-number lookup.
-             */
-            if (
-              found?.id !== undefined &&
-              found?.id !== null
-            ) {
-              const actualId =
-                String(found.id);
-
-              if (
-                actualId !==
-                String(this.orderId)
-              ) {
-                this.orderId = actualId;
-
-                this.router.navigate(
-                  ['/track-order'],
-                  {
-                    queryParams: {
-                      id: actualId
-                    },
-                    replaceUrl: true
-                  }
-                );
-              }
-            }
-
-            return;
-          }
-
-          /*
-           * Last fallback: checkout stores the completed order in
-           * localStorage. This lets the Track Order page still show
-           * the order if the backend's specific-order route uses a
-           * different identifier format.
-           */
-          const localOrder =
-            this.getStoredLastOrder();
-
-          if (
-            localOrder &&
-            this.orderMatches(
-              localOrder,
-              wanted
-            )
-          ) {
-            this.order =
-              this.normalizeOrder(
-                localOrder
-              );
-
-            return;
-          }
-
-          this.order = null;
-
-          alert(
-            'Order not found.'
-          );
-        },
-
-        error: (error) => {
-          console.error(
-            'Unable to load orders:',
-            error
-          );
-
-          if (
-            error?.status === 401
-          ) {
-            this.handleUnauthorized();
-            return;
-          }
-
-          /*
-           * Backend list lookup failed, so try the locally stored
-           * order created immediately after checkout.
-           */
-          const localOrder =
-            this.getStoredLastOrder();
-
-          if (
-            localOrder &&
-            this.orderMatches(
-              localOrder,
-              String(identifier)
-                .trim()
-                .toLowerCase()
-            )
-          ) {
-            this.order =
-              this.normalizeOrder(
-                localOrder
-              );
-
-            return;
-          }
-
-          this.order = null;
-
-          alert(
-            'Unable to load this order.'
-          );
-        }
-      });
-  }
-
-  private extractOrders(
-    response: any
-  ): any[] {
-    if (Array.isArray(response)) {
-      return response;
-    }
-
-    if (
-      Array.isArray(response?.orders)
-    ) {
-      return response.orders;
-    }
-
-    if (
-      Array.isArray(response?.data)
-    ) {
-      return response.data;
-    }
-
-    if (
-      Array.isArray(response?.data?.orders)
-    ) {
-      return response.data.orders;
-    }
-
-    return [];
-  }
-
-  private getStoredLastOrder(): any | null {
-    const raw =
-      localStorage.getItem(
-        'botaniqueLastOrder'
-      );
-
-    if (!raw) {
-      return null;
-    }
+    this.orderLoading = true;
+    this.orderError = '';
+    this.cdr.markForCheck();
 
     try {
-      const parsed =
-        JSON.parse(raw);
+
+      const found =
+        identifier
+          ? await this.findOrder(identifier)
+          : await this.findLatestOrder();
+
+      // A newer lookup started while we waited: let it decide what to show.
+      if (seq !== this.loadSeq) {
+        return;
+      }
+
+      this.order =
+        found
+          ? this.normalizeOrder(found)
+          : null;
 
       /*
-       * Support both:
-       *   botaniqueLastOrder = order
-       * and
-       *   botaniqueLastOrder = { order: order }
+       * Replace an order number in the URL with the real database ID so a
+       * refresh does not repeat the number lookup.
        */
-      return (
-        parsed?.order ||
-        parsed?.data ||
-        parsed ||
-        null
-      );
-    } catch (error) {
+      if (
+        found?.id !== undefined &&
+        found?.id !== null &&
+        identifier &&
+        String(found.id) !== identifier
+      ) {
+
+        this.orderId = String(found.id);
+
+        void this.router.navigate(
+          ['/track-order'],
+          {
+            queryParams: {
+              id: this.orderId
+            },
+            replaceUrl: true
+          }
+        );
+
+      }
+
+    } catch (error: any) {
+
+      if (seq !== this.loadSeq) {
+        return;
+      }
+
       console.error(
-        'Unable to read stored last order:',
+        'Unable to load order:',
         error
       );
 
-      return null;
+      if (
+        error instanceof ApiError &&
+        error.isUnauthorized
+      ) {
+
+        await this.handleUnauthorized();
+
+        return;
+
+      }
+
+      this.order = null;
+
+      this.orderError =
+        error instanceof ApiError
+          ? error.message
+          : 'Unable to load your order. Please try again.';
+
+    } finally {
+
+      if (seq === this.loadSeq) {
+        this.orderLoading = false;
+        this.cdr.markForCheck();
+      }
+
     }
+
   }
 
-  private orderMatches(
-    order: any,
+  /** The checkout page may pass the database ID or the order number. */
+  private async findOrder(
     identifier: string
-  ): boolean {
-    const wanted =
-      String(identifier || '')
-        .trim()
-        .toLowerCase();
+  ): Promise<any | null> {
 
-    if (!wanted) {
-      return false;
+    const requestedId = String(identifier).trim();
+
+    try {
+
+      const response: any =
+        await this.ordersService.loadOne(requestedId);
+
+      const rawOrder =
+        response?.order ||
+        response?.data ||
+        response;
+
+      if (rawOrder) {
+        const returnedId = String(rawOrder.id ?? '').trim().toLowerCase();
+        const returnedNumber = String(rawOrder.orderNumber ?? '').trim().toLowerCase();
+
+        // Defensive check: even if an intermediary returns a stale order, do
+        // not mistake it for the explicitly requested one.
+        if (
+          returnedId === requestedId.toLowerCase() ||
+          returnedNumber === requestedId.toLowerCase()
+        ) {
+          return rawOrder;
+        }
+      }
+
+    } catch (error: any) {
+
+      // Only "not found" falls back to the order-number lookup below;
+      // anything else (401, network, server error) is a real failure.
+      if (
+        !(error instanceof ApiError) ||
+        error.status !== 404
+      ) {
+        throw error;
+      }
+
     }
 
-    const id =
-      String(
-        order?.id ?? ''
-      )
-        .trim()
-        .toLowerCase();
+    const wanted = requestedId.toLowerCase();
 
-    const orderNumber =
-      String(
-        order?.orderNumber ?? ''
-      )
-        .trim()
-        .toLowerCase();
+    const orders = await this.ordersService.load();
 
     return (
-      id === wanted ||
-      orderNumber === wanted
+      orders.find(
+        (item: any) =>
+          String(item?.id ?? '').trim().toLowerCase() === wanted ||
+          String(item?.orderNumber ?? '').trim().toLowerCase() === wanted
+      ) || null
     );
+
   }
 
-  private handleUnauthorized(): void {
+  private async findLatestOrder(): Promise<any | null> {
+
+    const orders = await this.ordersService.load();
+
+    if (orders.length === 0) {
+      return null;
+    }
+
+    // Newest first, whatever order the API returned them in.
+    return [...orders].sort(
+      (a: any, b: any) =>
+        new Date(b?.createdAt || 0).getTime() -
+        new Date(a?.createdAt || 0).getTime()
+    )[0];
+
+  }
+
+  private async handleUnauthorized(): Promise<void> {
+
     this.order = null;
 
-    localStorage.removeItem(
-      'botaniqueToken'
-    );
-
-    localStorage.removeItem(
-      'token'
-    );
+    await this.authService.logout().catch(() => undefined);
 
     alert(
       'Your session has expired. Please log in again.'
     );
 
-    this.router.navigateByUrl(
-      '/login'
-    );
+    await this.router.navigateByUrl('/login');
+
   }
 
 
@@ -895,470 +745,241 @@ export class TrackOrderPage implements OnInit {
 
 
   /* NORMALIZE STATUS */
-
-  private normalizeStatus(
-    status?: string
-  ): string {
-
-    const value =
-      String(
-        status || 'Processing'
-      )
-        .trim()
-        .toLowerCase()
-        .replace(/-/g, '_')
-        .replace(/\s+/g, '_');
-
+  normalizeStatus(status?: string): string {
+    const value = String(status || 'Pending')
+      .trim()
+      .toLowerCase()
+      .replace(/-/g, '_')
+      .replace(/\s+/g, '_');
 
     switch (value) {
-
-      /* PROCESSING */
-
       case 'pending':
+        return 'Pending';
       case 'processing':
       case 'confirmed':
       case 'preparing':
         return 'Processing';
-
-
-      /* SHIPPED */
-
+      case 'processed':
+        return 'Processed';
+      case 'sorting':
+      case 'order_is_being_sorted':
+      case 'being_sorted':
+        return 'Order is being sorted';
+      // Old shipped orders are displayed as On delivery after the data migration.
       case 'shipped':
       case 'in_transit':
       case 'intransit':
-        return 'Shipped';
-
-
-      /* OUT FOR DELIVERY */
-
+      case 'on_delivery':
       case 'out_for_delivery':
       case 'outfordelivery':
       case 'delivery':
-        return 'Out for Delivery';
-
-
-      /* DELIVERED */
-
+        return 'On delivery';
       case 'delivered':
       case 'complete':
       case 'completed':
         return 'Delivered';
-
-
-      /* CANCELLED */
-
       case 'cancelled':
       case 'canceled':
       case 'cancel':
         return 'Cancelled';
-
-
-      /* DEFAULT */
-
       default:
-        return 'Processing';
-
+        return 'Pending';
     }
-
   }
 
+  /* ORDER LIST + STATUS FILTER */
 
-  /* FILTER ORDERS */
-  
-  filterOrders(): void {
+  async loadOrders(force = false): Promise<void> {
+    const seq = ++this.ordersSeq;
+    this.ordersLoading = true;
+    this.ordersError = '';
+    this.cdr.markForCheck();
 
-    if (
-      this.statusFilter === 'all'
-    ) {
-
-      this.loadOrder();
-
+    if (!this.authService.isLoggedIn) {
+      this.orders = [];
+      this.ordersLoaded = false;
+      this.ordersLoading = false;
+      this.ordersError = 'Please log in to view your orders.';
+      this.cdr.markForCheck();
+      await this.router.navigateByUrl('/login');
       return;
-
     }
 
+    try {
+      const rawOrders = await this.ordersService.load(force);
+      if (seq !== this.ordersSeq) return;
 
-    const token =
-      localStorage.getItem('botaniqueToken') ||
-      localStorage.getItem('token');
+      this.orders = rawOrders
+        .map((raw: any) => this.normalizeOrder(raw))
+        .sort((a, b) => {
+          const aTime = new Date(a.createdAt || a.date || 0).getTime();
+          const bTime = new Date(b.createdAt || b.date || 0).getTime();
+          return bTime - aTime;
+        });
+      this.ordersLoaded = true;
+    } catch (error: any) {
+      if (seq !== this.ordersSeq) return;
+      console.error('Unable to load orders:', error);
 
+      if (error instanceof ApiError && error.isUnauthorized) {
+        await this.handleUnauthorized();
+        return;
+      }
 
-    if (!token) {
+      this.orders = [];
+      this.ordersLoaded = false;
+      this.ordersError = error instanceof ApiError
+        ? error.message
+        : 'Unable to load your orders. Please try again.';
+    } finally {
+      if (seq === this.ordersSeq) {
+        this.ordersLoading = false;
+        this.cdr.markForCheck();
+      }
+    }
+  }
 
+  async showAllOrders(): Promise<void> {
+    this.statusFilter = 'all';
+    if (!this.isDetailView) {
+      await this.loadOrders(true);
+      return;
+    }
+
+    ++this.loadSeq;
+    this.order = null;
+    this.orderLoading = true;
+    this.orderError = '';
+    this.cdr.markForCheck();
+    await this.router.navigateByUrl('/track-order', { replaceUrl: true });
+  }
+
+  async filterOrders(): Promise<void> {
+    // The dropdown filters the full order list locally, so changing filters is
+    // immediate and cannot accidentally select an unrelated single order.
+    if (this.isDetailView) {
+      ++this.loadSeq; // ignore any outstanding detail request
       this.order = null;
-
+      this.orderLoading = true; // keep the detail view from flashing a false 'not found' during navigation
+      this.orderError = '';
+      this.cdr.markForCheck();
+      await this.router.navigateByUrl('/track-order', { replaceUrl: true });
       return;
-
     }
 
-
-    const headers =
-      new HttpHeaders({
-        Authorization:
-          `Bearer ${token}`
-      });
-
-
-    this.http
-      .get<any[]>(
-        `${this.API_URL}/orders`,
-        { headers }
-      )
-      .subscribe({
-
-        next: (orders) => {
-
-          if (
-            !Array.isArray(orders)
-          ) {
-
-            this.order = null;
-
-            return;
-
-          }
-
-
-          const found =
-            orders.find(
-              (item: any) => {
-
-                const normalized =
-                  this.normalizeStatus(
-                    item?.status
-                  );
-
-
-                if (
-                  this.statusFilter ===
-                  'Shipped'
-                ) {
-
-                  return (
-                    normalized ===
-                    'Shipped' ||
-                    normalized ===
-                    'Out for Delivery'
-                  );
-
-                }
-
-
-                return (
-                  normalized ===
-                  this.statusFilter
-                );
-
-              }
-            );
-
-
-          if (!found) {
-
-            this.order = null;
-
-            return;
-
-          }
-
-
-          this.order =
-            this.normalizeOrder(
-              found
-            );
-
-
-          if (
-            this.order?.id
-          ) {
-
-            this.router.navigate(
-              ['/track-order'],
-              {
-                queryParams: {
-                  id: this.order.id
-                },
-                replaceUrl: true
-              }
-            );
-
-          }
-
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Unable to filter orders:',
-            error
-          );
-
-          this.order = null;
-
-        }
-
-      });
-
+    if (!this.ordersLoading && !this.ordersLoaded && !this.ordersError) {
+      await this.loadOrders(true);
+    }
+    this.cdr.markForCheck();
   }
 
+  trackOrder(orderId: string): void {
+    const selectedOrderId = String(orderId || '').trim();
+    if (!selectedOrderId) return;
+
+    this.statusFilter = 'all';
+    this.order = null;
+    this.orderError = '';
+    this.orderLoading = true;
+    this.cdr.markForCheck();
+    void this.router.navigate(['/track-order', selectedOrderId]);
+  }
+
+  retryLoadOrders(): void {
+    void this.loadOrders(true);
+  }
 
   /* STATUS STEP */
+  private getStatusStep(status?: string): number {
+    if (this.normalizeStatus(status) === 'Cancelled') return 0;
 
-  private getStatusStep(
-    status?: string
-  ): number {
-
-    const normalized =
-      this.normalizeStatus(
-        status
-      );
-
-
-    switch (normalized) {
-
-      case 'Processing':
-        return 1;
-
-      case 'Shipped':
-        return 2;
-
-      case 'Out for Delivery':
-        return 3;
-
-      case 'Delivered':
-        return 4;
-
-      case 'Cancelled':
-        return 1;
-
-      default:
-        return 1;
-
-    }
-
+    const steps: Record<string, number> = {
+      Pending: 1,
+      Processing: 2,
+      Processed: 3,
+      'Order is being sorted': 4,
+      'On delivery': 5,
+      Delivered: 6
+    };
+    return steps[this.normalizeStatus(status)] ?? 1;
   }
-
-
-  /* STEP NUMBER */
 
   private getStepNumber(
-    step:
-      | 'processing'
-      | 'shipped'
-      | 'out_for_delivery'
-      | 'delivered'
+    step: 'pending' | 'processing' | 'processed' | 'sorting' | 'on_delivery' | 'delivered'
   ): number {
-
-    switch (step) {
-
-      case 'processing':
-        return 1;
-
-      case 'shipped':
-        return 2;
-
-      case 'out_for_delivery':
-        return 3;
-
-      case 'delivered':
-        return 4;
-
-      default:
-        return 1;
-
-    }
-
+    const steps = {
+      pending: 1,
+      processing: 2,
+      processed: 3,
+      sorting: 4,
+      on_delivery: 5,
+      delivered: 6
+    };
+    return steps[step];
   }
-
-
-  /* CHECK COMPLETED STEP */
 
   isStepCompleted(
-    step:
-      | 'processing'
-      | 'shipped'
-      | 'out_for_delivery'
-      | 'delivered'
+    step: 'pending' | 'processing' | 'processed' | 'sorting' | 'on_delivery' | 'delivered'
   ): boolean {
-
-    if (!this.order) {
-
-      return false;
-
-    }
-
-
-    const currentStep =
-      this.getStatusStep(
-        this.order.status
-      );
-
-
-    const stepNumber =
-      this.getStepNumber(
-        step
-      );
-
-    return (
-      currentStep >=
-      stepNumber
-    );
-
+    if (!this.order || this.normalizeStatus(this.order.status) === 'Cancelled') return false;
+    return this.getStatusStep(this.order.status) > this.getStepNumber(step);
   }
-
-
-  /* CHECK CURRENT STEP */
 
   isCurrentStep(
-    step:
-      | 'processing'
-      | 'shipped'
-      | 'out_for_delivery'
-      | 'delivered'
+    step: 'pending' | 'processing' | 'processed' | 'sorting' | 'on_delivery' | 'delivered'
   ): boolean {
-
-    if (!this.order) {
-
-      return false;
-
-    }
-
-
-    const currentStep =
-      this.getStatusStep(
-        this.order.status
-      );
-
-
-    return (
-      currentStep ===
-      this.getStepNumber(step)
-    );
-
+    if (!this.order || this.normalizeStatus(this.order.status) === 'Cancelled') return false;
+    return this.getStatusStep(this.order.status) === this.getStepNumber(step);
   }
-
-
-  /* CHECK REACHED STEP */
 
   isStepReached(
-    step:
-      | 'processing'
-      | 'shipped'
-      | 'out_for_delivery'
-      | 'delivered'
+    step: 'pending' | 'processing' | 'processed' | 'sorting' | 'on_delivery' | 'delivered'
   ): boolean {
-
-    if (!this.order) {
-
-      return false;
-
-    }
-
-
-    const currentStep =
-      this.getStatusStep(
-        this.order.status
-      );
-
-
-    return (
-      currentStep >=
-      this.getStepNumber(step)
-    );
-
+    if (!this.order || this.normalizeStatus(this.order.status) === 'Cancelled') return false;
+    return this.getStatusStep(this.order.status) >= this.getStepNumber(step);
   }
-
 
   /* STATUS MESSAGE */
-
-  getStatusMessage(
-    status: string
-  ): string {
-
-    const normalized =
-      this.normalizeStatus(
-        status
-      );
-
-
-    switch (normalized) {
-
+  getStatusMessage(status: string): string {
+    switch (this.normalizeStatus(status)) {
+      case 'Pending':
+        return 'Your order has been received and is awaiting processing.';
       case 'Processing':
-
         return 'Your order is being prepared.';
-
-
-      case 'Shipped':
-
-        return 'Your order is on its way.';
-
-
-      case 'Out for Delivery':
-
-        return 'Your Botanique order is arriving today.';
-
-
+      case 'Processed':
+        return 'Your order is prepared and ready for sorting.';
+      case 'Order is being sorted':
+        return 'Your parcel is being sorted for delivery.';
+      case 'On delivery':
+        return 'Your Botanique order is on its way.';
       case 'Delivered':
-
         return 'Your order has been delivered.';
-
-
       case 'Cancelled':
-
         return 'This order has been cancelled.';
-
-
       default:
-
         return 'We are preparing your order.';
-
     }
-
   }
-
 
   /* STATUS CSS CLASS */
-
-  getOrderStatusClass(
-    status?: string
-  ): string {
-
-    const normalized =
-      this.normalizeStatus(
-        status
-      );
-
-
-    switch (normalized) {
-
+  getOrderStatusClass(status?: string): string {
+    switch (this.normalizeStatus(status)) {
       case 'Delivered':
-
         return 'status-delivered';
-
-
-      case 'Shipped':
-
-        return 'status-shipped';
-
-
-      case 'Out for Delivery':
-
-        return 'status-shipped';
-
-
+      case 'On delivery':
+        return 'status-on-delivery';
+      case 'Order is being sorted':
+        return 'status-sorting';
+      case 'Processed':
+        return 'status-processed';
       case 'Cancelled':
-
         return 'status-cancelled';
-
-
+      case 'Pending':
+        return 'status-pending';
       default:
-
         return 'status-processing';
-
     }
-
   }
-
 
   /* ITEM COUNT */
 
@@ -1975,7 +1596,7 @@ export class TrackOrderPage implements OnInit {
       this.closeLoginDropdown();
       this.email = '';
       this.password = '';
-      this.loadOrder();
+      void this.loadOrder();
 
       alert(`Welcome back, ${user.fullName || 'Botanique customer'}!`);
     } catch (error: any) {

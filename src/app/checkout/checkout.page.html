@@ -956,7 +956,7 @@
           <button
             type="button"
             class="place-order-btn"
-            [disabled]="cartItems.length === 0"
+            [disabled]="cartItems.length === 0 || placingOrder"
             (click)="placeOrder()"
           >
             Place Order

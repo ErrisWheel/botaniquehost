@@ -8,6 +8,9 @@ import { sendOrderConfirmation } from '../services/orderEmail.js';
 import { mayaConfigured } from '../config.js';
 import { invoice } from '../services/invoice.js';
 import { audit } from '../utils/audit.js';
+import { httpError } from '../utils/httpError.js';
+import { ORDER_STATUSES } from '../services/orderStatus.js';
+import { applyAdminStatusChange } from '../services/adminOrders.js';
 
 const r = Router();
 
@@ -44,7 +47,8 @@ const toCustomerOrder = <T extends { confirmationEmailError?: unknown }>(
     return rest;
 };
 
-async function createOrder(userId: string, b: any) {
+/** Exported for tests; the HTTP route below is the only production caller. */
+export async function createOrder(userId: string, b: any) {
     const cart = await prisma.cart.findUnique({
         where: { userId },
         include: {
@@ -89,6 +93,28 @@ async function createOrder(userId: string, b: any) {
     const t = computePricing(subtotal);
 
     const order = await prisma.$transaction(async (tx) => {
+        // 1. Claim EXACTLY the cart rows that were priced above. Two checkouts
+        //    for the same cart (double click, two tabs, a retry) race on this
+        //    DELETE: the loser finds the rows already gone, matches fewer rows
+        //    than expected and aborts, so one cart can only ever become one
+        //    order. If this transaction later rolls back, the cart is restored.
+        const claimed = await tx.cartItem.deleteMany({
+            where: {
+                cartId: cart.id,
+                OR: cart.items.map((i) => ({
+                    id: i.id,
+                    quantity: i.quantity
+                }))
+            }
+        });
+
+        if (claimed.count !== cart.items.length)
+            throw httpError(
+                409,
+                'Your cart changed or this order was already placed. Please review your cart and try again.',
+                'CART_CHANGED'
+            );
+
         const o = await tx.order.create({
             data: {
                 orderNumber: orderNumber(),
@@ -116,37 +142,52 @@ async function createOrder(userId: string, b: any) {
             }
         });
 
+        // 2. Reserve stock atomically. The WHERE clause only matches while
+        //    enough stock remains AND the price is still the one the customer
+        //    was charged, so simultaneous checkouts can never oversell the last
+        //    unit and an admin price change mid-checkout cannot slip through.
         for (const i of cart.items) {
-            // Atomic: only decrements while enough stock remains, so two
-            // simultaneous checkouts cannot oversell the last unit.
             const dec = await tx.product.updateMany({
                 where: {
                     id: i.productId,
                     status: 'ACTIVE',
+                    price: i.product.price,
                     stock: { gte: i.quantity }
                 },
                 data: { stock: { decrement: i.quantity } }
             });
 
-            if (dec.count === 0)
-                throw Object.assign(
-                    new Error(`Insufficient stock for ${i.product.name}`),
-                    { statusCode: 400 }
+            if (dec.count === 0) {
+                const now = await tx.product.findUnique({
+                    where: { id: i.productId },
+                    select: { price: true }
+                });
+
+                if (now && now.price !== i.product.price)
+                    throw httpError(
+                        409,
+                        `The price of ${i.product.name} just changed. Please review your cart and try again.`,
+                        'PRICE_CHANGED'
+                    );
+
+                throw httpError(
+                    400,
+                    `Insufficient stock for ${i.product.name}`,
+                    'INSUFFICIENT_STOCK'
                 );
+            }
 
             await tx.product.updateMany({
-                where: { id: i.productId, stock: 0 },
+                where: { id: i.productId, stock: 0, status: 'ACTIVE' },
                 data: { status: 'OUT_OF_STOCK' }
             });
         }
 
-        await tx.cartItem.deleteMany({
-            where: { cartId: cart.id }
-        });
-
         return o;
     });
 
+    // The order is already committed: a notification problem must never turn
+    // a successful checkout into an error (the customer would retry).
     await notify(
         userId,
         b.paymentMethod === 'MAYA' ? 'Order received' : 'Order confirmed',
@@ -154,7 +195,7 @@ async function createOrder(userId: string, b: any) {
             ? `Your order ${order.orderNumber} has been received and is waiting for payment.`
             : `Your order ${order.orderNumber} has been received.`,
         'ORDER'
-    );
+    ).catch((e) => console.error('[notify] order notification failed:', e));
 
     // Cash on delivery is confirmed immediately. Maya orders get their
     // confirmation only after Maya verifies the payment.
@@ -209,12 +250,23 @@ r.get(
         )
 );
 
+// Only what the storefront renders for each item (the full product row carries
+// large JSON columns the order screens never use).
+const orderItemProduct = {
+    select: { id: true, slug: true, name: true, image: true }
+} as const;
+
 r.get('/', auth, async (req: any, res) => {
+    // Served by the (userId, createdAt) index. Always the caller's own orders.
     const orders = await prisma.order.findMany({
         where: { userId: req.user.id },
-        include: { items: { include: { product: true } } },
-        orderBy: { createdAt: 'desc' }
+        include: { items: { include: { product: orderItemProduct } } },
+        orderBy: { createdAt: 'desc' },
+        take: 100
     });
+
+    // Account data must never be served from a browser/proxy cache.
+    res.set('Cache-Control', 'no-store');
 
     res.json(orders.map(toCustomerOrder));
 });
@@ -226,7 +278,7 @@ r.get('/:id', auth, async (req: any, res) => {
             userId: req.user.id
         },
         include: {
-            items: { include: { product: true } },
+            items: { include: { product: orderItemProduct } },
             returns: true
         }
     });
@@ -236,6 +288,7 @@ r.get('/:id', auth, async (req: any, res) => {
             .status(404)
             .json({ message: 'Order not found' });
 
+    res.set('Cache-Control', 'no-store');
     res.json(toCustomerOrder(o));
 });
 
@@ -276,6 +329,24 @@ r.post('/:id/return', auth, async (req: any, res, next) => {
                 .status(404)
                 .json({ message: 'Order not found' });
 
+        // Returns only make sense for goods that were actually delivered, and
+        // one open request per order is enough.
+        if (o.status !== 'DELIVERED')
+            return res.status(409).json({
+                message: 'A return can only be requested for a delivered order.',
+                code: 'ORDER_NOT_DELIVERED'
+            });
+
+        const open = await prisma.returnRequest.findFirst({
+            where: { orderId: o.id, status: 'REQUESTED' }
+        });
+
+        if (open)
+            return res.status(409).json({
+                message: 'A return request for this order is already open.',
+                code: 'RETURN_ALREADY_REQUESTED'
+            });
+
         res.status(201).json(
             await prisma.returnRequest.create({
                 data: {
@@ -289,6 +360,12 @@ r.post('/:id/return', auth, async (req: any, res, next) => {
     }
 });
 
+/**
+ * Administrator status change. All rules (allowed transitions, Maya payment
+ * requirement, atomic compare-and-set, exactly-once restock on cancellation)
+ * live in services/orderStatus.ts and are shared with the admin dashboard
+ * endpoint, so both entry points behave identically.
+ */
 r.patch(
     '/admin/:id/status',
     auth,
@@ -296,52 +373,17 @@ r.patch(
     async (req: any, res, next) => {
         try {
             const b = z
-                .object({
-                    status: z.enum([
-                        'PENDING',
-                        'PROCESSING',
-                        'SHIPPED',
-                        'DELIVERED',
-                        'CANCELLED'
-                    ])
-                })
+                .object({ status: z.enum(ORDER_STATUSES) })
                 .parse(req.body);
 
-            const before = await prisma.order.findUnique({
-                where: { id: req.params.id },
-                select: { paymentStatus: true }
-            });
-
-            const o = await prisma.order.update({
-                where: { id: req.params.id },
-                data: {
-                    status: b.status,
-                    paymentStatus:
-                        b.status === 'CANCELLED'
-                            ? before?.paymentStatus === 'PAID'
-                                ? 'REFUNDED'
-                                : 'CANCELLED'
-                            : undefined
-                },
-                include: { items: true }
-            });
-
-            await notify(
-                o.userId || undefined,
-                'Order status updated',
-                `Order ${o.orderNumber} is now ${b.status}.`,
-                'ORDER'
+            res.json(
+                await applyAdminStatusChange(
+                    prisma,
+                    req.user.id,
+                    String(req.params.id),
+                    b.status
+                )
             );
-
-            await audit(
-                req.user.id,
-                'UPDATE_STATUS',
-                'Order',
-                o.id,
-                { status: b.status }
-            );
-
-            res.json(o);
         } catch (e) {
             next(e);
         }
@@ -384,9 +426,32 @@ r.post(
                 })
                 .parse(req.body);
 
+            const ret = await prisma.returnRequest.findUnique({
+                where: { id: req.params.id },
+                include: { order: { select: { total: true } } }
+            });
+
+            if (!ret)
+                return res
+                    .status(404)
+                    .json({ message: 'Return request not found' });
+
+            // A refund can never exceed what the customer paid, and a REFUNDED
+            // return always records an amount (full order total by default) so
+            // the dashboard's revenue can subtract it.
+            const refundAmount =
+                b.status === 'REFUNDED'
+                    ? Math.min(b.refundAmount ?? ret.order.total, ret.order.total)
+                    : b.refundAmount;
+
             const x = await prisma.returnRequest.updateMany({
                 where: { id: req.params.id },
-                data: b
+                data: { ...b, refundAmount: refundAmount === undefined ? undefined : Math.round(refundAmount) }
+            });
+
+            await audit(req.user.id, 'UPDATE_RETURN', 'ReturnRequest', req.params.id, {
+                status: b.status,
+                refundAmount
             });
 
             res.json(x);

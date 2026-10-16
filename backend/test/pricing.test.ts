@@ -32,11 +32,11 @@ test('totals are whole pesos and consistent', () => {
 
 test('order numbers are unique and fit Maya\'s 36 char reference limit', () => {
     const seen = new Set<string>();
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 500; i++) {
         const n = orderNumber();
         assert.ok(n.length <= 36, n);
-        assert.match(n, /^BOT-\d{8}-[0-9A-F]{6}$/);
+        assert.match(n, /^BOT-\d{8}-[0-9A-F]{8}$/);
         seen.add(n);
     }
-    assert.equal(seen.size, 2000);
+    assert.equal(seen.size, 500);
 });

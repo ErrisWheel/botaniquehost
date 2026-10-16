@@ -54,7 +54,7 @@ This also covers the old default admin `admin@botanique.local` (password unchang
 ### First administrator
 - Existing admin row: run the import above, log in with the same credentials, then change the password in *Profile → Change password*.
 - Fresh database: set `SEED_ADMIN_EMAIL` in `backend/.env` before seeding, register that e-mail in the app, click the verification link Firebase e-mails you, log in. The seeded row is linked to your Firebase login on first sign-in.
-- More admins: Admin panel → create admin (creates the Firebase login + row).
+- More admins: Admin panel → Accounts → *New account* (role Administrator; creates the Firebase login + row, no password is typed - the person uses *Forgot password*), or provision the team with `npm run admins:provision` (see `docs/ADMIN_AND_MIGRATION.md`).
 
 ## 3. Database migration (run against YOUR database)
 
@@ -68,7 +68,7 @@ npx prisma migrate status      # shows the new migration as pending
 npx prisma migrate deploy      # applies it
 npx prisma generate
 ```
-`npm run dev` and `npm start` already run `prisma migrate deploy` for you. The seed no longer creates a default admin.
+`npm run dev` and `npm start` no longer run `prisma migrate deploy` or the seed automatically - run `npm run db:migrate:deploy` yourself (and `npm run prisma:seed` if you want missing catalogue rows added; it never overwrites existing data). The seed does not create a default admin. See `docs/ADMIN_AND_MIGRATION.md` for the full, safe deployment steps.
 
 ## 4. Maya (sandbox)
 

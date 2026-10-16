@@ -71,6 +71,13 @@ export const routes: Routes = [
     loadComponent: () => import('./profile/profile.page').then(m => m.ProfilePage)
   },
   {
+    // Explicit order route: opening Track Order from a particular history row
+    // must retain that exact order, even when Ionic reuses cached pages.
+    path: 'track-order/:orderId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./track-order/track-order.page').then(m => m.TrackOrderPage)
+  },
+  {
     path: 'track-order',
     canActivate: [authGuard],
     loadComponent: () => import('./track-order/track-order.page').then(m => m.TrackOrderPage)
