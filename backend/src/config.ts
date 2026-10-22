@@ -51,6 +51,7 @@ const schema = z.object({
     EMAILJS_PRIVATE_KEY: optionalString,
     EMAILJS_SERVICE_ID: optionalString,
     EMAILJS_ORDER_TEMPLATE_ID: optionalString,
+    EMAILJS_CONTACT_TEMPLATE_ID: optionalString,
     // Optional generic template used for in-app notification e-mails.
     EMAILJS_NOTIFICATION_TEMPLATE_ID: optionalString,
     // Shown in the e-mail footer (optional).

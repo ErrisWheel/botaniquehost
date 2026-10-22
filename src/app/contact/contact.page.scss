@@ -431,6 +431,12 @@ select {
   transform: translateY(0);
   box-shadow: none;
 }
+.contact-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 /* CONTACT INFORMATION CARD */
 .contact-info-card {
   min-width: 0;

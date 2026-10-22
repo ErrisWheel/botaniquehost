@@ -189,6 +189,16 @@ export class ProductPage implements OnInit {
 
   }
 
+  private skipInitialRatingRefresh = true;
+
+  ionViewWillEnter(): void {
+    if (this.skipInitialRatingRefresh) {
+      this.skipInitialRatingRefresh = false;
+      return;
+    }
+    void this.loadRatingSummaries();
+  }
+
   private async loadRatingSummaries(): Promise<void> {
     try {
       const response = await fetch(`${environment.apiUrl}/reviews/summary`, { cache: 'no-store' });

@@ -47,6 +47,7 @@ export class ProductDetailPage implements OnInit {
   reviewFeedbackError = false;
   private reviewsLoadSeq = 0;
   private reviewOrdersLoadSeq = 0;
+  private skipInitialReviewsRefresh = true;
   readonly reviewStars = [1, 2, 3, 4, 5];
 
   get averageRating(): number | null {
@@ -112,6 +113,17 @@ export class ProductDetailPage implements OnInit {
 
 
   /* INIT */
+
+  ionViewWillEnter(): void {
+    if (this.skipInitialReviewsRefresh) {
+      this.skipInitialReviewsRefresh = false;
+      return;
+    }
+    if (this.productId) {
+      void this.loadReviews();
+      void this.loadReviewOrders();
+    }
+  }
 
   ngOnInit(): void {
 

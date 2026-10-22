@@ -681,6 +681,14 @@
             </p>
           </div>
 
+          <div class="receipt-confirmation" *ngIf="normalizeStatus(order.status) === 'On delivery'">
+            <p>Has your order arrived? Confirm once you have received your items.</p>
+            <p class="receipt-error" *ngIf="receiptError" role="alert">{{ receiptError }}</p>
+            <button class="primary-button" type="button" [disabled]="receiptSubmitting" (click)="confirmOrderReceived()">
+              {{ receiptSubmitting ? 'Confirming receipt…' : 'Order Received' }}
+            </button>
+          </div>
+
         </section>
 
 
@@ -907,12 +915,12 @@
 
         </section>
 
-        <!-- STATIC MAP FROM STORE TO THIS ORDER'S DESTINATION; NO RIDER GPS IS IMPLIED. -->
-        <section class="order-map-card" aria-labelledby="order-map-title">
+        <!-- Delivery map is available only once an order is on delivery or delivered. -->
+        <section class="order-map-card" *ngIf="shouldShowOrderMap" aria-labelledby="order-map-title">
           <div class="card-heading">
             <div>
               <p class="eyebrow">DELIVERY MAP</p>
-              <h2 id="order-map-title">Store to delivery destination</h2>
+              <h2 id="order-map-title">{{ normalizeStatus(order.status) === 'Delivered' ? 'Delivered to your address' : 'Store to delivery destination' }}</h2>
             </div>
             <span class="map-status">{{ order.status }}</span>
           </div>
@@ -925,7 +933,7 @@
               referrerpolicy="no-referrer-when-downgrade"
               allowfullscreen
             ></iframe>
-            <p>This is a route/map preview, not real-time rider GPS tracking.</p>
+            <p>{{ normalizeStatus(order.status) === 'Delivered' ? 'The map is centered on your delivery address. This is not rider GPS tracking.' : 'This is a route preview, not real-time rider GPS tracking.' }}</p>
             <a [href]="mapDirectionsUrl" target="_blank" rel="noopener noreferrer">Open directions in Google Maps</a>
           </div>
 
@@ -1035,6 +1043,50 @@
 
 
   <!-- FOOTER -->
+
+  <!-- OPTIONAL POST-DELIVERY REVIEW MODAL -->
+  <div class="received-review-backdrop" *ngIf="reviewModalOpen" (click)="closeReviewModal()">
+    <section class="received-review-modal" role="dialog" aria-modal="true" aria-labelledby="received-review-title" (click)="$event.stopPropagation()">
+      <header class="received-review-header">
+        <div class="received-review-brand">
+          <img src="assets/images/logo.png" alt="Botanique" />
+          <div><p class="eyebrow">ORDER RECEIVED</p><h2 id="received-review-title">How was your experience?</h2></div>
+        </div>
+        <button type="button" class="received-review-close" aria-label="Close review dialog" (click)="closeReviewModal()">×</button>
+      </header>
+      <div class="received-review-body">
+        <p class="review-modal-intro">Your order is marked delivered. Reviews are completely optional—you can review the product, Botanique, both, or skip for now.</p>
+        <section class="received-review-section" *ngIf="reviewableItems.length">
+          <h3>Review a product</h3>
+          <label class="review-modal-label" for="received-review-product">Product</label>
+          <select id="received-review-product" [(ngModel)]="reviewProductSelection" name="reviewProductSelection">
+            <option *ngFor="let item of reviewableItems" [value]="item.productSlug || item.productId">{{ item.name }}</option>
+          </select>
+          <span class="review-modal-label">Your rating</span>
+          <div class="received-review-stars" role="group" aria-label="Rate the product">
+            <button *ngFor="let star of reviewStars" type="button" [class.selected]="productReviewRating >= star" [attr.aria-pressed]="productReviewRating === star" [attr.aria-label]="'Rate product ' + star + ' out of 5'" (click)="productReviewRating = star">★</button>
+          </div>
+          <label class="review-modal-label" for="received-product-comment">Written feedback (optional)</label>
+          <textarea id="received-product-comment" name="productReviewComment" [(ngModel)]="productReviewComment" rows="3" maxlength="2000" placeholder="Share what you liked about the product."></textarea>
+          <p class="review-modal-feedback" *ngIf="productReviewFeedback" [class.error]="productReviewFeedbackError" role="status">{{ productReviewFeedback }}</p>
+          <button class="review-modal-submit" type="button" [disabled]="productReviewSubmitting || productReviewRating < 1 || !reviewProductSelection" (click)="submitProductReviewFromOrder()">{{ productReviewSubmitting ? 'Saving…' : 'Submit product review' }}</button>
+        </section>
+        <section class="received-review-section">
+          <h3>Review Botanique</h3>
+          <p class="store-rating-summary" *ngIf="storeReviewSummary.count">Current store rating: {{ storeReviewSummary.average | number:'1.1-1' }} / 5 ({{ storeReviewSummary.count }} {{ storeReviewSummary.count === 1 ? 'review' : 'reviews' }})</p>
+          <span class="review-modal-label">Your rating</span>
+          <div class="received-review-stars" role="group" aria-label="Rate Botanique">
+            <button *ngFor="let star of reviewStars" type="button" [class.selected]="storeReviewRating >= star" [attr.aria-pressed]="storeReviewRating === star" [attr.aria-label]="'Rate Botanique ' + star + ' out of 5'" (click)="storeReviewRating = star">★</button>
+          </div>
+          <label class="review-modal-label" for="received-store-comment">Written feedback (optional)</label>
+          <textarea id="received-store-comment" name="storeReviewComment" [(ngModel)]="storeReviewComment" rows="3" maxlength="2000" placeholder="Share your experience with our store."></textarea>
+          <p class="review-modal-feedback" *ngIf="storeReviewFeedback" [class.error]="storeReviewFeedbackError" role="status">{{ storeReviewFeedback }}</p>
+          <button class="review-modal-submit" type="button" [disabled]="storeReviewSubmitting || storeReviewRating < 1" (click)="submitStoreReviewFromOrder()">{{ storeReviewSubmitting ? 'Saving…' : 'Submit store review' }}</button>
+        </section>
+      </div>
+      <footer class="received-review-footer"><button type="button" class="received-review-later" (click)="closeReviewModal()">Maybe later</button><button type="button" class="primary-button" (click)="closeReviewModal()">Done</button></footer>
+    </section>
+  </div>
 
   <footer class="footer">
 

@@ -226,6 +226,49 @@ r.post('/', auth, async (req: any, res, next) => {
     }
 });
 
+/** Customer confirms receipt only for their own ON_DELIVERY order. */
+r.post('/:id/received', auth, async (req: any, res, next) => {
+    try {
+        const result = await prisma.$transaction(async (tx: any) => {
+            const order = await tx.order.findFirst({
+                where: { id: String(req.params.id), userId: req.user.id },
+                include: { items: { include: { product: orderItemProduct } } }
+            });
+            if (!order) throw httpError(404, 'Order not found');
+            if (order.status === 'DELIVERED') return { order, changed: false };
+            if (order.status !== 'ON_DELIVERY') {
+                throw httpError(409, 'You can confirm receipt only when your order is marked On delivery.', 'ORDER_NOT_ON_DELIVERY');
+            }
+            const data: Record<string, unknown> = { status: 'DELIVERED' };
+            if (order.paymentMethod === 'COD' && order.paymentStatus === 'PENDING') {
+                data.paymentStatus = 'PAID';
+                data.paidAt = new Date();
+            }
+            const updated = await tx.order.updateMany({
+                where: { id: order.id, userId: req.user.id, status: 'ON_DELIVERY' }, data
+            });
+            if (updated.count !== 1) {
+                const current = await tx.order.findFirst({
+                    where: { id: order.id, userId: req.user.id },
+                    include: { items: { include: { product: orderItemProduct } } }
+                });
+                if (current?.status === 'DELIVERED') return { order: current, changed: false };
+                throw httpError(409, 'The order status changed. Refresh and try again.', 'CONCURRENT_CHANGE');
+            }
+            const fresh = await tx.order.findUniqueOrThrow({
+                where: { id: order.id }, include: { items: { include: { product: orderItemProduct } } }
+            });
+            return { order: fresh, changed: true };
+        });
+        if (result.changed) {
+            await notify(req.user.id, 'Order received', `You confirmed that order ${result.order.orderNumber} has been received.`, 'ORDER')
+                .catch((e) => console.error('[notify] receipt confirmation notification failed:', e));
+        }
+        res.set('Cache-Control', 'no-store');
+        res.json(result);
+    } catch (e) { next(e); }
+});
+
 r.get(
     '/admin/all',
     auth,

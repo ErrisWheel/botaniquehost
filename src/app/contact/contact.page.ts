@@ -77,6 +77,8 @@ export class ContactPage implements OnInit {
 
   /* CONTACT FORM */
 
+  contactSubmitting = false;
+
   contact: ContactForm = {
     name: '',
     email: '',
@@ -621,74 +623,48 @@ export class ContactPage implements OnInit {
 
   /* CONTACT FORM SUBMIT */
 
-  submitContactForm(form: NgForm): void {
-    if (!form || form.invalid) {
+  async submitContactForm(form: NgForm): Promise<void> {
+    if (!form || form.invalid || this.contactSubmitting) {
       form?.control.markAllAsTouched();
-
-      alert('Please complete all required fields before sending your message.');
-
+      if (form?.invalid) alert('Please complete all required fields before sending your message.');
       return;
     }
 
     const name = this.contact.name.trim();
-
     const email = this.contact.email.trim();
-
     const phone = this.contact.phone.trim();
-
     const subject = this.contact.subject;
-
     const message = this.contact.message.trim();
-
-    if (!name || !email || !subject || !message) {
+    if (!name || !email || !subject || message.length < 5) {
       alert('Please complete all required fields.');
-
       return;
     }
 
-    const submission = {
-      id: Date.now(),
-      name,
-      email,
-      phone,
-      subject,
-      message,
-      createdAt: new Date().toISOString(),
-    };
-
+    this.contactSubmitting = true;
     try {
-      const storageKey = 'botaniqueContactMessages';
+      const token = this.authService.isLoggedIn ? await this.authService.getToken().catch(() => null) : null;
+      const response = await fetch(`${environment.apiUrl}/support`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ name, email, phone, subject, message }),
+        cache: 'no-store'
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.message || 'Unable to send your message. Please try again.');
 
-      const storedMessages = localStorage.getItem(storageKey);
-
-      let messages: any[] = storedMessages ? JSON.parse(storedMessages) : [];
-
-      if (!Array.isArray(messages)) {
-        messages = [];
+      this.addContactNotification();
+      if (result?.emailSent === true) {
+        alert('Thank you for contacting Botanique! Your message was sent to our support team.');
+      } else {
+        alert('Your message was saved for the Botanique team, but the store email notification could not be sent. Please contact the store using the contact details shown on this page.');
       }
-
-      messages.push(submission);
-
-      localStorage.setItem(storageKey, JSON.stringify(messages));
-    } catch (error) {
-      console.error('Unable to save contact message:', error);
+      this.contact = { name: '', email: this.getCurrentUserEmail(), phone: '', subject: '', message: '' };
+      form.resetForm(this.contact);
+    } catch (error: any) {
+      alert(error?.message || 'Unable to send your message. Please check your connection and try again.');
+    } finally {
+      this.contactSubmitting = false;
     }
-
-    this.addContactNotification();
-
-    alert(
-      'Thank you for contacting Botanique! We received your message and will get back to you within 24 hours.',
-    );
-
-    this.contact = {
-      name: '',
-      email: this.getCurrentUserEmail(),
-      phone: '',
-      subject: '',
-      message: '',
-    };
-
-    form.resetForm(this.contact);
   }
 
   /* GET CURRENT USER EMAIL */

@@ -388,8 +388,8 @@
 
             <!-- SUBMIT -->
             <div class="contact-submit">
-              <button type="submit" class="contact-submit-btn">
-                Send Message →
+              <button type="submit" class="contact-submit-btn" [disabled]="contactSubmitting">
+                {{ contactSubmitting ? 'Sending…' : 'Send Message →' }}
               </button>
             </div>
           </div>

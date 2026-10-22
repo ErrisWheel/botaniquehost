@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../shared/auth.service';
-import { ApiError } from '../shared/api.service';
+import { ApiService, ApiError } from '../shared/api.service';
 import { OrdersService } from '../shared/orders.service';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -19,7 +19,8 @@ interface OrderItem {
   image: string;
   price: number;
   quantity: number;
-  
+  productId?: string;
+  productSlug?: string;
 }
 
 /* =========================================================
@@ -79,6 +80,7 @@ export class TrackOrderPage implements OnInit {
 
   private readonly authService = inject(AuthService);
   private readonly ordersService = inject(OrdersService);
+  private readonly api = inject(ApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly sanitizer = inject(DomSanitizer);
 
@@ -105,6 +107,22 @@ export class TrackOrderPage implements OnInit {
   order: Order | null = null;
   mapEmbedUrl: SafeResourceUrl | null = null;
   mapDirectionsUrl = '';
+  receiptSubmitting = false;
+  receiptError = '';
+  reviewModalOpen = false;
+  productReviewSubmitting = false;
+  storeReviewSubmitting = false;
+  reviewProductSelection = '';
+  productReviewRating = 0;
+  productReviewComment = '';
+  storeReviewRating = 0;
+  storeReviewComment = '';
+  productReviewFeedback = '';
+  productReviewFeedbackError = false;
+  storeReviewFeedback = '';
+  storeReviewFeedbackError = false;
+  storeReviewSummary: { average: number | null; count: number } = { average: null, count: 0 };
+  readonly reviewStars = [1, 2, 3, 4, 5];
   orders: Order[] = [];
   ordersLoading = false;
   ordersError = '';
@@ -116,6 +134,20 @@ export class TrackOrderPage implements OnInit {
 
   get isDetailView(): boolean {
     return !!this.orderId;
+  }
+
+  get shouldShowOrderMap(): boolean {
+    const status = this.order ? this.normalizeStatus(this.order.status) : '';
+    return status === 'On delivery' || status === 'Delivered';
+  }
+
+  get reviewableItems(): OrderItem[] {
+    return (this.order?.items || []).filter((item) => !!(item.productSlug || item.productId));
+  }
+
+  reviewStarsFor(rating: number): string {
+    const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled);
   }
 
   get filteredOrders(): Order[] {
@@ -512,6 +544,12 @@ export class TrackOrderPage implements OnInit {
             id:
               item?.id,
 
+            productId:
+              String(item?.productId || item?.product?.id || ''),
+
+            productSlug:
+              String(item?.product?.slug || ''),
+
             name:
               item?.productName ||
               item?.name ||
@@ -713,21 +751,108 @@ export class TrackOrderPage implements OnInit {
   }
 
   private prepareOrderMap(order: Order | null): void {
-    const destination = String(order?.address || '').trim();
-    if (!destination) {
+    const status = order ? this.normalizeStatus(order.status) : '';
+    const rawDestination: any = order?.address;
+    const destination = (typeof rawDestination === 'string' ? rawDestination : this.formatAddress(rawDestination)).trim();
+    if (!order || !['On delivery', 'Delivered'].includes(status) || !destination) {
       this.mapEmbedUrl = null;
       this.mapDirectionsUrl = '';
       return;
     }
-
+    const target = encodeURIComponent(destination);
+    if (status === 'Delivered') {
+      this.mapEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(`https://maps.google.com/maps?q=${target}&output=embed`);
+      this.mapDirectionsUrl = `https://www.google.com/maps/search/?api=1&query=${target}`;
+      return;
+    }
     const store = 'Botanique Studio, 938 Aurora Boulevard, Cubao, Quezon City';
     const origin = encodeURIComponent(store);
-    const target = encodeURIComponent(destination);
-    this.mapEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
-      `https://maps.google.com/maps?saddr=${origin}&daddr=${target}&output=embed`
-    );
-    this.mapDirectionsUrl =
-      `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${target}`;
+    this.mapEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(`https://maps.google.com/maps?saddr=${origin}&daddr=${target}&output=embed`);
+    this.mapDirectionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${target}`;
+  }
+
+  async confirmOrderReceived(): Promise<void> {
+    if (!this.order || this.normalizeStatus(this.order.status) !== 'On delivery' || this.receiptSubmitting) return;
+    this.receiptSubmitting = true;
+    this.receiptError = '';
+    this.cdr.markForCheck();
+    try {
+      const result = await this.api.request<any>(`/orders/${encodeURIComponent(this.order.id)}/received`, { method: 'POST' });
+      this.order = this.normalizeOrder(result?.order || result);
+      this.prepareOrderMap(this.order);
+      this.ordersService.invalidate();
+      this.reviewProductSelection = this.reviewableItems[0]?.productSlug || this.reviewableItems[0]?.productId || '';
+      this.productReviewRating = 0;
+      this.productReviewComment = '';
+      this.storeReviewRating = 0;
+      this.storeReviewComment = '';
+      this.productReviewFeedback = '';
+      this.storeReviewFeedback = '';
+      this.reviewModalOpen = true;
+      void this.loadStoreReviewSummary();
+    } catch (error: any) {
+      this.receiptError = error instanceof ApiError ? error.message : 'Unable to confirm receipt right now. Please try again.';
+    } finally {
+      this.receiptSubmitting = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  closeReviewModal(): void {
+    this.reviewModalOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  private async loadStoreReviewSummary(): Promise<void> {
+    try {
+      this.storeReviewSummary = await this.api.request<{ average: number | null; count: number }>('/reviews/store/summary');
+    } catch {
+      this.storeReviewSummary = { average: null, count: 0 };
+    }
+    this.cdr.markForCheck();
+  }
+
+  async submitProductReviewFromOrder(): Promise<void> {
+    if (!this.order || !this.reviewProductSelection || this.productReviewRating < 1 || this.productReviewSubmitting) return;
+    this.productReviewSubmitting = true;
+    this.productReviewFeedback = '';
+    try {
+      await this.api.request(`/reviews/product/${encodeURIComponent(this.reviewProductSelection)}`, {
+        method: 'POST', body: { orderId: this.order.id, rating: this.productReviewRating, comment: this.productReviewComment.trim() || undefined }
+      });
+      this.productReviewFeedback = 'Thank you. Your product review has been saved.';
+      this.productReviewFeedbackError = false;
+      this.productReviewRating = 0;
+      this.productReviewComment = '';
+    } catch (error: any) {
+      this.productReviewFeedback = error?.message || 'Unable to save your product review. Please try again.';
+      this.productReviewFeedbackError = true;
+    } finally {
+      this.productReviewSubmitting = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  async submitStoreReviewFromOrder(): Promise<void> {
+    if (!this.order || this.storeReviewRating < 1 || this.storeReviewSubmitting) return;
+    this.storeReviewSubmitting = true;
+    this.storeReviewFeedback = '';
+    try {
+      await this.api.request('/reviews/store', {
+        method: 'POST', body: { orderId: this.order.id, rating: this.storeReviewRating, comment: this.storeReviewComment.trim() || undefined }
+      });
+      this.storeReviewFeedback = 'Thank you. Your store review has been saved.';
+      this.storeReviewFeedbackError = false;
+      this.storeReviewRating = 0;
+      this.storeReviewComment = '';
+      await this.loadStoreReviewSummary();
+    } catch (error: any) {
+      this.storeReviewFeedback = error?.message || 'Unable to save your store review. Please try again.';
+      this.storeReviewFeedbackError = true;
+    } finally {
+      this.storeReviewSubmitting = false;
+      this.cdr.markForCheck();
+    }
   }
 
   paymentStatusLabel(status?: string): string {

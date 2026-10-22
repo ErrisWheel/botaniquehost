@@ -106,6 +106,15 @@ For the branded custom reset/verification action page and Firebase template setu
 
 Payment rules enforced by the server: prices come from the DB; discount/shipping/tax/total are recomputed on the server; the order is marked **PAID only after the backend fetches the payment from Maya with the secret key and it is `PAYMENT_SUCCESS` for the same reference number, PHP, and exactly the stored total**. Redirect URLs and webhook bodies are never believed. Duplicate callbacks are no-ops (unique `PaymentEvent.eventKey` + atomic updates).
 
+## EmailJS contact-form delivery
+
+The Contact Us form saves a support ticket through `POST /api/support` and attempts a server-side EmailJS notification to the store inbox. Configure these backend environment variables in Render and local `backend/.env`:
+
+- `EMAILJS_SUPPORT_EMAIL`: the store inbox that should receive contact messages.
+- `EMAILJS_CONTACT_TEMPLATE_ID`: a dedicated EmailJS template ID for contact-form notifications.
+
+Use `docs/emailjs/contact-message.html` as the template body. Set the EmailJS template **To Email** field to `{{to_email}}`, **Subject** to `{{message_subject}}`, and Reply-To to `{{sender_email}}`. The backend supplies `to_email` from `EMAILJS_SUPPORT_EMAIL`; never accept the recipient from the browser. If the template is not configured or email delivery fails, the support ticket remains saved and the contact page reports that the email notification did not send.
+
 ## 5. EmailJS
 
 1. https://dashboard.emailjs.com → **Email Services → Add New Service** (Gmail/Outlook/etc.) → copy the **Service ID**.
