@@ -306,6 +306,7 @@ r.get('/:id/invoice', auth, async (req: any, res) => {
             .status(404)
             .json({ message: 'Order not found' });
 
+    res.set('Cache-Control', 'no-store');
     invoice(res, o);
 });
 

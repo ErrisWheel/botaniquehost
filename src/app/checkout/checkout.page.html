@@ -317,6 +317,9 @@
 
    <!-- CHECKOUT PAGE -->
   <main class="checkout-page">
+    <div class="checkout-notice" role="status" *ngIf="checkoutNotice">
+      {{ checkoutNotice }}
+    </div>
 
     <div class="wrap">
 

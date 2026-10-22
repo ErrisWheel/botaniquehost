@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL_POOLED")
+  directUrl = env("DATABASE_URL")
 }
 
 model User {
@@ -255,6 +256,10 @@ model Review {
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // One review per customer and product. A later submission updates the
+  // existing review instead of creating duplicates.
+  @@unique([userId, productId])
 }
 
 model SupportTicket {

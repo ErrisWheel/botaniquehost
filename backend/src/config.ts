@@ -10,6 +10,7 @@ const schema = z.object({
     PORT: z.coerce.number().default(3000),
     NODE_ENV: z.string().default('development'),
     DATABASE_URL: z.string(),
+    DATABASE_URL_POOLED: z.string(),
     CORS_ORIGIN: z
         .string()
         .default('http://localhost:8100,http://localhost:4200'),

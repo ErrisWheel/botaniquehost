@@ -588,8 +588,10 @@
               </span>
 
               <span class="stars">
-                ★★★★★
+                {{ ratingStars(product.id) }}
               </span>
+
+              <small class="rating-count">{{ ratingCountLabel(product.id) }}</small>
 
             </div>
 

@@ -4,7 +4,7 @@ import { AuthService } from '../shared/auth.service';
 import { OrdersService } from '../shared/orders.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertController } from '@ionic/angular';
 
 interface CartItem {
@@ -51,10 +51,12 @@ export class CheckoutPage implements OnInit {
 
   private readonly authService = inject(AuthService);
   private readonly ordersService = inject(OrdersService);
+  private readonly route = inject(ActivatedRoute);
 
   // True while an order is being submitted: blocks double clicks, which would
   // otherwise run two cart syncs and two order requests at the same time.
   placingOrder = false;
+  checkoutNotice = '';
 
   
   // NAVBAR
@@ -187,6 +189,28 @@ philippineRegions: string[] = [
     this.loadCart();
     this.loadUser();
     this.refreshNavbarCounts();
+
+  }
+
+  ionViewWillEnter(): void {
+    // Ionic keeps pages alive in its navigation stack; reload the restored
+    // browser cart when returning from Maya rather than relying on ngOnInit.
+    this.loadCart();
+    this.refreshNavbarCounts();
+
+    if (this.route.snapshot.queryParamMap.get('mayaCancelled') === '1') {
+      this.checkoutNotice = 'Your previous Maya payment was cancelled or expired. Your cart has been restored. Choose another payment method or try Maya again.';
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { mayaCancelled: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    }
+  }
+
+  ionViewDidLeave(): void {
+    this.checkoutNotice = '';
   }
 
 
@@ -1374,6 +1398,20 @@ philippineRegions: string[] = [
       // and mark any request that started before this order as outdated so
       // Order History / Track Order load the new order from the API.
       this.ordersService.invalidate();
+
+      // Keep the exact cart snapshot through the Maya redirect. Maya's hosted
+      // checkout can be cancelled, in which case the payment-result page uses
+      // this snapshot (or the authenticated order record) to restore checkout.
+      if (paymentMethod === 'MAYA') {
+        try {
+          sessionStorage.setItem(
+            `botaniqueMayaCart:${String(data.id)}`,
+            JSON.stringify(this.cartItems)
+          );
+        } catch {
+          // Payment-result recovery can rebuild items from the owned order.
+        }
+      }
 
       // -----------------------------
       // DO NOT MANUALLY CLEAR

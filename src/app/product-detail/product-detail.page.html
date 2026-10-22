@@ -455,24 +455,12 @@
 
         <!-- RATING -->
 
-        <div class="detail-rating">
-
-          <span class="stars">
-            ★★★★★
-          </span>
-
-          <span>
-            5.0
-          </span>
-
-          <span>
-            •
-          </span>
-
-          <span>
-            Botanique favorite
-          </span>
-
+        <div class="detail-rating" aria-label="Customer rating">
+          <span class="stars">{{ averageRating === null ? '☆☆☆☆☆' : reviewStarsFor(averageRating) }}</span>
+          <span *ngIf="averageRating !== null">{{ averageRating | number:'1.1-1' }}</span>
+          <span *ngIf="averageRating === null">No ratings yet</span>
+          <span>•</span>
+          <span>{{ reviews.length }} {{ reviews.length === 1 ? 'review' : 'reviews' }}</span>
         </div>
 
 
@@ -844,6 +832,65 @@
 
       </div>
 
+    </section>
+
+
+    <section *ngIf="product" class="reviews-section" aria-labelledby="reviews-title">
+      <div class="reviews-heading">
+        <div>
+          <p class="reviews-eyebrow">CUSTOMER EXPERIENCES</p>
+          <h2 id="reviews-title">Reviews &amp; Ratings</h2>
+          <p>Read feedback from customers who purchased this plant.</p>
+        </div>
+      </div>
+
+      <p class="reviews-state" *ngIf="reviewsLoading" role="status">Loading reviews…</p>
+      <p class="reviews-state" *ngIf="reviewsLoadError" role="alert">{{ reviewsLoadError }}</p>
+      <p class="reviews-state" *ngIf="!reviewsLoading && !reviewsLoadError && reviews.length === 0">No approved reviews yet. Be the first to share your experience after delivery.</p>
+
+      <div class="reviews-list" *ngIf="!reviewsLoading && !reviewsLoadError && reviews.length">
+        <article class="review-card" *ngFor="let review of reviews">
+          <div class="review-card-top">
+            <span class="review-stars" [attr.aria-label]="review.rating + ' out of 5 stars'">{{ reviewStarsFor(review.rating) }}</span>
+            <span class="review-date">{{ review.createdAt | date:'mediumDate' }}</span>
+          </div>
+          <h3>{{ review.user?.fullName || 'Botanique customer' }}</h3>
+          <p>{{ review.comment }}</p>
+        </article>
+      </div>
+
+      <div class="review-form-card">
+        <h3>Share your experience</h3>
+        <p class="review-form-intro">Reviews are available for customers with a delivered order containing this product.</p>
+
+        <p *ngIf="!isLoggedIn" class="reviews-state">Please log in to submit a review.</p>
+        <p *ngIf="isLoggedIn && reviewOrdersLoading" class="reviews-state" role="status">Checking your delivered orders…</p>
+        <p *ngIf="isLoggedIn && reviewOrdersError" class="reviews-state" role="alert">{{ reviewOrdersError }}</p>
+        <p *ngIf="isLoggedIn && !reviewOrdersLoading && !reviewOrdersError && reviewOrders.length === 0" class="reviews-state">You can submit a review once this product has been delivered as part of one of your orders.</p>
+
+        <form *ngIf="isLoggedIn && reviewOrders.length > 0" (ngSubmit)="submitReview()">
+          <label for="review-order">Delivered order</label>
+          <select id="review-order" name="reviewOrderId" [(ngModel)]="reviewOrderId" required>
+            <option *ngFor="let order of reviewOrders" [value]="order.id">
+              Order {{ order.orderNumber || order.id }} · {{ order.createdAt | date:'mediumDate' }}
+            </option>
+          </select>
+
+          <fieldset class="review-rating-picker">
+            <legend>Your rating</legend>
+            <div class="review-star-buttons">
+              <button *ngFor="let star of reviewStars" type="button" [class.selected]="reviewRating >= star" [attr.aria-pressed]="reviewRating === star" [attr.aria-label]="'Rate ' + star + ' out of 5 stars'" (click)="reviewRating = star">★</button>
+            </div>
+          </fieldset>
+
+          <label for="review-comment">Your review</label>
+          <textarea id="review-comment" name="reviewComment" [(ngModel)]="reviewComment" rows="4" maxlength="2000" required placeholder="What was your experience with this plant?"></textarea>
+          <p class="review-feedback" *ngIf="reviewFeedback" [class.error]="reviewFeedbackError" role="status">{{ reviewFeedback }}</p>
+          <button class="review-submit" type="submit" [disabled]="reviewSubmitting || reviewRating < 1 || !reviewComment.trim() || !reviewOrderId">
+            {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
+          </button>
+        </form>
+      </div>
     </section>
 
   </main>

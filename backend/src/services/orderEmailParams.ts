@@ -44,7 +44,14 @@ export function buildOrderEmailParams(
     const customer = (o.customerJson ?? {}) as Record<string, unknown>;
     const delivery = (o.deliveryJson ?? {}) as Record<string, unknown>;
 
-    const email = o.user?.email || str(customer.email);
+    // For linked orders, the recipient comes only from the authenticated
+    // account row. Checkout form data is not allowed to redirect a receipt.
+    // Legacy orders without a linked account retain their stored receipt e-mail.
+    const email = (o.userId
+        ? str(o.user?.email)
+        : str(customer.email))
+        .trim()
+        .toLowerCase();
     const name = o.user?.fullName || str(customer.fullName) || 'Customer';
 
     const itemsText = o.items

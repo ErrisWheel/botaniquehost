@@ -193,6 +193,13 @@ export class ContactPage implements OnInit {
 
   /* CONTACT */
 
+  goToFaq(event?: Event): void {
+    event?.preventDefault();
+    this.closeMenu();
+    this.loginDropdownOpen = false;
+    this.router.navigate(['/faq']);
+  }
+
   goToContact(event?: Event): void {
     event?.preventDefault();
     this.closeMenu();

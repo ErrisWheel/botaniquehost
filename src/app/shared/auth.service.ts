@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { FirebaseError, getApps, initializeApp } from 'firebase/app';
 import {
   EmailAuthProvider,
+  applyActionCode,
+  confirmPasswordReset,
+  verifyPasswordResetCode,
   browserLocalPersistence,
   browserSessionPersistence,
   createUserWithEmailAndPassword,
@@ -177,7 +180,7 @@ export class AuthService {
 
       await updateProfile(cred.user, { displayName: input.fullName.trim() });
       // Lets us safely link a pre-existing account with the same e-mail.
-      sendEmailVerification(cred.user).catch(() => undefined);
+      sendEmailVerification(cred.user, this.authActionSettings()).catch(() => undefined);
 
       try {
         return await this.syncProfile(
@@ -236,13 +239,51 @@ export class AuthService {
 
   async resetPassword(email: string): Promise<void> {
     try {
-      await sendPasswordResetEmail(this.auth, email.trim().toLowerCase());
+      await sendPasswordResetEmail(this.auth, email.trim().toLowerCase(), this.authActionSettings());
     } catch (e) {
       const code = (e as FirebaseError)?.code;
       // Do not reveal whether the address has an account.
       if (code === 'auth/user-not-found') return;
       throw new Error(this.friendlyError(e));
     }
+  }
+
+  async resendVerificationEmail(): Promise<void> {
+    const user = this.auth.currentUser;
+    if (!user) throw new Error('Log in to request another verification email.');
+    if (user.emailVerified) return;
+    try {
+      await sendEmailVerification(user, this.authActionSettings());
+    } catch (e) {
+      throw new Error(this.friendlyError(e));
+    }
+  }
+
+  async validatePasswordResetCode(code: string): Promise<string> {
+    return verifyPasswordResetCode(this.auth, code);
+  }
+
+  async completePasswordReset(code: string, password: string): Promise<void> {
+    try {
+      await confirmPasswordReset(this.auth, code, password);
+    } catch (e) {
+      throw new Error(this.friendlyError(e));
+    }
+  }
+
+  async completeEmailVerification(code: string): Promise<void> {
+    try {
+      await applyActionCode(this.auth, code);
+    } catch (e) {
+      throw new Error(this.friendlyError(e));
+    }
+  }
+
+  private authActionSettings() {
+    return {
+      url: `${window.location.origin}/auth-action`,
+      handleCodeInApp: false
+    };
   }
 
   /** Real password change performed by Firebase (re-authenticates first). */
@@ -370,6 +411,10 @@ export class AuthService {
         return 'Please enter a valid email address.';
       case 'auth/user-disabled':
         return 'This account has been disabled.';
+      case 'auth/expired-action-code':
+        return 'This link has expired. Request a new email and try again.';
+      case 'auth/invalid-action-code':
+        return 'This link is invalid or has already been used.';
       case 'auth/too-many-requests':
         return 'Too many attempts. Please wait a few minutes and try again.';
       case 'auth/network-request-failed':

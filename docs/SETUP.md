@@ -56,6 +56,15 @@ This also covers the old default admin `admin@botanique.local` (password unchang
 - Fresh database: set `SEED_ADMIN_EMAIL` in `backend/.env` before seeding, register that e-mail in the app, click the verification link Firebase e-mails you, log in. The seeded row is linked to your Firebase login on first sign-in.
 - More admins: Admin panel → Accounts → *New account* (role Administrator; creates the Firebase login + row, no password is typed - the person uses *Forgot password*), or provision the team with `npm run admins:provision` (see `docs/ADMIN_AND_MIGRATION.md`).
 
+## Neon connection strings (Prisma 6)
+
+For Neon, configure BOTH URLs. In Neon Console → **Connect**, copy the pooled URL with `-pooler` in the hostname, then turn connection pooling off to copy the direct URL. Keep each value private and do not commit them.
+
+- `DATABASE_URL`: the **direct/unpooled** Neon connection string. Prisma migrations and CLI schema operations use this.
+- `DATABASE_URL_POOLED`: the **pooled** Neon connection string (hostname includes `-pooler`). The deployed backend uses this for normal queries.
+
+Set both variables in `backend/.env` locally and in Render → `botanique-backend` → **Environment**. Replace the expired Render database URL; do not leave it in either variable. Use the exact connection strings Neon provides, including their SSL query parameters.
+
 ## 3. Database migration (run against YOUR database)
 
 The migration `backend/prisma/migrations/20261003000000_firebase_maya_emailjs` is **additive** (new columns/table, `User.passwordHash` becomes nullable). Nothing is dropped.
@@ -64,11 +73,15 @@ The migration `backend/prisma/migrations/20261003000000_firebase_maya_emailjs` i
 cd backend
 # 1) BACK UP FIRST (your .env DATABASE_URL points at a hosted Postgres):
 #    pg_dump "$DATABASE_URL" > botanique-backup.sql
-npx prisma migrate status      # shows the new migration as pending
-npx prisma migrate deploy      # applies it
+npx prisma migrate status      # shows pending migrations
+npx prisma migrate deploy      # applies them, including the review uniqueness index
 npx prisma generate
 ```
+The review migration removes older duplicate reviews for the same customer/product (retaining the newest one) before adding the uniqueness index, so take and verify a database backup before deploying it.
+
 `npm run dev` and `npm start` no longer run `prisma migrate deploy` or the seed automatically - run `npm run db:migrate:deploy` yourself (and `npm run prisma:seed` if you want missing catalogue rows added; it never overwrites existing data). The seed does not create a default admin. See `docs/ADMIN_AND_MIGRATION.md` for the full, safe deployment steps.
+
+For the branded custom reset/verification action page and Firebase template setup, follow [`docs/FIREBASE_AUTH_EMAILS.md`](FIREBASE_AUTH_EMAILS.md).
 
 ## 4. Maya (sandbox)
 
@@ -98,7 +111,7 @@ Payment rules enforced by the server: prices come from the DB; discount/shipping
 1. https://dashboard.emailjs.com → **Email Services → Add New Service** (Gmail/Outlook/etc.) → copy the **Service ID**.
 2. **Account → General**: copy **Public Key**. **Account → API keys**: copy the **Private Key**.
 3. **Account → Security → enable "Allow EmailJS API for non-browser applications"** (required: the backend calls the REST API with the private key).
-4. **Email Templates → Create New Template**, switch the content editor to **Code Editor (`</>`)** and paste `docs/emailjs/order-confirmation.html`. Then set the fields:
+4. **Email Templates → Create New Template**, switch the content editor to **Code Editor (`</>`)** and paste `docs/emailjs/order-confirmation.html`. Then set the fields exactly as shown:
    | Field | Value |
    |---|---|
    | Subject | `Your Botanique order {{order_id}} - {{payment_status}}` |
@@ -106,6 +119,8 @@ Payment rules enforced by the server: prices come from the DB; discount/shipping
    | From Name | `Botanique` |
    | Reply To | your support address |
    Save and copy the **Template ID**.
+
+**Receipt privacy check:** open the template currently referenced by `EMAILJS_ORDER_TEMPLATE_ID` (do not just create a new template). Its **To Email** must be exactly `{{customer_email}}`, not a personal mailbox or a fixed address. Clear CC/BCC unless each additional recipient is intentionally authorized. Check the selected Email Service's default recipient/routing settings too. The backend fills `customer_email` from the order's linked database account; for legacy orders with no linked account it uses the e-mail saved with that order. A fixed To/CC/BCC value in the EmailJS dashboard can override the source-code recipient, so test with two separate accounts after saving the settings.
 5. `backend/.env`:
    ```
    EMAILJS_PUBLIC_KEY="..."

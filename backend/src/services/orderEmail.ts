@@ -1,7 +1,7 @@
 import { prisma } from '../db.js';
 import { env, emailJsConfigured } from '../config.js';
 import { buildOrderEmailParams } from './orderEmailParams.js';
-import { sendEmailJs } from './emailjs.js';
+import { EmailJsError, sendEmailJs } from './emailjs.js';
 import { audit } from '../utils/audit.js';
 
 export type EmailOutcome =
@@ -73,6 +73,11 @@ export async function sendOrderConfirmation(
     try {
         if (!order) throw new Error('Order not found');
 
+        // A linked customer whose account e-mail is unavailable must fail
+        // closed rather than falling back to untrusted checkout JSON.
+        if (order.userId && !order.user?.email?.trim())
+            throw new Error('Linked customer account has no e-mail address');
+
         const params = buildOrderEmailParams(order);
         if (!params.customer_email)
             throw new Error('Order has no customer e-mail address');
@@ -89,7 +94,10 @@ export async function sendOrderConfirmation(
         });
         return { result: 'SENT' };
     } catch (e: any) {
-        const message = String(e?.message ?? e).slice(0, 300);
+        const rawMessage = String(e?.message ?? e);
+        const message = e instanceof EmailJsError && e.status
+            ? `EmailJS rejected the request (HTTP ${e.status})`
+            : rawMessage.slice(0, 300);
         console.error(
             `[email] Confirmation e-mail failed for order ${orderId}: ${message}`
         );

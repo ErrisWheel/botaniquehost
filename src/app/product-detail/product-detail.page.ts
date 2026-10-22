@@ -2,6 +2,7 @@ import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
+import { OrdersService } from '../shared/orders.service';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -25,12 +26,33 @@ import {
 export class ProductDetailPage implements OnInit {
 
   private readonly authService = inject(AuthService);
+  private readonly ordersService = inject(OrdersService);
 
   /* PRODUCT */
 
   product: Product | undefined;
 
   productId = '';
+  reviews: any[] = [];
+  reviewOrders: any[] = [];
+  reviewsLoading = false;
+  reviewsLoadError = '';
+  reviewOrdersLoading = false;
+  reviewOrdersError = '';
+  reviewSubmitting = false;
+  reviewRating = 0;
+  reviewComment = '';
+  reviewOrderId = '';
+  reviewFeedback = '';
+  reviewFeedbackError = false;
+  private reviewsLoadSeq = 0;
+  private reviewOrdersLoadSeq = 0;
+  readonly reviewStars = [1, 2, 3, 4, 5];
+
+  get averageRating(): number | null {
+    if (!this.reviews.length) return null;
+    return this.reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / this.reviews.length;
+  }
 
 
   /* NAVBAR */
@@ -103,12 +125,137 @@ export class ProductDetailPage implements OnInit {
           item => item.id === this.productId
         );
 
+      void this.loadReviews();
+      void this.loadReviewOrders();
+
     });
 
     this.loadCart();
 
     this.refreshNavbarCounts();
 
+  }
+
+  private async loadReviews(): Promise<void> {
+    const sequence = ++this.reviewsLoadSeq;
+    const slug = this.productId;
+    if (!slug) {
+      this.reviews = [];
+      this.reviewsLoading = false;
+      return;
+    }
+
+    this.reviews = [];
+    this.reviewsLoading = true;
+    this.reviewsLoadError = '';
+    try {
+      const response = await fetch(
+        `${environment.apiUrl}/reviews/product/${encodeURIComponent(slug)}`,
+        { cache: 'no-store' }
+      );
+      const body = await response.json().catch(() => []);
+      if (sequence !== this.reviewsLoadSeq) return;
+      if (!response.ok) throw new Error(body?.message || 'Unable to load reviews.');
+      this.reviews = Array.isArray(body) ? body : [];
+    } catch {
+      if (sequence === this.reviewsLoadSeq) {
+        this.reviews = [];
+        this.reviewsLoadError = 'Reviews are temporarily unavailable. Please try again later.';
+      }
+    } finally {
+      if (sequence === this.reviewsLoadSeq) this.reviewsLoading = false;
+    }
+  }
+
+  private async loadReviewOrders(): Promise<void> {
+    const sequence = ++this.reviewOrdersLoadSeq;
+    if (!this.authService.isLoggedIn) {
+      this.reviewOrders = [];
+      this.reviewOrderId = '';
+      this.reviewOrdersLoading = false;
+      return;
+    }
+
+    this.reviewOrders = [];
+    this.reviewOrderId = '';
+    this.reviewOrdersLoading = true;
+    this.reviewOrdersError = '';
+    try {
+      const orders = await this.ordersService.load();
+      if (sequence !== this.reviewOrdersLoadSeq) return;
+      this.reviewOrders = orders.filter((order: any) =>
+        String(order?.status || '').toUpperCase() === 'DELIVERED' &&
+        Array.isArray(order?.items) && order.items.some((item: any) =>
+          String(item?.product?.slug || item?.productId || '') === this.productId ||
+          String(item?.product?.id || '') === this.productId
+        )
+      );
+      if (!this.reviewOrders.some((order: any) => order.id === this.reviewOrderId)) {
+        this.reviewOrderId = String(this.reviewOrders[0]?.id || '');
+      }
+    } catch {
+      if (sequence === this.reviewOrdersLoadSeq) {
+        this.reviewOrders = [];
+        this.reviewOrdersError = 'We could not check your order history. Please reload and try again.';
+      }
+    } finally {
+      if (sequence === this.reviewOrdersLoadSeq) this.reviewOrdersLoading = false;
+    }
+  }
+
+  reviewStarsFor(rating: number): string {
+    const filled = Math.max(0, Math.min(5, Math.round(Number(rating) || 0)));
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+  }
+
+  async submitReview(): Promise<void> {
+    if (!this.authService.isLoggedIn) {
+      this.reviewFeedback = 'Please log in to submit a review.';
+      this.reviewFeedbackError = true;
+      return;
+    }
+    if (this.reviewRating < 1 || !this.reviewOrderId || !this.reviewComment.trim()) {
+      this.reviewFeedback = 'Choose a star rating, select a delivered order, and enter your written feedback.';
+      this.reviewFeedbackError = true;
+      return;
+    }
+
+    this.reviewSubmitting = true;
+    this.reviewFeedback = '';
+    try {
+      const token = await this.authService.getToken();
+      if (!token) throw new Error('Please log in again to submit your review.');
+      const response = await fetch(
+        `${environment.apiUrl}/reviews/product/${encodeURIComponent(this.productId)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            rating: this.reviewRating,
+            comment: this.reviewComment.trim(),
+            orderId: this.reviewOrderId
+          })
+        }
+      );
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.message || 'Unable to submit your review.');
+
+      this.reviewComment = '';
+      this.reviewRating = 0;
+      this.reviewFeedback = body?.isApproved === false
+        ? 'Your review was saved and is awaiting moderation.'
+        : 'Thank you. Your review has been submitted.';
+      this.reviewFeedbackError = false;
+      await this.loadReviews();
+    } catch (error: any) {
+      this.reviewFeedback = error?.message || 'Unable to submit your review. Please try again.';
+      this.reviewFeedbackError = true;
+    } finally {
+      this.reviewSubmitting = false;
+    }
   }
 
 

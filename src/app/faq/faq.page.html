@@ -1,0 +1,30 @@
+<main class="faq-page">
+  <header class="faq-topbar">
+    <button class="faq-brand" type="button" (click)="goHome()"><span>✿</span> Botanique</button>
+    <nav aria-label="Page navigation"><button type="button" (click)="goHome()">Home</button><button type="button" (click)="goContact()">Contact Us</button><button type="button" (click)="goLogin()">My account</button></nav>
+  </header>
+
+  <section class="faq-hero">
+    <p class="faq-eyebrow">BOTANIQUE SUPPORT</p>
+    <h1>Frequently Asked Questions</h1>
+    <p>Helpful answers about orders, payments, delivery, and your account.</p>
+  </section>
+
+  <div class="faq-content">
+    <section class="faq-category" *ngFor="let category of categories">
+      <h2>{{ category.title }}</h2>
+      <div class="faq-list">
+        <details class="faq-item" *ngFor="let item of category.items">
+          <summary>{{ item.question }}</summary>
+          <p>{{ item.answer }}</p>
+        </details>
+      </div>
+    </section>
+
+    <aside class="faq-contact">
+      <div><h2>Still need help?</h2><p>Contact the Botanique team with your order number so we can review your specific situation.</p></div>
+      <button type="button" (click)="goContact()">Contact support <span aria-hidden="true">→</span></button>
+    </aside>
+  </div>
+  <footer class="faq-footer">© 2026 Botanique Plant Co. <span>Thoughtfully grown, beautifully lived.</span></footer>
+</main>

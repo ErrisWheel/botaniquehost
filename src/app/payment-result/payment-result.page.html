@@ -5,16 +5,21 @@
     @switch (phase) {
       @case ('checking') {
         <div class="pr-spinner" aria-hidden="true"></div>
-        <h1>Confirming your payment…</h1>
-        <p>Please wait while we verify your payment with Maya. Do not close this page.</p>
+        <h1>{{ outcomeHint === 'cancel' ? 'Checking payment status…' : 'Confirming your payment…' }}</h1>
+        <p *ngIf="outcomeHint === 'cancel'">Maya returned you from checkout. We are verifying the final status before restoring your cart. A return link alone does not confirm cancellation.</p>
+        <p *ngIf="outcomeHint !== 'cancel'">Please wait while we verify your payment with Maya. Do not close this page.</p>
+      }
+      @case ('restoring') {
+        <div class="pr-spinner" aria-hidden="true"></div>
+        <h1>Returning to checkout…</h1>
+        <p>Maya confirmed the payment was not completed. We are restoring your cart so you can choose another payment method or try again.</p>
       }
       @case ('paid') {
         <div class="pr-icon ok" aria-hidden="true">✓</div>
         <h1>Payment received</h1>
         <p>
           Thank you! Your payment for order <strong>{{ orderNumber }}</strong>
-          ({{ formatPrice(total) }}) was verified. We're preparing your plants,
-          and a confirmation email is on its way.
+          ({{ formatPrice(total) }}) was verified. We're preparing your plants. Your order details are available in Order History.
         </p>
       }
       @case ('pending') {
@@ -25,6 +30,7 @@
           <strong>{{ orderNumber }}</strong> yet. If you completed the payment,
           it can take a few minutes - your order will update automatically.
         </p>
+        <p *ngIf="outcomeHint === 'cancel'">Maya has not confirmed a final cancellation yet, so we have not marked this order as cancelled or restored its cart.</p>
       }
       @case ('unverified') {
         <div class="pr-icon wait" aria-hidden="true">?</div>
@@ -80,6 +86,9 @@
       }
       @if (orderNumber) {
         <button type="button" class="pr-btn" (click)="viewOrder()">View order</button>
+      }
+      @if (phase === 'cancelled' || phase === 'expired') {
+        <button type="button" class="pr-btn primary" (click)="goToCheckout()">Return to checkout</button>
       }
       <button type="button" class="pr-btn" (click)="continueShopping()">Continue shopping</button>
     </div>

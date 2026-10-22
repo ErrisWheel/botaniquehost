@@ -37,8 +37,13 @@ test('HTML in product names is escaped in the html rows', () => {
 });
 
 test('falls back to the order e-mail when there is no linked user', () => {
-    const p = buildOrderEmailParams({ ...base, user: null });
+    const p = buildOrderEmailParams({ ...base, user: null, userId: null });
     assert.equal(p.customer_email, 'order@example.com');
+});
+
+test('does not fall back to checkout e-mail when a linked account relation is missing', () => {
+    const p = buildOrderEmailParams({ ...base, user: null });
+    assert.equal(p.customer_email, '');
 });
 
 test('payment status wording', () => {

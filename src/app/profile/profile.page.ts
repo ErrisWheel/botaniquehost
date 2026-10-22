@@ -35,6 +35,12 @@ interface Order {
   date: string;
   status: string;
   total: number;
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  tax: number;
+  paymentMethod: string;
+  paymentStatus: string;
   items: OrderItem[];
 }
 
@@ -1141,6 +1147,13 @@ export class ProfilePage implements OnInit {
           calculatedTotal
         ),
 
+      subtotal: Number(order?.subtotal ?? calculatedTotal),
+      discount: Number(order?.discount ?? 0),
+      shipping: Number(order?.shipping ?? 0),
+      tax: Number(order?.tax ?? 0),
+      paymentMethod: String(order?.paymentMethod === 'MAYA' ? 'Maya' : order?.paymentMethod === 'COD' ? 'Cash on Delivery' : order?.paymentMethod || 'Cash on Delivery'),
+      paymentStatus: String(order?.paymentStatus || 'PENDING'),
+
       items
 
     };
@@ -1165,6 +1178,20 @@ export class ProfilePage implements OnInit {
 
     await this.router.navigateByUrl('/login');
 
+  }
+
+  paymentStatusLabel(status?: string): string {
+    const labels: Record<string, string> = {
+      PENDING: 'Pending',
+      PAID: 'Paid',
+      FAILED: 'Failed',
+      CANCELLED: 'Cancelled',
+      EXPIRED: 'Expired',
+      REFUND_PENDING: 'Refund pending',
+      REFUNDED: 'Refunded'
+    };
+    const value = String(status || 'PENDING').toUpperCase();
+    return labels[value] || value;
   }
 
   /* NORMALIZE ORDER STATUS */

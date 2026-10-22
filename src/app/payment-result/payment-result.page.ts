@@ -7,6 +7,7 @@ import { OrdersService } from '../shared/orders.service';
 
 type Phase =
   | 'checking'
+  | 'restoring'
   | 'paid'
   | 'pending'
   | 'failed'
@@ -53,13 +54,16 @@ export class PaymentResultPage implements OnInit, OnDestroy {
   total = 0;
   message = '';
   retrying = false;
+  outcomeHint = '';
 
   private polls = 0;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private destroyed = false;
+  private cancelRecoveryStarted = false;
 
   ngOnInit(): void {
     this.orderId = this.route.snapshot.queryParamMap.get('orderId') || '';
+    this.outcomeHint = this.route.snapshot.queryParamMap.get('outcome') || '';
 
     if (!this.orderId) {
       this.phase = 'error';
@@ -131,15 +135,16 @@ export class PaymentResultPage implements OnInit, OnDestroy {
 
   private apply(d: StatusResponse): void {
     if (d.paymentStatus === 'PAID') {
+      try { sessionStorage.removeItem(`botaniqueMayaCart:${this.orderId}`); } catch {}
       this.phase = 'paid';
       return;
     }
     if (d.paymentStatus === 'CANCELLED') {
-      this.phase = 'cancelled';
+      this.returnToCheckoutAfterFinalCancel('cancelled');
       return;
     }
     if (d.paymentStatus === 'EXPIRED') {
-      this.phase = 'expired';
+      this.returnToCheckoutAfterFinalCancel('expired');
       return;
     }
     if (d.paymentStatus === 'FAILED') {
@@ -159,6 +164,88 @@ export class PaymentResultPage implements OnInit, OnDestroy {
       this.timer = setTimeout(() => void this.check(), POLL_MS);
     } else {
       this.phase = 'pending';
+    }
+  }
+
+  private async returnToCheckoutAfterFinalCancel(
+    finalState: 'cancelled' | 'expired'
+  ): Promise<void> {
+    if (this.cancelRecoveryStarted) return;
+    this.cancelRecoveryStarted = true;
+    this.phase = 'restoring';
+    this.message = '';
+
+    try {
+      let cartItems: any[] = [];
+      const key = `botaniqueMayaCart:${this.orderId}`;
+      const restoredKey = `botaniqueMayaCartRestored:${this.orderId}`;
+      if (localStorage.getItem(restoredKey) === '1') {
+        try { sessionStorage.removeItem(key); } catch {}
+        this.ordersService.invalidate();
+        if (!this.destroyed) {
+          await this.router.navigate(['/checkout'], {
+            queryParams: { mayaCancelled: '1' },
+            replaceUrl: true
+          });
+        }
+        return;
+      }
+      try {
+        const raw = sessionStorage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(parsed)) cartItems = parsed;
+      } catch {
+        cartItems = [];
+      }
+
+      // A same-tab snapshot is fastest. If the provider returned in a new tab
+      // or session storage was cleared, rebuild from this customer's owned
+      // order returned by the backend (never from URL-supplied item data).
+      if (!cartItems.length) {
+        const order = await this.ordersService.loadOne(this.orderId);
+        const orderItems = order?.['items'];
+        cartItems = (Array.isArray(orderItems) ? orderItems : []).map((item: any) => ({
+          id: String(item?.product?.slug || item?.productId || ''),
+          quantity: Math.max(1, Number(item?.quantity) || 1),
+          name: String(item?.productName || item?.product?.name || item?.name || 'Botanique Product'),
+          price: Number(item?.unitPrice ?? item?.price ?? 0),
+          image: String(item?.product?.image || item?.image || '')
+        })).filter((item: any) => item.id);
+      }
+
+      let existing: any[] = [];
+      try {
+        const parsed = JSON.parse(localStorage.getItem('botaniqueCartItems') || '[]');
+        if (Array.isArray(parsed)) existing = parsed;
+      } catch {
+        existing = [];
+      }
+
+      const merged = new Map<string, any>();
+      for (const item of [...cartItems, ...existing]) {
+        const id = String(item?.id || '');
+        if (!id) continue;
+        const quantity = Math.max(1, Number(item?.quantity) || 1);
+        const current = merged.get(id);
+        merged.set(id, current
+          ? { ...current, quantity: current.quantity + quantity }
+          : { ...item, id, quantity });
+      }
+
+      localStorage.setItem('botaniqueCartItems', JSON.stringify([...merged.values()]));
+      localStorage.setItem(restoredKey, '1');
+      try { sessionStorage.removeItem(key); } catch {}
+      this.ordersService.invalidate();
+
+      if (this.destroyed) return;
+      await this.router.navigate(['/checkout'], {
+        queryParams: { mayaCancelled: '1' },
+        replaceUrl: true
+      });
+    } catch (e) {
+      console.error('[maya] Could not restore checkout cart:', e);
+      this.phase = finalState;
+      this.message = 'Your Maya payment was not completed. We could not automatically restore the cart on this device. Return to checkout and review your cart before placing another order.';
     }
   }
 
@@ -204,6 +291,10 @@ export class PaymentResultPage implements OnInit, OnDestroy {
 
   viewOrder(): void {
     void this.router.navigate(['/track-order'], { queryParams: { id: this.orderId } });
+  }
+
+  goToCheckout(): void {
+    void this.router.navigate(['/checkout']);
   }
 
   continueShopping(): void {

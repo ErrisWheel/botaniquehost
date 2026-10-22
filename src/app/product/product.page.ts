@@ -1,3 +1,4 @@
+import { environment } from '../../environments/environment';
 import { Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
 import { CommonModule } from '@angular/common';
@@ -68,6 +69,8 @@ export class ProductPage implements OnInit {
   /* DATA */
 
   readonly catalog = CATALOG;
+
+  ratingSummaries: Record<string, { count: number; average: number | null }> = {};
 
   readonly subcategoryMap = SUBCATEGORIES;
 
@@ -150,6 +153,7 @@ export class ProductPage implements OnInit {
 
   ngOnInit(): void {
 
+    void this.loadRatingSummaries();
     this.updateCartState();
     this.loadLoggedInUser();
     this.updateWishlistCount();
@@ -183,6 +187,37 @@ export class ProductPage implements OnInit {
 
     });
 
+  }
+
+  private async loadRatingSummaries(): Promise<void> {
+    try {
+      const response = await fetch(`${environment.apiUrl}/reviews/summary`, { cache: 'no-store' });
+      if (!response.ok) return;
+      const summaries = await response.json();
+      if (!Array.isArray(summaries)) return;
+      this.ratingSummaries = Object.fromEntries(
+        summaries.map((item: any) => [String(item.productSlug), {
+          count: Math.max(0, Number(item.count) || 0),
+          average: item.average === null || item.average === undefined
+            ? null
+            : Number(item.average)
+        }])
+      );
+    } catch {
+      this.ratingSummaries = {};
+    }
+  }
+
+  ratingStars(productId: string): string {
+    const average = this.ratingSummaries[productId]?.average;
+    if (average === null || average === undefined || !Number.isFinite(average)) return '☆☆☆☆☆';
+    const filled = Math.max(0, Math.min(5, Math.round(average)));
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+  }
+
+  ratingCountLabel(productId: string): string {
+    const count = this.ratingSummaries[productId]?.count || 0;
+    return count ? `${count} ${count === 1 ? 'review' : 'reviews'}` : 'No reviews';
   }
 
 

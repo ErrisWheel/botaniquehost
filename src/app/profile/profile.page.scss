@@ -1608,3 +1608,25 @@
   }
 
 }
+.order-price-breakdown {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border, rgba(36, 49, 38, 0.12));
+}
+
+.order-price-breakdown > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  color: var(--muted, #71806f);
+  font-size: 13px;
+}
+
+.order-price-breakdown strong {
+  color: var(--ink, #243126);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

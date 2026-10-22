@@ -1,6 +1,7 @@
 import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AuthService } from '../shared/auth.service';
 import { ApiError } from '../shared/api.service';
 import { OrdersService } from '../shared/orders.service';
@@ -31,6 +32,11 @@ interface Order {
   date: string;
   status: string;
   total: number;
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  tax: number;
+  paymentStatus: string;
 
   items: OrderItem[];
 
@@ -74,6 +80,7 @@ export class TrackOrderPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly ordersService = inject(OrdersService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly sanitizer = inject(DomSanitizer);
 
   /* NAVBAR */
 
@@ -96,6 +103,8 @@ export class TrackOrderPage implements OnInit {
   /* ORDER */
 
   order: Order | null = null;
+  mapEmbedUrl: SafeResourceUrl | null = null;
+  mapDirectionsUrl = '';
   orders: Order[] = [];
   ordersLoading = false;
   ordersError = '';
@@ -317,6 +326,7 @@ export class TrackOrderPage implements OnInit {
         found
           ? this.normalizeOrder(found)
           : null;
+      this.prepareOrderMap(this.order);
 
       /*
        * Replace an order number in the URL with the real database ID so a
@@ -627,18 +637,26 @@ export class TrackOrderPage implements OnInit {
     /* PAYMENT */
 
     const paymentMethod =
-      rawOrder?.paymentMethod === 'COD'
-        ? 'Cash on Delivery'
-        : rawOrder?.paymentMethod ||
-          'Cash on Delivery';
+      rawOrder?.paymentMethod === 'MAYA'
+        ? 'Maya'
+        : rawOrder?.paymentMethod === 'COD'
+          ? 'Cash on Delivery'
+          : rawOrder?.paymentMethod || 'Cash on Delivery';
 
 
     /* TOTAL */
 
-    const total =
-      Number(
-        rawOrder?.total
-      ) || 0;
+    const itemSubtotal = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
+    const numericField = (value: unknown, fallback = 0) => {
+      const n = Number(value);
+      return value !== null && value !== undefined && Number.isFinite(n) ? n : fallback;
+    };
+
+    const total = numericField(rawOrder?.total, itemSubtotal);
 
 
     return {
@@ -668,6 +686,12 @@ export class TrackOrderPage implements OnInit {
 
       total,
 
+      subtotal: numericField(rawOrder?.subtotal, itemSubtotal),
+      discount: numericField(rawOrder?.discount),
+      shipping: numericField(rawOrder?.shipping),
+      tax: numericField(rawOrder?.tax),
+      paymentStatus: String(rawOrder?.paymentStatus || 'PENDING'),
+
       items,
 
       address,
@@ -686,6 +710,38 @@ export class TrackOrderPage implements OnInit {
 
     };
 
+  }
+
+  private prepareOrderMap(order: Order | null): void {
+    const destination = String(order?.address || '').trim();
+    if (!destination) {
+      this.mapEmbedUrl = null;
+      this.mapDirectionsUrl = '';
+      return;
+    }
+
+    const store = 'Botanique Studio, 938 Aurora Boulevard, Cubao, Quezon City';
+    const origin = encodeURIComponent(store);
+    const target = encodeURIComponent(destination);
+    this.mapEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+      `https://maps.google.com/maps?saddr=${origin}&daddr=${target}&output=embed`
+    );
+    this.mapDirectionsUrl =
+      `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${target}`;
+  }
+
+  paymentStatusLabel(status?: string): string {
+    const labels: Record<string, string> = {
+      PENDING: 'Pending',
+      PAID: 'Paid',
+      FAILED: 'Failed',
+      CANCELLED: 'Cancelled',
+      EXPIRED: 'Expired',
+      REFUND_PENDING: 'Refund pending',
+      REFUNDED: 'Refunded'
+    };
+    const value = String(status || 'PENDING').toUpperCase();
+    return labels[value] || value;
   }
 
 

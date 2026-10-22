@@ -986,6 +986,10 @@
                       Qty: {{ item.quantity }}
                     </span>
 
+                  <span>
+                    Unit price: ₱{{ item.price | number:'1.2-2' }}
+                  </span>
+
                   </div>
 
                   <strong class="order-item-price">
@@ -994,6 +998,15 @@
 
                 </div>
 
+              </div>
+
+              <div class="order-price-breakdown" aria-label="Order price breakdown">
+                <div><span>Product subtotal</span><strong>₱{{ order.subtotal | number:'1.2-2' }}</strong></div>
+                <div *ngIf="order.discount > 0"><span>Discount</span><strong>− ₱{{ order.discount | number:'1.2-2' }}</strong></div>
+                <div><span>Delivery fee</span><strong>₱{{ order.shipping | number:'1.2-2' }}</strong></div>
+                <div><span>Tax</span><strong>₱{{ order.tax | number:'1.2-2' }}</strong></div>
+                <div><span>Payment method</span><strong>{{ order.paymentMethod }}</strong></div>
+                <div><span>Payment status</span><strong>{{ paymentStatusLabel(order.paymentStatus) }}</strong></div>
               </div>
 
 

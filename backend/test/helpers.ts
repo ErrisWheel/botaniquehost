@@ -1,5 +1,6 @@
 // Minimum env so src/config.ts can be imported in unit tests (no real services).
 process.env.DATABASE_URL ??= 'postgresql://test:test@localhost:5432/test';
+process.env.DATABASE_URL_POOLED ??= process.env.DATABASE_URL;
 process.env.EMAILJS_SUPPORT_EMAIL ??= 'support@example.test';
 process.env.MAYA_PUBLIC_KEY ??= 'pk-test-not-real';
 process.env.MAYA_SECRET_KEY ??= 'sk-test-not-real';

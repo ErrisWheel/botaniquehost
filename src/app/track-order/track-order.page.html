@@ -755,6 +755,10 @@
                     Quantity: {{ item.quantity }}
                   </span>
 
+                <span>
+                  Unit price: {{ formatPrice(item.price) }}
+                </span>
+
                 </div>
 
 
@@ -770,17 +774,14 @@
             </div>
 
 
-            <!-- TOTAL -->
-            <div class="order-total-row">
-
-              <span>
-                Order Total
-              </span>
-
-              <strong>
-                {{ formatPrice(order.total) }}
-              </strong>
-
+            <div class="order-price-breakdown" aria-label="Order price breakdown">
+              <div><span>Product subtotal</span><strong>{{ formatPrice(order.subtotal) }}</strong></div>
+              <div *ngIf="order.discount > 0"><span>Discount</span><strong>− {{ formatPrice(order.discount) }}</strong></div>
+              <div><span>Delivery fee</span><strong>{{ formatPrice(order.shipping) }}</strong></div>
+              <div><span>Tax</span><strong>{{ formatPrice(order.tax) }}</strong></div>
+              <div><span>Payment method</span><strong>{{ order.paymentMethod }}</strong></div>
+              <div><span>Payment status</span><strong>{{ paymentStatusLabel(order.paymentStatus) }}</strong></div>
+              <div class="breakdown-total"><span>Order total</span><strong>{{ formatPrice(order.total) }}</strong></div>
             </div>
 
           </div>
@@ -904,6 +905,35 @@
 
           </div>
 
+        </section>
+
+        <!-- STATIC MAP FROM STORE TO THIS ORDER'S DESTINATION; NO RIDER GPS IS IMPLIED. -->
+        <section class="order-map-card" aria-labelledby="order-map-title">
+          <div class="card-heading">
+            <div>
+              <p class="eyebrow">DELIVERY MAP</p>
+              <h2 id="order-map-title">Store to delivery destination</h2>
+            </div>
+            <span class="map-status">{{ order.status }}</span>
+          </div>
+
+          <div class="order-map-frame" *ngIf="mapEmbedUrl; else noMapAddress">
+            <iframe
+              [src]="mapEmbedUrl"
+              title="Map showing the Botanique store and this order's delivery destination"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen
+            ></iframe>
+            <p>This is a route/map preview, not real-time rider GPS tracking.</p>
+            <a [href]="mapDirectionsUrl" target="_blank" rel="noopener noreferrer">Open directions in Google Maps</a>
+          </div>
+
+          <ng-template #noMapAddress>
+            <div class="map-fallback">
+              <p>A delivery address is not available for this order, so a map cannot be shown.</p>
+            </div>
+          </ng-template>
         </section>
 
 
