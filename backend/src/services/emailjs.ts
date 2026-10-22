@@ -6,11 +6,24 @@ const TIMEOUT_MS = 10_000;
 export class EmailJsError extends Error {
     constructor(
         message: string,
-        public readonly status?: number
+        public readonly status?: number,
+        public readonly providerMessage?: string
     ) {
         super(message);
         this.name = 'EmailJsError';
     }
+}
+
+/** Keep useful provider diagnostics while stripping addresses and key-like values. */
+function sanitizeProviderMessage(value: string): string {
+    return value
+        .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
+        .replace(/(accessToken|private key|public key|user_id|service_id|template_id)\s*[:=]\s*[^,\s"']+/gi, '$1=[redacted]')
+        .replace(/\b[A-Za-z0-9_-]{36,}\b/g, '[redacted]')
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim()
+        .slice(0, 220);
 }
 
 /**
@@ -46,10 +59,11 @@ export async function sendEmailJs(
         });
 
         if (!res.ok) {
-            const text = (await res.text().catch(() => '')).slice(0, 200);
+            const text = sanitizeProviderMessage(await res.text().catch(() => ''));
             throw new EmailJsError(
-                `EmailJS rejected the request (HTTP ${res.status}): ${text}`,
-                res.status
+                `EmailJS rejected the request (HTTP ${res.status})`,
+                res.status,
+                text || undefined
             );
         }
     } catch (e: any) {

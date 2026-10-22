@@ -1,8 +1,8 @@
 import { environment } from '../../environments/environment';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
-import { OrdersService } from '../shared/orders.service';
+import { ApiError, ApiService } from '../shared/api.service';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -26,7 +26,8 @@ import {
 export class ProductDetailPage implements OnInit {
 
   private readonly authService = inject(AuthService);
-  private readonly ordersService = inject(OrdersService);
+  private readonly api = inject(ApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   /* PRODUCT */
 
@@ -39,6 +40,7 @@ export class ProductDetailPage implements OnInit {
   reviewsLoadError = '';
   reviewOrdersLoading = false;
   reviewOrdersError = '';
+  hasAlreadyReviewed = false;
   reviewSubmitting = false;
   reviewRating = 0;
   reviewComment = '';
@@ -154,16 +156,18 @@ export class ProductDetailPage implements OnInit {
     if (!slug) {
       this.reviews = [];
       this.reviewsLoading = false;
+      this.cdr.markForCheck();
       return;
     }
 
     this.reviews = [];
     this.reviewsLoading = true;
     this.reviewsLoadError = '';
+    this.cdr.markForCheck();
     try {
       const response = await fetch(
         `${environment.apiUrl}/reviews/product/${encodeURIComponent(slug)}`,
-        { cache: 'no-store' }
+        { cache: 'no-store', signal: AbortSignal.timeout(15000) }
       );
       const body = await response.json().catch(() => []);
       if (sequence !== this.reviewsLoadSeq) return;
@@ -175,8 +179,15 @@ export class ProductDetailPage implements OnInit {
         this.reviewsLoadError = 'Reviews are temporarily unavailable. Please try again later.';
       }
     } finally {
-      if (sequence === this.reviewsLoadSeq) this.reviewsLoading = false;
+      if (sequence === this.reviewsLoadSeq) {
+        this.reviewsLoading = false;
+        this.cdr.markForCheck();
+      }
     }
+  }
+
+  retryLoadReviews(): void {
+    void this.loadReviews();
   }
 
   private async loadReviewOrders(): Promise<void> {
@@ -185,34 +196,53 @@ export class ProductDetailPage implements OnInit {
       this.reviewOrders = [];
       this.reviewOrderId = '';
       this.reviewOrdersLoading = false;
+      this.hasAlreadyReviewed = false;
+      this.reviewOrdersError = '';
+      this.cdr.markForCheck();
       return;
     }
 
     this.reviewOrders = [];
     this.reviewOrderId = '';
+    this.hasAlreadyReviewed = false;
     this.reviewOrdersLoading = true;
     this.reviewOrdersError = '';
+    this.cdr.markForCheck();
     try {
-      const orders = await this.ordersService.load();
+      if (!this.productId) throw new Error('The requested product could not be identified.');
+      const eligibility = await this.api.request<{
+        eligibleOrders?: any[];
+        hasReviewed?: boolean;
+      }>(`/reviews/product/${encodeURIComponent(this.productId)}/eligibility`, {
+        signal: AbortSignal.timeout(15000)
+      });
       if (sequence !== this.reviewOrdersLoadSeq) return;
-      this.reviewOrders = orders.filter((order: any) =>
-        String(order?.status || '').toUpperCase() === 'DELIVERED' &&
-        Array.isArray(order?.items) && order.items.some((item: any) =>
-          String(item?.product?.slug || item?.productId || '') === this.productId ||
-          String(item?.product?.id || '') === this.productId
-        )
-      );
+      this.reviewOrders = Array.isArray(eligibility?.eligibleOrders)
+        ? eligibility.eligibleOrders
+        : [];
+      this.hasAlreadyReviewed = eligibility?.hasReviewed === true;
       if (!this.reviewOrders.some((order: any) => order.id === this.reviewOrderId)) {
         this.reviewOrderId = String(this.reviewOrders[0]?.id || '');
       }
-    } catch {
+    } catch (error: any) {
       if (sequence === this.reviewOrdersLoadSeq) {
         this.reviewOrders = [];
-        this.reviewOrdersError = 'We could not check your order history. Please reload and try again.';
+        this.reviewOrdersError = error instanceof ApiError && error.status === 404
+          ? 'This product could not be found. Please return to the product list and try again.'
+          : error instanceof Error && error.message
+            ? error.message
+            : 'We could not check your delivered orders. Please try again.';
       }
     } finally {
-      if (sequence === this.reviewOrdersLoadSeq) this.reviewOrdersLoading = false;
+      if (sequence === this.reviewOrdersLoadSeq) {
+        this.reviewOrdersLoading = false;
+        this.cdr.markForCheck();
+      }
     }
+  }
+
+  retryReviewEligibility(): void {
+    void this.loadReviewOrders();
   }
 
   reviewStarsFor(rating: number): string {
@@ -224,11 +254,13 @@ export class ProductDetailPage implements OnInit {
     if (!this.authService.isLoggedIn) {
       this.reviewFeedback = 'Please log in to submit a review.';
       this.reviewFeedbackError = true;
+      this.cdr.markForCheck();
       return;
     }
     if (this.reviewRating < 1 || !this.reviewOrderId || !this.reviewComment.trim()) {
       this.reviewFeedback = 'Choose a star rating, select a delivered order, and enter your written feedback.';
       this.reviewFeedbackError = true;
+      this.cdr.markForCheck();
       return;
     }
 
@@ -261,12 +293,15 @@ export class ProductDetailPage implements OnInit {
         ? 'Your review was saved and is awaiting moderation.'
         : 'Thank you. Your review has been submitted.';
       this.reviewFeedbackError = false;
+      this.hasAlreadyReviewed = true;
+      this.reviewOrders = [];
       await this.loadReviews();
     } catch (error: any) {
       this.reviewFeedback = error?.message || 'Unable to submit your review. Please try again.';
       this.reviewFeedbackError = true;
     } finally {
       this.reviewSubmitting = false;
+      this.cdr.markForCheck();
     }
   }
 

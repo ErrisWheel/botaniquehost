@@ -2958,6 +2958,7 @@
 .receipt-confirmation { margin-top:24px; padding:22px 24px; display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap; border:1px solid var(--line); border-radius:16px; background:var(--white); }
 .receipt-confirmation p { margin:0; color:var(--muted); font-size:14px; line-height:1.6; }
 .receipt-confirmation .receipt-error { flex-basis:100%; color:#a52a2a; }
+.receipt-confirmation .receipt-success { color:var(--green, #2e7d32); }
 .receipt-confirmation button:disabled, .review-modal-submit:disabled { opacity:.6; cursor:not-allowed; transform:none; }
 .received-review-backdrop { position:fixed; inset:0; z-index:4000; display:flex; align-items:center; justify-content:center; padding:22px; background:rgba(20,28,22,.68); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
 .received-review-modal { width:min(720px,100%); max-height:min(820px,calc(100vh - 44px)); display:flex; flex-direction:column; overflow:hidden; color:#d8ded5; background:#0c1c12; border:1px solid rgba(143,177,122,.55); border-radius:17px; box-shadow:0 30px 80px rgba(0,0,0,.35); }

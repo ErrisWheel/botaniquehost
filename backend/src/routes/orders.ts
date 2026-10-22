@@ -226,7 +226,7 @@ r.post('/', auth, async (req: any, res, next) => {
     }
 });
 
-/** Customer confirms receipt only for their own ON_DELIVERY order. */
+/** Customer confirms receipt for their own On delivery or Delivered order. */
 r.post('/:id/received', auth, async (req: any, res, next) => {
     try {
         const result = await prisma.$transaction(async (tx: any) => {
@@ -235,24 +235,33 @@ r.post('/:id/received', auth, async (req: any, res, next) => {
                 include: { items: { include: { product: orderItemProduct } } }
             });
             if (!order) throw httpError(404, 'Order not found');
-            if (order.status === 'DELIVERED') return { order, changed: false };
-            if (order.status !== 'ON_DELIVERY') {
-                throw httpError(409, 'You can confirm receipt only when your order is marked On delivery.', 'ORDER_NOT_ON_DELIVERY');
+            if (order.customerReceivedAt) return { order, changed: false };
+            if (!['ON_DELIVERY', 'DELIVERED'].includes(order.status)) {
+                throw httpError(409, 'You can confirm receipt only when your order is On delivery or Delivered.', 'ORDER_NOT_ELIGIBLE_FOR_RECEIPT');
             }
-            const data: Record<string, unknown> = { status: 'DELIVERED' };
-            if (order.paymentMethod === 'COD' && order.paymentStatus === 'PENDING') {
+            const data: Record<string, unknown> = {
+                status: 'DELIVERED',
+                customerReceivedAt: new Date()
+            };
+            if (order.status === 'ON_DELIVERY' && order.paymentMethod === 'COD' && order.paymentStatus === 'PENDING') {
                 data.paymentStatus = 'PAID';
                 data.paidAt = new Date();
             }
             const updated = await tx.order.updateMany({
-                where: { id: order.id, userId: req.user.id, status: 'ON_DELIVERY' }, data
+                where: {
+                    id: order.id,
+                    userId: req.user.id,
+                    status: { in: ['ON_DELIVERY', 'DELIVERED'] },
+                    customerReceivedAt: null
+                },
+                data
             });
             if (updated.count !== 1) {
                 const current = await tx.order.findFirst({
                     where: { id: order.id, userId: req.user.id },
                     include: { items: { include: { product: orderItemProduct } } }
                 });
-                if (current?.status === 'DELIVERED') return { order: current, changed: false };
+                if (current?.customerReceivedAt) return { order: current, changed: false };
                 throw httpError(409, 'The order status changed. Refresh and try again.', 'CONCURRENT_CHANGE');
             }
             const fresh = await tx.order.findUniqueOrThrow({

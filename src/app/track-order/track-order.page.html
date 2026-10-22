@@ -681,12 +681,15 @@
             </p>
           </div>
 
-          <div class="receipt-confirmation" *ngIf="normalizeStatus(order.status) === 'On delivery'">
+          <div class="receipt-confirmation" *ngIf="['On delivery', 'Delivered'].includes(normalizeStatus(order.status)) && !order.customerReceivedAt">
             <p>Has your order arrived? Confirm once you have received your items.</p>
             <p class="receipt-error" *ngIf="receiptError" role="alert">{{ receiptError }}</p>
             <button class="primary-button" type="button" [disabled]="receiptSubmitting" (click)="confirmOrderReceived()">
               {{ receiptSubmitting ? 'Confirming receipt…' : 'Order Received' }}
             </button>
+          </div>
+          <div class="receipt-confirmation" *ngIf="order.customerReceivedAt">
+            <p class="receipt-success" role="status">Thank you for confirming that you received this order.</p>
           </div>
 
         </section>
@@ -1055,7 +1058,7 @@
         <button type="button" class="received-review-close" aria-label="Close review dialog" (click)="closeReviewModal()">×</button>
       </header>
       <div class="received-review-body">
-        <p class="review-modal-intro">Your order is marked delivered. Reviews are completely optional—you can review the product, Botanique, both, or skip for now.</p>
+        <p class="review-modal-intro">Thank you for your order! Please take a minute to review the product you purchased and share your experience with the store. Reviews are optional—you can review the product, Botanique, both, or skip for now.</p>
         <section class="received-review-section" *ngIf="reviewableItems.length">
           <h3>Review a product</h3>
           <label class="review-modal-label" for="received-review-product">Product</label>

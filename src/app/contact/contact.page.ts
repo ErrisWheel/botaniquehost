@@ -655,8 +655,10 @@ export class ContactPage implements OnInit {
       this.addContactNotification();
       if (result?.emailSent === true) {
         alert('Thank you for contacting Botanique! Your message was sent to our support team.');
+      } else if (result?.emailReason === 'not_configured') {
+        alert('Your message was saved for the Botanique team, but the store email notification is not configured correctly. The team can still review your saved message.');
       } else {
-        alert('Your message was saved for the Botanique team, but the store email notification could not be sent. Please contact the store using the contact details shown on this page.');
+        alert('Your message was saved for the Botanique team, but the email provider rejected or could not deliver the notification. The team can still review your saved message; please contact the store using the contact details shown on this page if your request is urgent.');
       }
       this.contact = { name: '', email: this.getCurrentUserEmail(), phone: '', subject: '', message: '' };
       form.resetForm(this.contact);

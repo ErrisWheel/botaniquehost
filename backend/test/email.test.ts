@@ -2,6 +2,7 @@ import './helpers.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildOrderEmailParams, escapeHtml, paymentStatusText } from '../src/services/orderEmailParams.js';
+import { EmailJsError, sendEmailJs } from '../src/services/emailjs.js';
 
 const base: any = {
     id: 'o1', orderNumber: 'BOT-20261003-ABC123', userId: 'u1', status: 'PROCESSING',
@@ -53,4 +54,23 @@ test('payment status wording', () => {
 
 test('escapeHtml', () => {
     assert.equal(escapeHtml(`<a href="x">'&'</a>`), '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;');
+});
+
+test('EmailJS rejection keeps a sanitized provider diagnostic for server logs', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => new Response('Invalid recipient contact@example.test', { status: 400 })) as typeof fetch;
+    try {
+        await assert.rejects(
+            sendEmailJs('template_contact_test', { to_email: 'contact@example.test' }),
+            (error: unknown) => {
+                assert.ok(error instanceof EmailJsError);
+                assert.equal(error.status, 400);
+                assert.match(error.providerMessage || '', /Invalid recipient/);
+                assert.doesNotMatch(error.providerMessage || '', /contact@example\.test/);
+                return true;
+            }
+        );
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
 });

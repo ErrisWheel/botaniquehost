@@ -38,6 +38,7 @@ interface Order {
   shipping: number;
   tax: number;
   paymentStatus: string;
+  customerReceivedAt?: string | null;
 
   items: OrderItem[];
 
@@ -729,6 +730,7 @@ export class TrackOrderPage implements OnInit {
       shipping: numericField(rawOrder?.shipping),
       tax: numericField(rawOrder?.tax),
       paymentStatus: String(rawOrder?.paymentStatus || 'PENDING'),
+      customerReceivedAt: rawOrder?.customerReceivedAt || null,
 
       items,
 
@@ -772,7 +774,12 @@ export class TrackOrderPage implements OnInit {
   }
 
   async confirmOrderReceived(): Promise<void> {
-    if (!this.order || this.normalizeStatus(this.order.status) !== 'On delivery' || this.receiptSubmitting) return;
+    if (
+      !this.order ||
+      !['On delivery', 'Delivered'].includes(this.normalizeStatus(this.order.status)) ||
+      this.order.customerReceivedAt ||
+      this.receiptSubmitting
+    ) return;
     this.receiptSubmitting = true;
     this.receiptError = '';
     this.cdr.markForCheck();
@@ -781,6 +788,10 @@ export class TrackOrderPage implements OnInit {
       this.order = this.normalizeOrder(result?.order || result);
       this.prepareOrderMap(this.order);
       this.ordersService.invalidate();
+      if (result?.changed === false) {
+        this.receiptError = 'Receipt has already been confirmed for this order.';
+        return;
+      }
       this.reviewProductSelection = this.reviewableItems[0]?.productSlug || this.reviewableItems[0]?.productId || '';
       this.productReviewRating = 0;
       this.productReviewComment = '';

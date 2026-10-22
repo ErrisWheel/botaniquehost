@@ -50,13 +50,60 @@ r.get('/store/summary', async (_req, res, next) => {
     } catch (e) { next(e); }
 });
 
+/**
+ * Return review eligibility for this product only. The client must not decide
+ * eligibility from a different product's order or from browser-supplied IDs.
+ */
+r.get('/product/:productId/eligibility', auth, async (req: any, res, next) => {
+    try {
+        const product = await findProduct(String(req.params.productId));
+        if (!product) return res.status(404).json({ message: 'Product not found' });
+
+        const [eligibleOrders, existingReview] = await Promise.all([
+            prisma.order.findMany({
+                where: {
+                    userId: req.user.id,
+                    status: 'DELIVERED',
+                    items: { some: { productId: product.id } }
+                },
+                select: { id: true, orderNumber: true, createdAt: true },
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.review.findUnique({
+                where: {
+                    userId_productId: {
+                        userId: req.user.id,
+                        productId: product.id
+                    }
+                },
+                select: { id: true, rating: true, comment: true, isApproved: true, createdAt: true }
+            })
+        ]);
+
+        res.set('Cache-Control', 'no-store');
+        res.json({
+            productId: product.id,
+            productSlug: product.slug,
+            eligibleOrders,
+            hasReviewed: Boolean(existingReview),
+            existingReview: existingReview || null
+        });
+    } catch (e) { next(e); }
+});
+
 r.get('/product/:productId', async (req, res, next) => {
     try {
         const product = await findProduct(String(req.params.productId));
         if (!product) return res.status(404).json({ message: 'Product not found' });
         const reviews = await prisma.review.findMany({
             where: { productId: product.id, isApproved: true },
-            include: { user: { select: { fullName: true } } },
+            select: {
+                id: true,
+                rating: true,
+                comment: true,
+                createdAt: true,
+                user: { select: { fullName: true } }
+            },
             orderBy: { createdAt: 'desc' }
         });
         res.set('Cache-Control', 'no-store');

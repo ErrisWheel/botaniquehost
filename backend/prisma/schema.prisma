@@ -167,6 +167,9 @@ model Order {
   paidAt          DateTime?
   // Set once when the order is cancelled (any path: admin, Maya cancel/expiry).
   cancelledAt     DateTime?
+  // Customer-confirmed receipt is separate from fulfilment status because the
+  // admin may mark an order Delivered before the customer acknowledges it.
+  customerReceivedAt DateTime?
   // Set exactly once, atomically, when the reserved stock of a cancelled order
   // is given back. A second cancellation/callback can therefore never restock
   // the same order twice.

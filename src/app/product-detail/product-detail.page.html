@@ -845,7 +845,7 @@
       </div>
 
       <p class="reviews-state" *ngIf="reviewsLoading" role="status">Loading reviews…</p>
-      <p class="reviews-state" *ngIf="reviewsLoadError" role="alert">{{ reviewsLoadError }}</p>
+      <p class="reviews-state" *ngIf="reviewsLoadError" role="alert">{{ reviewsLoadError }} <button class="review-submit" type="button" (click)="retryLoadReviews()">Try Again</button></p>
       <p class="reviews-state" *ngIf="!reviewsLoading && !reviewsLoadError && reviews.length === 0">No approved reviews yet. Be the first to share your experience after delivery.</p>
 
       <div class="reviews-list" *ngIf="!reviewsLoading && !reviewsLoadError && reviews.length">
@@ -865,10 +865,12 @@
 
         <p *ngIf="!isLoggedIn" class="reviews-state">Please log in to submit a review.</p>
         <p *ngIf="isLoggedIn && reviewOrdersLoading" class="reviews-state" role="status">Checking your delivered orders…</p>
-        <p *ngIf="isLoggedIn && reviewOrdersError" class="reviews-state" role="alert">{{ reviewOrdersError }}</p>
-        <p *ngIf="isLoggedIn && !reviewOrdersLoading && !reviewOrdersError && reviewOrders.length === 0" class="reviews-state">You can submit a review once this product has been delivered as part of one of your orders.</p>
+        <p *ngIf="isLoggedIn && reviewOrdersError" class="reviews-state" role="alert">{{ reviewOrdersError }} <button type="button" class="review-submit" (click)="retryReviewEligibility()">Try Again</button></p>
+        <p *ngIf="isLoggedIn && !reviewOrdersLoading && !reviewOrdersError && hasAlreadyReviewed" class="reviews-state">You have already submitted a review for this product. Thank you for sharing your experience.</p>
+        <p *ngIf="isLoggedIn && !reviewOrdersLoading && !reviewOrdersError && !hasAlreadyReviewed && reviewOrders.length === 0" class="reviews-state">You can submit a review once this product has been delivered as part of one of your orders.</p>
+        <p *ngIf="reviewFeedback && !reviewOrdersLoading" class="review-feedback" [class.error]="reviewFeedbackError" role="status">{{ reviewFeedback }}</p>
 
-        <form *ngIf="isLoggedIn && reviewOrders.length > 0" (ngSubmit)="submitReview()">
+        <form *ngIf="isLoggedIn && !reviewOrdersLoading && !reviewOrdersError && !hasAlreadyReviewed && reviewOrders.length > 0" (ngSubmit)="submitReview()">
           <label for="review-order">Delivered order</label>
           <select id="review-order" name="reviewOrderId" [(ngModel)]="reviewOrderId" required>
             <option *ngFor="let order of reviewOrders" [value]="order.id">
@@ -885,7 +887,6 @@
 
           <label for="review-comment">Your review</label>
           <textarea id="review-comment" name="reviewComment" [(ngModel)]="reviewComment" rows="4" maxlength="2000" required placeholder="What was your experience with this plant?"></textarea>
-          <p class="review-feedback" *ngIf="reviewFeedback" [class.error]="reviewFeedbackError" role="status">{{ reviewFeedback }}</p>
           <button class="review-submit" type="submit" [disabled]="reviewSubmitting || reviewRating < 1 || !reviewComment.trim() || !reviewOrderId">
             {{ reviewSubmitting ? 'Submitting…' : 'Submit review' }}
           </button>

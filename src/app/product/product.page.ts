@@ -1,5 +1,5 @@
 import { environment } from '../../environments/environment';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { AuthService } from '../shared/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -65,6 +65,7 @@ const SUBCATEGORIES: Record<string, string[]> = {
 export class ProductPage implements OnInit {
 
   private readonly authService = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   /* DATA */
 
@@ -201,7 +202,10 @@ export class ProductPage implements OnInit {
 
   private async loadRatingSummaries(): Promise<void> {
     try {
-      const response = await fetch(`${environment.apiUrl}/reviews/summary`, { cache: 'no-store' });
+      const response = await fetch(`${environment.apiUrl}/reviews/summary`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(15000)
+      });
       if (!response.ok) return;
       const summaries = await response.json();
       if (!Array.isArray(summaries)) return;
@@ -215,6 +219,8 @@ export class ProductPage implements OnInit {
       );
     } catch {
       this.ratingSummaries = {};
+    } finally {
+      this.cdr.markForCheck();
     }
   }
 

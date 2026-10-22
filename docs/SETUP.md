@@ -115,6 +115,8 @@ The Contact Us form saves a support ticket through `POST /api/support` and attem
 
 Use `docs/emailjs/contact-message.html` as the template body. Set the EmailJS template **To Email** field to `{{to_email}}`, **Subject** to `{{message_subject}}`, and Reply-To to `{{sender_email}}`. The backend supplies `to_email` from `EMAILJS_SUPPORT_EMAIL`; never accept the recipient from the browser. If the template is not configured or email delivery fails, the support ticket remains saved and the contact page reports that the email notification did not send.
 
+For contact notification failures, inspect Render's backend logs for `[contact]`. The log identifies missing environment variable names or records EmailJS's sanitized HTTP rejection reason without recording the customer's email address, phone number, or message. For server-side sends, verify **Account → Security → Allow EmailJS API for non-browser applications** is enabled, and confirm `EMAILJS_CONTACT_TEMPLATE_ID` points to the contact template (not the order-confirmation template).
+
 ## 5. EmailJS
 
 1. https://dashboard.emailjs.com → **Email Services → Add New Service** (Gmail/Outlook/etc.) → copy the **Service ID**.

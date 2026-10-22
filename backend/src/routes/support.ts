@@ -4,7 +4,7 @@ import { prisma } from '../db.js';
 import { auth, admin } from '../middleware/auth.js';
 import { notify } from '../services/notifications.js';
 import { env } from '../config.js';
-import { sendEmailJs } from '../services/emailjs.js';
+import { EmailJsError, sendEmailJs } from '../services/emailjs.js';
 
 const r = Router();
 
@@ -29,7 +29,14 @@ r.post('/', (req, res, next) => {
 
         const mailReady = Boolean(env.EMAILJS_CONTACT_TEMPLATE_ID && env.EMAILJS_SUPPORT_EMAIL && env.EMAILJS_PUBLIC_KEY && env.EMAILJS_PRIVATE_KEY && env.EMAILJS_SERVICE_ID);
         if (!mailReady) {
-            console.warn(`[contact] Ticket ${ticket.id} saved; contact email is not configured.`);
+            const missing: string[] = [
+                { name: 'EMAILJS_CONTACT_TEMPLATE_ID', configured: Boolean(env.EMAILJS_CONTACT_TEMPLATE_ID) },
+                { name: 'EMAILJS_SUPPORT_EMAIL', configured: Boolean(env.EMAILJS_SUPPORT_EMAIL) },
+                { name: 'EMAILJS_PUBLIC_KEY', configured: Boolean(env.EMAILJS_PUBLIC_KEY) },
+                { name: 'EMAILJS_PRIVATE_KEY', configured: Boolean(env.EMAILJS_PRIVATE_KEY) },
+                { name: 'EMAILJS_SERVICE_ID', configured: Boolean(env.EMAILJS_SERVICE_ID) }
+            ].filter((item) => !item.configured).map((item) => item.name);
+            console.warn(`[contact] Ticket ${ticket.id} saved; e-mail notification not sent. Missing configuration: ${missing.join(', ') || 'unknown'}.`);
             return res.status(201).json({ ticket, emailSent: false, emailReason: 'not_configured' });
         }
         try {
@@ -41,8 +48,14 @@ r.post('/', (req, res, next) => {
             });
             return res.status(201).json({ ticket, emailSent: true });
         } catch (error: any) {
-            // Never log the sender's address, name, phone or message.
-            console.error(`[contact] EmailJS delivery failed for ticket ${ticket.id} (status ${Number(error?.status) || 'unknown'}).`);
+            // Never log the sender's address, name, phone or message. Provider
+            // messages are sanitized in emailjs.ts and can identify the actual
+            // template/authentication failure without exposing customer data.
+            const status = Number(error?.status) || 0;
+            const diagnostic = error instanceof EmailJsError
+                ? error.providerMessage || error.message
+                : 'Unexpected e-mail notification error';
+            console.error(`[contact] EmailJS delivery failed for ticket ${ticket.id}; status=${status || 'unknown'}; reason=${String(diagnostic).slice(0, 240)}.`);
             return res.status(201).json({ ticket, emailSent: false, emailReason: 'delivery_failed' });
         }
     } catch (e) { next(e); }
