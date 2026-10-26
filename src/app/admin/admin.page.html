@@ -518,9 +518,10 @@
             <span *ngIf="!f.image">Drag and drop an image here, or click to choose a file</span>
             <span *ngIf="f.image">Choose another image or drag one here</span>
           </div>
-          <small>PNG, JPG, WEBP or GIF. Images are saved with the product.</small>
+          <small>PNG, JPG, WEBP or GIF, maximum 3 MB. The selected image uploads first, then its URL is saved with the product.</small>
+          <small *ngIf="imageUploading">Uploading image…</small>
           <span class="image-url-label">Or use an image URL/path</span>
-          <input type="text" [(ngModel)]="f.image" maxlength="5000000" placeholder="https://… or assets/…" />
+          <input type="text" [(ngModel)]="f.image" maxlength="500" placeholder="https://… or assets/…" />
         </label>
         <label>Visibility
           <select [(ngModel)]="f.status">
@@ -536,7 +537,7 @@
       <div class="error-box inline" *ngIf="productFormError">{{ productFormError }}</div>
 
       <div class="actions">
-        <button type="button" class="primary" [disabled]="productSaving" (click)="saveProduct()">
+        <button type="button" class="primary" [disabled]="productSaving || imageUploading" (click)="saveProduct()">
           {{ productSaving ? 'Saving...' : (f.id ? 'Save changes' : 'Create product') }}
         </button>
         <button type="button" (click)="cancelProductForm()">Cancel</button>

@@ -19,6 +19,7 @@ import admin from './routes/admin.js';
 import cms from './routes/cms.js';
 import settings from './routes/settings.js';
 import payments from './routes/payments.js';
+import uploads from './routes/uploads.js';
 import { startPaymentSweeper } from './services/orderPayments.js';
 
 const app = express();
@@ -82,6 +83,7 @@ app.use('/api/admin', admin);
 app.use('/api/cms', cms);
 app.use('/api/settings', settings);
 app.use('/api/payments', payments);
+app.use('/api/uploads', uploads);
 
 app.use(errorHandler);
 

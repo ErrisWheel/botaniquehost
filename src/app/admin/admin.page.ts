@@ -269,6 +269,7 @@ export class AdminPage implements OnInit {
 
   productForm: ProductForm | null = null;
   imageDragging = false;
+  imageUploading = false;
   productFormError = '';
   productSaving = false;
 
@@ -660,7 +661,7 @@ export class AdminPage implements OnInit {
 
   private async readProductImage(file: File): Promise<void> {
     const f = this.productForm;
-    if (!f) return;
+    if (!f || this.imageUploading) return;
     if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type)) {
       this.rejectProduct('Choose a PNG, JPG, WEBP or GIF image.');
       return;
@@ -669,17 +670,27 @@ export class AdminPage implements OnInit {
       this.rejectProduct('Please choose an image smaller than 3 MB.');
       return;
     }
+
+    this.imageUploading = true;
+    this.productFormError = '';
+    this.cdr.markForCheck();
     try {
-      f.image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('Unable to read image.'));
-        reader.onerror = () => reject(new Error('Unable to read image.'));
-        reader.readAsDataURL(file);
+      const form = new FormData();
+      form.append('image', file, file.name);
+      const result = await this.api.request<{ url: string }>('/uploads/product-image', {
+        method: 'POST',
+        body: form
       });
+      if (!result?.url || result.url.length > 500) {
+        throw new Error('The server returned an invalid image URL.');
+      }
+      f.image = result.url;
       this.productFormError = '';
+    } catch (e) {
+      this.rejectProduct(this.describe(e, 'Unable to upload that image. Please try again.'));
+    } finally {
+      this.imageUploading = false;
       this.cdr.markForCheck();
-    } catch {
-      this.rejectProduct('Unable to read that image file.');
     }
   }
 

@@ -79,15 +79,18 @@ export class ApiService {
     }
 
     const hasBody = options.body !== undefined;
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
 
     try {
       return await fetch(`${environment.apiUrl}${path}`, {
         method: options.method ?? 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
-          ...(hasBody ? { 'Content-Type': 'application/json' } : {})
+          ...(hasBody && !isFormData ? { 'Content-Type': 'application/json' } : {})
         },
-        body: hasBody ? JSON.stringify(options.body) : undefined,
+        body: hasBody
+          ? (isFormData ? options.body as FormData : JSON.stringify(options.body))
+          : undefined,
         signal: options.signal,
         // Never let the browser serve a stored copy of account data.
         cache: 'no-store'
