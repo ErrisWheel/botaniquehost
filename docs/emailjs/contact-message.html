@@ -1,0 +1,53 @@
+<div style="margin:0;padding:24px 0;background:#f3f8f3;font-family:Arial,Helvetica,sans-serif;color:#1f2d1f;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;">
+    <tr>
+      <td style="background:#2e7d32;padding:24px;text-align:center;">
+        <div style="font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:1px;">Botanique</div>
+        <div style="font-size:13px;color:#d7ecd8;margin-top:4px;">Plants &amp; accessories</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:28px 28px 8px 28px;">
+        <h1 style="margin:0 0 8px 0;font-size:22px;color:#1f3d1f;">New Contact Message</h1>
+        <p style="margin:0;font-size:14px;line-height:1.6;color:#3f5a3f;">
+          Someone has sent a message through the Botanique Contact Us form. The message is also saved as a support ticket in the website.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f8f3;border-radius:8px;">
+          <tr>
+            <td style="padding:14px 16px;font-size:13px;line-height:1.8;color:#3f5a3f;">
+              <div><strong>Ticket number:</strong> {{ticket_id}}</div>
+              <div><strong>Submitted:</strong> {{submitted_at}}</div>
+              <div><strong>Subject:</strong> {{message_subject}}</div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:8px 28px 0 28px;">
+        <h2 style="margin:0 0 6px 0;font-size:16px;color:#1f3d1f;">Sender details</h2>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.7;color:#3f5a3f;">
+          <tr><td style="padding:4px 0;width:115px;"><strong>Name</strong></td><td style="padding:4px 0;overflow-wrap:anywhere;">{{sender_name}}</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Email</strong></td><td style="padding:4px 0;overflow-wrap:anywhere;">{{sender_email}}</td></tr>
+          <tr><td style="padding:4px 0;"><strong>Phone</strong></td><td style="padding:4px 0;overflow-wrap:anywhere;">{{sender_phone}}</td></tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px 28px 24px 28px;">
+        <h2 style="margin:0 0 10px 0;font-size:16px;color:#1f3d1f;">Message</h2>
+        <div style="padding:16px;background:#f3f8f3;border-radius:8px;font-size:14px;line-height:1.7;color:#3f5a3f;white-space:pre-wrap;overflow-wrap:anywhere;">{{message_body}}</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:16px 28px 28px 28px;border-top:1px solid #e6efe6;font-size:12px;line-height:1.6;color:#7a8f7a;text-align:center;">
+        Reply to this email to respond to {{sender_name}} at {{sender_email}}.<br />
+        &copy; Botanique
+      </td>
+    </tr>
+  </table>
+</div>
