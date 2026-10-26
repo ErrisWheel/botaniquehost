@@ -57,9 +57,24 @@ fs.mkdirSync(
 
 app.use(
     '/uploads',
+    // Product images are served by the API host but displayed on the storefront
+    // host. Override Helmet's default CORP=same-origin for uploaded images only.
+    (_req, res, next) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        next();
+    },
     express.static(
         path.resolve(env.UPLOAD_DIR)
     )
+);
+
+// Root status page: the backend's API routes live under /api.
+app.get('/', (_req, res) =>
+    res.json({
+        service: 'botanique-backend',
+        status: 'online',
+        health: '/api/health'
+    })
 );
 
 app.get('/api/health', (_req, res) =>
