@@ -1,0 +1,940 @@
+<div class="notification-scroll">
+
+        <!-- HEADER / NAVBAR -->
+      <header class="site-header">
+
+        <nav
+          class="nav wrap"
+          aria-label="Main navigation"
+        >
+
+          <!-- LOGO -->
+          <a
+            class="logo"
+            href="#"
+            (click)="goHome($event)"
+          >
+
+            <img
+              src="assets/images/logo.png"
+              alt="Botanique Logo"
+              class="logo-img"
+            />
+
+            <span>Botanique</span>
+
+          </a>
+
+
+          <!-- MOBILE MENU BUTTON -->
+          <button
+            class="menu-toggle"
+            type="button"
+            aria-label="Open menu"
+            [attr.aria-expanded]="menuOpen"
+            (click)="toggleMenu()"
+          >
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+          </button>
+
+
+          <!-- NAVIGATION LINKS -->
+          <div
+            class="nav-links"
+            [class.open]="menuOpen"
+          >
+
+            <!-- HOME -->
+            <a
+              href="#"
+              (click)="goHome($event)"
+            >
+              Home
+            </a>
+
+
+            <!-- ABOUT -->
+            <a
+              href="#"
+              (click)="goToAbout($event)"
+            >
+              About Us
+            </a>
+
+
+            <!-- PRODUCT -->
+            <a
+              href="#"
+              (click)="goToProduct($event)"
+            >
+              Product
+            </a>
+
+
+            <!-- DEVELOPERS -->
+            <a
+              href="#"
+              (click)="goToDevelopers($event)"
+            >
+              Developers
+            </a>
+
+
+            <!-- CONTACT -->
+            <a
+              href="#"
+              (click)="goToContact($event)"
+            >
+              Contact Us
+            </a>
+
+          </div>
+
+
+          <!-- NAV ACTIONS -->
+          <div class="nav-actions">
+
+
+            <!-- WISHLIST -->
+            <button
+              class="icon-link wishlist-link"
+              type="button"
+              title="Wishlist"
+              aria-label="Wishlist"
+              (click)="goToWishlist($event)"
+            >
+
+              <svg
+                class="nav-svg wishlist-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"
+                />
+
+              </svg>
+
+
+              <span
+                class="wishlist-badge"
+                *ngIf="wishlistCount > 0"
+              >
+                {{ wishlistCount }}
+              </span>
+
+            </button>
+
+
+            <!-- NOTIFICATIONS -->
+            <button
+              class="icon-link notification-link"
+              type="button"
+              title="Notifications"
+              aria-label="Notifications"
+              (click)="goToNotifications($event)"
+            >
+
+              <svg
+                class="nav-svg notification-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+                />
+
+                <path
+                  d="M13.73 21a2 2 0 0 1-3.46 0"
+                />
+
+              </svg>
+
+
+              <span
+                class="notification-badge"
+                *ngIf="notificationCount > 0"
+              >
+                {{ notificationCount }}
+              </span>
+
+            </button>
+
+
+            <!-- CART -->
+            <button
+        class="icon-link cart-link"
+        type="button"
+        title="Shopping Bag"
+        aria-label="Shopping bag"
+        (click)="goToCart($event)"
+      >
+        <svg
+          class="nav-svg cart-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <!-- Shopping Bag -->
+          <path
+            d="M5 8h14l1 13H4L5 8z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linejoin="round"
+          />
+
+          <!-- Bag Handle -->
+          <path
+            d="M8 8V6a4 4 0 0 1 8 0v2"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+
+        <span
+          class="cart-badge"
+          *ngIf="cartCount > 0"
+        >
+          {{ cartCount }}
+        </span>
+      </button>
+            <!-- ACCOUNT -->
+            <button
+        class="icon-link user-button"
+        type="button"
+         [title]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+         [attr.aria-label]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+        (click)="toggleLoginDropdown($event)"
+      >
+        <svg
+          class="nav-svg user-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="8"
+            r="3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          />
+
+          <path
+            d="M5 20c.8-4 3.3-6 7-6s6.2 2 7 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+
+
+            <!-- LOGIN DROPDOWN -->
+            <div
+              class="login-dropdown"
+              [class.show]="loginDropdownOpen"
+            >
+
+              <h3>
+                Welcome Back
+              </h3>
+
+
+              <p>
+                Login to your Botanique account
+              </p>
+
+
+              <form
+                (ngSubmit)="login()"
+              >
+
+                <!-- EMAIL -->
+                <div class="dropdown-input">
+
+                  <label
+                    for="notificationEmail"
+                  >
+                    Email Address
+                  </label>
+
+                  <input
+                    id="notificationEmail"
+                    type="email"
+                    name="email"
+                    [(ngModel)]="email"
+                    placeholder="Enter your email"
+                    autocomplete="email"
+                    required
+                  />
+
+                </div>
+
+
+                <!-- PASSWORD -->
+                <div class="dropdown-input">
+
+                  <label
+                    for="notificationPassword"
+                  >
+                    Password
+                  </label>
+
+                  <input
+                    id="notificationPassword"
+                    type="password"
+                    name="password"
+                    [(ngModel)]="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                  />
+
+                </div>
+
+
+                <!-- OPTIONS -->
+                <div class="dropdown-options">
+
+                  <label>
+
+                    <input
+                      type="checkbox"
+                      name="rememberMe"
+                      [(ngModel)]="rememberMe"
+                    />
+
+                    <span>
+                      Remember me
+                    </span>
+
+                  </label>
+
+
+                  <a
+                    href="#"
+                    (click)="forgotPassword($event)"
+                  >
+                    Forgot Password?
+                  </a>
+
+                </div>
+
+
+                <!-- LOGIN -->
+                <button
+                  class="dropdown-login"
+                  type="submit"
+                >
+                  Login
+                </button>
+
+              </form>
+
+
+              <!-- DIVIDER -->
+              <div class="dropdown-divider">
+
+                <span>
+                  OR
+                </span>
+
+              </div>
+
+
+              <!-- GUEST -->
+              <button
+                class="dropdown-guest"
+                type="button"
+                (click)="continueAsGuest()"
+              >
+                Continue as Guest
+              </button>
+
+
+              <!-- SIGN UP -->
+              <p class="dropdown-signup">
+
+                Don't have an account?
+
+                <a
+                  href="#"
+                  (click)="goToSignup($event)"
+                >
+                  Sign Up
+                </a>
+
+              </p>
+
+            </div>
+
+          </div>
+
+        </nav>
+
+      </header>
+
+      <!-- ABOUT HERO== -->
+
+    <section class="about-banner">
+
+      <img
+        src="https://t4.ftcdn.net/jpg/12/40/70/17/360_F_1240701757_AzaNix2tuXEx6aMOEwiMwMWpkc1Aw71c.jpg"
+        alt="Lush green leaves"
+      >
+
+      <div class="hero-content">
+
+        <h1>
+          Notifications
+        </h1>
+
+        <p>
+          Discover who we are, where we came from,
+          and what inspires us to create a better future.
+        </p>
+
+      </div>
+
+    </section>
+
+  <!-- MAIN NOTIFICATION CONTENT -->
+  <main class="notification-page">
+
+    <section class="notification-hero">
+
+      <div class="notification-heading">
+
+        <div>
+
+          <span class="notification-eyebrow">
+            Botanique Updates
+          </span>
+          <p>
+            Stay updated with your orders, wishlist,
+            and everything happening in your Botanique journey.
+          </p>
+
+        </div>
+
+        <button
+          *ngIf="hasUnreadNotifications"
+          class="mark-all-button"
+          type="button"
+          (click)="markAllAsRead()"
+        >
+          Mark all as read
+        </button>
+
+      </div>
+
+
+      <!-- NOTIFICATION LIST -->
+      <div
+        class="notifications-list"
+        *ngIf="notifications.length > 0"
+      >
+
+        <article
+          class="notification-card"
+          *ngFor="let notification of notifications"
+          [class.unread]="!notification.read"
+        >
+
+          <!-- ICON -->
+          <div
+            class="notification-icon-box"
+            [ngClass]="'type-' + notification.type"
+          >
+
+            <!-- ORDER -->
+            <svg
+              *ngIf="notification.type === 'order'"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M6 3h12v18H6z"></path>
+              <path d="M9 7h6"></path>
+              <path d="M9 11h6"></path>
+              <path d="M9 15h4"></path>
+            </svg>
+
+            <!-- WISHLIST -->
+            <svg
+              *ngIf="notification.type === 'wishlist'"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"
+              />
+            </svg>
+
+            <!-- PROMOTION -->
+            <svg
+              *ngIf="notification.type === 'promotion'"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M20 12v7H4v-7"></path>
+              <path d="M2 7h20v5H2z"></path>
+              <path d="M12 7v12"></path>
+              <path
+                d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"
+              />
+              <path
+                d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"
+              />
+            </svg>
+
+            <!-- SYSTEM -->
+            <svg
+              *ngIf="notification.type === 'system'"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="9"
+              ></circle>
+
+              <path d="M12 11v5"></path>
+
+              <path d="M12 8h.01"></path>
+            </svg>
+
+          </div>
+
+
+          <!-- CONTENT -->
+          <div class="notification-content">
+
+            <div class="notification-top">
+
+              <h2>
+                {{ notification.title }}
+              </h2>
+
+              <span
+                class="unread-dot"
+                *ngIf="!notification.read"
+              ></span>
+
+            </div>
+
+            <p>
+              {{ notification.message }}
+            </p>
+
+            <span class="notification-time">
+              {{ notification.time }}
+            </span>
+
+            <div class="notification-actions">
+
+              <button
+                *ngIf="!notification.read"
+                type="button"
+                (click)="markAsRead(notification.id)"
+              >
+                Mark as read
+              </button>
+
+              <button
+                type="button"
+                (click)="deleteNotification(notification.id)"
+              >
+                Remove
+              </button>
+
+            </div>
+
+          </div>
+
+        </article>
+
+      </div>
+
+
+      <!-- EMPTY STATE -->
+      <div
+        class="notification-empty"
+        *ngIf="notifications.length === 0"
+      >
+
+        <div class="empty-notification-icon">
+
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            />
+
+            <path
+              d="M13.73 21a2 2 0 0 1-3.46 0"
+            />
+          </svg>
+
+        </div>
+
+        <h2>
+          You're all caught up
+        </h2>
+
+        <p>
+          There are no new notifications right now.
+          We'll let you know when something important happens.
+        </p>
+
+        <button
+          type="button"
+          (click)="goToProduct($event)"
+        >
+          Explore Plants
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  
+  <!-- FOOTER -->
+  <footer class="footer">
+
+    <div class="wrap footer-grid">
+
+      <!-- BRAND -->
+      <div>
+
+        <a
+          class="logo"
+          href="#"
+          (click)="goHome($event)"
+        >
+
+          <img
+            src="assets/images/logo.png"
+            alt="Botanique Logo"
+            class="logo-img"
+          />
+
+          Botanique
+
+        </a>
+
+        <p>
+          Plants for the way you live.
+        </p>
+
+      </div>
+
+
+      <!-- SHOP -->
+      <div>
+
+        <b>
+          Shop
+        </b>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          All plants
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Indoor
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Outdoor
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Accessories
+        </a>
+
+      </div>
+
+
+      <!-- COMPANY -->
+      <div>
+
+        <b>
+          Company
+        </b>
+
+        <a
+          href="#"
+          (click)="goToAbout($event)"
+        >
+          About Us
+        </a>
+
+        <a
+          href="#"
+          (click)="goToDevelopers($event)"
+        >
+          Developers
+        </a>
+
+        <a
+          href="#"
+          (click)="goToContact($event)"
+        >
+          Contact Us
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER BOTTOM -->
+    <div class="wrap footer-bottom">
+
+      <span>
+        © 2026 Botanique Plant Co.
+      </span>
+
+      <span>
+        Thoughtfully grown, beautifully lived.
+      </span>
+
+    </div>
+
+  </footer>
+
+  <!-- CART OVERLAY-->
+
+  <div
+    class="cart-overlay"
+    [class.show]="cartDrawerOpen"
+    (click)="closeCart()"
+  ></div>
+
+
+  <!--CART DRAWER -->
+
+  <aside
+    class="cart-drawer"
+    [class.open]="cartDrawerOpen"
+    aria-label="Shopping cart"
+    [attr.aria-hidden]="!cartDrawerOpen"
+  >
+
+    <!-- CART HEADER -->
+    <div class="cart-drawer-header">
+
+      <div>
+        <span class="cart-eyebrow">
+          Your selection
+        </span>
+
+        <h2>
+          Your Cart
+        </h2>
+      </div>
+
+      <button
+        class="cart-close"
+        type="button"
+        aria-label="Close cart"
+        (click)="closeCart()"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <!-- EMPTY CART -->
+
+    <div
+      class="cart-empty"
+      *ngIf="cartItems.length === 0"
+    >
+
+      <div class="empty-cart-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="9"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <circle
+            cx="19"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <path
+            d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H6"
+          />
+        </svg>
+
+      </div>
+
+      <h3>
+        Your cart is empty
+      </h3>
+
+      <p>
+        Add something green and it will appear here.
+      </p>
+
+      <button
+        class="cart-shop-button"
+        type="button"
+        (click)="continueShopping($event)"
+      >
+        Shop Plants
+      </button>
+
+    </div>
+
+
+    <!-- CART ITEMS -->
+
+    <div
+      class="cart-items"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div
+        class="cart-item"
+        *ngFor="let item of cartItems"
+      >
+
+        <!-- IMAGE -->
+        <div class="cart-item-image">
+
+          <img
+            [src]="item.image"
+            [alt]="item.name || 'Plant'"
+          />
+
+        </div>
+
+
+        <!-- INFO -->
+        <div class="cart-item-info">
+
+          <h3>
+            {{ item.name }}
+          </h3>
+
+          <p class="cart-item-price">
+            {{ formatCartPrice(item.price || 0) }}
+          </p>
+
+
+          <!-- QUANTITY -->
+          <div class="cart-quantity">
+
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              (click)="decreaseQuantity(item)"
+            >
+              −
+            </button>
+
+            <span>
+              {{ item.quantity }}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              (click)="increaseQuantity(item)"
+            >
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- REMOVE -->
+        <button
+          class="cart-remove"
+          type="button"
+          aria-label="Remove item"
+          (click)="removeFromCart(item)"
+        >
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- CART FOOTER -->
+
+    <div
+      class="cart-drawer-footer"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div class="cart-total-row">
+
+        <span>
+          Subtotal
+        </span>
+
+        <strong>
+          {{ formatCartPrice(cartSubtotal) }}
+        </strong>
+
+      </div>
+
+      <p class="cart-note">
+        Taxes and delivery fees are calculated at checkout.
+      </p>
+
+      <button
+        class="cart-checkout-button"
+        type="button"
+        (click)="checkout($event)"
+      >
+        Continue to Checkout
+      </button>
+
+    </div>
+
+  </aside>
+
+</div>

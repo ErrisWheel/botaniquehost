@@ -1,0 +1,1814 @@
+import { environment } from '../../environments/environment';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { AuthService } from '../shared/auth.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule, NgForm } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { AlertController } from '@ionic/angular';
+
+import {
+  Product,
+  CartItem,
+  CATALOG
+} from '../shared/product-data';
+
+
+/* USER */
+
+interface User {
+  name?: string;
+  email: string;
+  password: string;
+}
+
+interface BackendProduct {
+  id: string;
+  name: string;
+  slug?: string;
+  stock: number;
+  status: string;
+}
+
+interface ProductsResponse {
+  items: BackendProduct[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/* SUBCATEGORIES */
+
+const SUBCATEGORIES: Record<string, string[]> = {
+
+  indoor: [
+    'All',
+    'Air-Purifying',
+    'Low-Light',
+    'Large Foliage'
+  ],
+
+  outdoor: [
+    'All',
+    'Ornamental',
+    'Herbs & Edible Plants',
+    'Garden Shrubs & Small Trees'
+  ],
+
+  accessories: [
+    'All',
+    'Care & Maintenance',
+    'Structural Support',
+    'Display & Decor'
+  ]
+
+};
+
+
+/* PRODUCT PAGE */
+
+@Component({
+  selector: 'app-product',
+  templateUrl: './product.page.html',
+  styleUrls: ['./product.page.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule
+  ]
+})
+export class ProductPage implements OnInit {
+
+  private readonly authService = inject(AuthService);
+  private readonly cdr = inject(ChangeDetectorRef);
+
+  /* DATA */
+
+ readonly catalog: Product[] = CATALOG.map(product => ({
+  ...product
+}));
+  ratingSummaries: Record<string, { count: number; average: number | null }> = {};
+
+  readonly subcategoryMap = SUBCATEGORIES;
+
+
+  /* NAVBAR */
+
+  menuOpen = false;
+
+  loginDropdownOpen = false;
+
+  get isLoggedIn(): boolean {
+    return !!localStorage.getItem('botaniqueToken');
+  }
+
+  searchBoxOpen = false;
+
+  cartDrawerOpen = false;
+
+
+  /* CART */
+
+  cartCount = 0;
+
+  cartItems: CartItem[] = [];
+
+
+  /* WISHLIST */
+
+  wishlistCount = 0;
+
+  private readonly WISHLIST_STORAGE_KEY =
+    'botaniqueWishlistItems';
+
+
+  /* NOTIFICATIONS */
+
+  notificationCount = 0;
+
+  private readonly NOTIFICATION_STORAGE_KEY =
+    'botaniqueNotifications';
+
+
+  /* LOGIN */
+
+  email = '';
+  password = '';
+  rememberMe = false;
+
+
+  /* SEARCH */
+  searchTerm = '';
+
+
+  /* CATEGORY */
+
+  currentCategory:
+    | 'all'
+    | 'indoor'
+    | 'outdoor'
+    | 'accessories' = 'all';
+
+  currentSubcategory = 'All';
+
+
+  /* PRODUCT FEEDBACK */
+
+  addedProductId: string | null = null;
+
+
+  /* CONSTRUCTOR */
+
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute,
+    private alertController: AlertController
+  ) {}
+
+
+  /* INIT */
+
+  ngOnInit(): void {
+  void this.loadRatingSummaries();
+  void this.loadProductStocks(); // ADD THIS LINE
+
+  this.updateCartState();
+  this.loadLoggedInUser();
+  this.updateWishlistCount();
+  this.updateNotificationCount();
+
+  this.route.queryParamMap.subscribe(params => {
+    const category = params.get('category');
+
+    if (
+      category === 'indoor' ||
+      category === 'outdoor' ||
+      category === 'accessories'
+    ) {
+      this.currentCategory = category;
+    } else {
+      this.currentCategory = 'all';
+    }
+
+    this.currentSubcategory = 'All';
+  });
+}
+
+  private skipInitialRatingRefresh = true;
+
+  ionViewWillEnter(): void {
+  if (this.skipInitialRatingRefresh) {
+    this.skipInitialRatingRefresh = false;
+  } else {
+    void this.loadRatingSummaries();
+  }
+
+  void this.loadProductStocks();
+
+  this.updateCartState();
+}
+
+  private async loadRatingSummaries(): Promise<void> {
+    try {
+      const response = await fetch(`${environment.apiUrl}/reviews/summary`, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!response.ok) return;
+      const summaries = await response.json();
+      if (!Array.isArray(summaries)) return;
+      this.ratingSummaries = Object.fromEntries(
+        summaries.map((item: any) => [String(item.productSlug), {
+          count: Math.max(0, Number(item.count) || 0),
+          average: item.average === null || item.average === undefined
+            ? null
+            : Number(item.average)
+        }])
+      );
+    } catch {
+      this.ratingSummaries = {};
+    } finally {
+      this.cdr.markForCheck();
+    }
+  }
+
+  ratingStars(productId: string): string {
+    const average = this.ratingSummaries[productId]?.average;
+    if (average === null || average === undefined || !Number.isFinite(average)) return '☆☆☆☆☆';
+    const filled = Math.max(0, Math.min(5, Math.round(average)));
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+  }
+
+  ratingCountLabel(productId: string): string {
+    const count = this.ratingSummaries[productId]?.count || 0;
+    return count ? `${count} ${count === 1 ? 'review' : 'reviews'}` : 'No reviews';
+  }
+
+
+  /* SUBCATEGORIES */
+
+  get subcategories(): string[] {
+
+    if (this.currentCategory === 'all') {
+      return [];
+    }
+
+    return (
+      this.subcategoryMap[
+        this.currentCategory
+      ] || ['All']
+    );
+
+  }
+
+  
+
+
+  /* FILTERED PRODUCTS */
+
+  get filteredProducts(): Product[] {
+
+    let products: Product[];
+
+
+    if (this.currentCategory === 'all') {
+
+      products = [
+        ...this.catalog
+      ];
+
+    } else {
+
+      products =
+        this.catalog.filter(
+          product =>
+            product.category ===
+            this.currentCategory
+        );
+
+
+      if (
+        this.currentSubcategory !== 'All'
+      ) {
+
+        products =
+          products.filter(
+            product =>
+              product.subcategory ===
+              this.currentSubcategory
+          );
+
+      }
+
+    }
+
+
+    const term =
+      this.searchTerm
+        .trim()
+        .toLowerCase();
+
+
+    if (!term) {
+      return products;
+    }
+
+
+    return products.filter(
+      product =>
+        product.name
+          .toLowerCase()
+          .includes(term)
+
+        ||
+
+        product.scientific
+          .toLowerCase()
+          .includes(term)
+
+        ||
+
+        product.subcategory
+          .toLowerCase()
+          .includes(term)
+
+        ||
+
+        product.category
+          .toLowerCase()
+          .includes(term)
+    );
+
+  }
+
+
+  /* CATEGORY SELECTION */
+
+  selectCategory(
+    category:
+      | 'all'
+      | 'indoor'
+      | 'outdoor'
+      | 'accessories'
+  ): void {
+
+    this.currentCategory =
+      category;
+
+    this.currentSubcategory =
+      'All';
+
+
+    if (category === 'all') {
+
+      this.router.navigate(
+        ['/product']
+      );
+
+    } else {
+
+      this.router.navigate(
+        ['/product'],
+        {
+          queryParams: {
+            category
+          }
+        }
+      );
+
+    }
+
+  }
+
+
+  selectSubcategory(
+    subcategory: string
+  ): void {
+
+    this.currentSubcategory =
+      subcategory;
+
+  }
+
+
+  /* SEARCH */
+
+  toggleSearch(): void {
+
+    this.searchBoxOpen =
+      !this.searchBoxOpen;
+
+
+    if (!this.searchBoxOpen) {
+
+      this.searchTerm =
+        '';
+
+    }
+
+  }
+
+
+  search(): void {
+
+    this.searchBoxOpen =
+      true;
+
+  }
+
+
+  onSearch(): void {
+
+    this.searchTerm =
+      this.searchTerm.trimStart();
+
+  }
+
+
+  clearSearch(): void {
+
+    this.searchTerm =
+      '';
+
+    this.searchBoxOpen =
+      false;
+
+  }
+
+
+  /* MOBILE MENU */
+
+  toggleMenu(): void {
+
+    this.menuOpen =
+      !this.menuOpen;
+
+
+    if (this.menuOpen) {
+
+      this.closeLoginDropdown();
+
+    }
+
+  }
+
+
+  closeMenu(): void {
+
+    this.menuOpen =
+      false;
+
+  }
+
+
+  /* LOGIN DROPDOWN */
+
+  toggleLoginDropdown(event?: Event): void {
+
+    event?.stopPropagation();
+
+    if (this.isLoggedIn) {
+      this.loginDropdownOpen = false;
+      this.router.navigate(['/profile']);
+      return;
+    }
+
+    this.loginDropdownOpen = !this.loginDropdownOpen;
+  }
+
+
+  closeLoginDropdown(): void {
+
+    this.loginDropdownOpen =
+      false;
+
+  }
+
+
+  /* NAVIGATION */
+
+  goHome(event?: Event): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+    this.router.navigate([
+      '/home'
+    ]);
+
+  }
+
+
+  goToAbout(event?: Event): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+    this.router.navigate([
+      '/about'
+    ]);
+
+  }
+
+
+  goToProduct(event?: Event): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+
+    this.currentCategory =
+      'all';
+
+    this.currentSubcategory =
+      'All';
+
+
+    this.router.navigate([
+      '/product'
+    ]);
+
+  }
+
+
+  goToServices(event?: Event): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+    this.router.navigate([
+      '/services'
+    ]);
+
+  }
+
+
+  goToDevelopers(event?: Event): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+    this.router.navigate([
+      '/developers'
+    ]);
+
+  }
+
+
+  goToContact(event?: Event): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+    this.router.navigate([
+      '/contact'
+    ]);
+
+  }
+
+
+  goToSignup(event?: Event): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+    this.router.navigate([
+      '/signup'
+    ]);
+
+  }
+
+
+  /* CATEGORY NAVIGATION */
+
+  goToProductCategory(
+    category:
+      | 'indoor'
+      | 'outdoor'
+      | 'accessories',
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+
+    event?.stopPropagation();
+
+    this.closeOverlays();
+
+
+    this.router.navigate(
+      ['/product'],
+      {
+        queryParams: {
+          category
+        }
+      }
+    );
+
+  }
+
+
+  /* PRODUCT DETAIL */
+
+  openProductDetail(
+    id: string,
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+
+    event?.stopPropagation();
+
+    this.closeOverlays();
+
+
+    this.router.navigate(
+      ['/product-detail'],
+      {
+        queryParams: {
+          id
+        }
+      }
+    );
+
+  }
+
+
+  /* GET PRODUCT */
+
+  getProduct(
+    id: string
+  ): Product | undefined {
+
+    return this.catalog.find(
+      product =>
+        product.id === id
+    );
+
+  }
+
+
+  /* FORMAT PRICE */
+
+  formatPrice(
+    value: number
+  ): string {
+
+    return `₱${Number(value).toLocaleString(
+      'en-PH',
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    )}`;
+
+  }
+
+
+  /*
+   * Cart-specific price formatter.
+   *
+   * Your HTML uses:
+   * formatCartPrice(...)
+   */
+
+  formatCartPrice(
+    value: number
+  ): string {
+
+    return `₱${Number(value || 0).toLocaleString(
+      'en-PH',
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    )}`;
+
+  }
+
+
+  /* TRACK PRODUCT */
+
+  trackByProductId(
+    _index: number,
+    product: Product
+  ): string {
+
+    return product.id;
+
+  }
+
+  
+
+  /* TRACK CART */
+
+  trackByCartId(
+    _index: number,
+    item: CartItem
+  ): string {
+
+    return String(item.id);
+
+  }
+
+ 
+private async loadProductStocks(): Promise<void> {
+  try {
+    const allProducts: BackendProduct[] = [];
+    let page = 1;
+    let total = 0;
+    let pageLimit = 24;
+
+    do {
+      const response = await fetch(
+        `${environment.apiUrl}/products?page=${page}&limit=${pageLimit}`,
+        {
+          cache: 'no-store',
+          signal: AbortSignal.timeout(15000)
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Products API returned ${response.status}`
+        );
+      }
+
+      const data: ProductsResponse = await response.json();
+
+      if (!Array.isArray(data.items)) {
+        throw new Error('Invalid products response.');
+      }
+
+      allProducts.push(...data.items);
+      total = Number(data.total) || 0;
+      pageLimit = Number(data.limit) || pageLimit;
+
+      if (data.items.length === 0) {
+        break;
+      }
+
+      page++;
+    } while (allProducts.length < total);
+
+    let matched = 0;
+
+    for (const backendProduct of allProducts) {
+      const slug = backendProduct.slug?.trim().toLowerCase();
+      const name = backendProduct.name.trim().toLowerCase();
+
+      const localProduct = this.catalog.find(product =>
+        (!!slug && product.id.trim().toLowerCase() === slug) ||
+        product.name.trim().toLowerCase() === name
+      );
+
+      if (!localProduct) {
+        continue;
+      }
+
+      localProduct.stock = Math.max(
+        0,
+        Number(backendProduct.stock) || 0
+      );
+
+      localProduct.status = backendProduct.status;
+      localProduct.lowStockThreshold = 5;
+
+      matched++;
+    }
+
+    this.cdr.detectChanges();
+
+    console.log('[BOTANIQUE] Products fetched:', allProducts.length);
+    console.log('[BOTANIQUE] Products matched:', matched);
+    console.log('[BOTANIQUE] Stock synchronization complete.');
+  } catch (error) {
+    console.error(
+      '[BOTANIQUE] Failed to load product stocks:',
+      error
+    );
+  }
+}
+
+
+  getStock(productId: string): number {
+  const product = this.getProduct(productId);
+  return Math.max(0, Number(product?.stock ?? 0));
+}
+
+isOutOfStock(productId: string): boolean {
+  const product = this.getProduct(productId);
+
+  return (
+    !product ||
+    product.stock === undefined ||
+    product.stock <= 0 ||
+    product.status?.toUpperCase() !== 'ACTIVE'
+  );
+}
+
+
+  /* CART QUANTITY */
+
+  getCartQuantity(
+    productId: string
+  ): number {
+
+    const item =
+      this.cartItems.find(
+        cartItem =>
+          String(cartItem.id) ===
+          String(productId)
+      );
+
+
+    if (!item) {
+      return 0;
+    }
+
+
+    const quantity =
+      Number(item.quantity);
+
+
+    return Number.isFinite(quantity)
+      ? Math.max(0, quantity)
+      : 0;
+
+  }
+
+
+  /* CART TOTAL */
+
+  get cartSubtotal(): number {
+
+    return this.cartItems.reduce(
+      (total, item) => {
+
+        const product =
+          this.getProduct(
+            String(item.id)
+          );
+
+        const price =
+          Number(item.price) ||
+          Number(product?.price) ||
+          0;
+
+
+        const quantity =
+          Number(item.quantity) || 0;
+
+
+        return total +
+          price * quantity;
+
+      },
+      0
+    );
+
+  }
+
+
+  /* OPEN CART */
+
+  openCart(): void {
+
+    this.closeMenu();
+
+    this.closeLoginDropdown();
+
+    this.updateCartState();
+
+    this.cartDrawerOpen =
+      true;
+
+  }
+
+
+  openCartDrawer(): void {
+
+    this.openCart();
+
+  }
+
+
+  goToCart(event?: Event): void {
+
+    event?.preventDefault();
+
+    event?.stopPropagation();
+
+    this.openCart();
+
+  }
+
+
+  /* CLOSE CART */
+
+  closeCartDrawer(): void {
+
+    this.cartDrawerOpen =
+      false;
+
+  }
+
+
+  closeCart(): void {
+
+    this.closeCartDrawer();
+
+  }
+
+
+  /* ADD TO CART */
+addToCart(id: string, event?: Event): void {
+  event?.preventDefault();
+  event?.stopPropagation();
+
+  const product = this.getProduct(id);
+
+  if (!product) {
+    console.error('Product not found:', id);
+    return;
+  }
+
+  if (product.stock === undefined) {
+    void this.showAlert(
+      'Stock Unavailable',
+      'Please wait for stock information to load.'
+    );
+    return;
+  }
+
+  if (this.isOutOfStock(id)) {
+    void this.showAlert(
+      'Product Unavailable',
+      'This product is out of stock or unavailable.'
+    );
+    return;
+  }
+
+  const existingItem = this.cartItems.find(
+    item => String(item.id) === String(id)
+  );
+
+  const currentQuantity = Number(existingItem?.quantity || 0);
+
+  if (currentQuantity >= product.stock) {
+    void this.showAlert(
+      'Stock Limit Reached',
+      `Only ${product.stock} unit(s) of ${product.name} are available.`
+    );
+    return;
+  }
+
+  if (existingItem) {
+    existingItem.quantity = currentQuantity + 1;
+  } else {
+    this.cartItems.push({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
+  }
+
+  this.saveCartItems();
+  this.addedProductId = id;
+  this.openCart();
+
+  
+
+  window.setTimeout(() => {
+    if (this.addedProductId === id) {
+      this.addedProductId = null;
+    }
+  }, 1200);
+}
+
+clearCart(): void {
+  this.cartItems = [];
+  this.cartCount = 0;
+
+  localStorage.removeItem('botaniqueCartItems');
+
+  this.cartDrawerOpen = false;
+
+  this.cdr.detectChanges();
+
+  console.log('[BOTANIQUE] Cart cleared after checkout.');
+}
+
+
+ /* INCREASE PRODUCT QUANTITY — STOCK LIMIT */
+
+increaseProductQuantity(
+  id: string,
+  event?: Event
+): void {
+  event?.preventDefault();
+  event?.stopPropagation();
+
+  const product = this.getProduct(id);
+
+  if (!product || this.isOutOfStock(id)) {
+    return;
+  }
+
+  const item = this.cartItems.find(
+    cartItem => String(cartItem.id) === String(id)
+  );
+
+  const currentQuantity = Number(item?.quantity || 0);
+  const availableStock = this.getStock(id);
+
+  // Block the + action when available stock is reached.
+  if (currentQuantity >= availableStock) {
+    return;
+  }
+
+  if (item) {
+    item.quantity = currentQuantity + 1;
+    this.saveCartItems();
+  } else {
+    this.addToCart(id);
+  }
+}
+
+/* DECREASE PRODUCT QUANTITY */
+
+decreaseProductQuantity(
+  id: string,
+  event?: Event
+): void {
+  event?.preventDefault();
+  event?.stopPropagation();
+
+  const item = this.cartItems.find(
+    cartItem => String(cartItem.id) === String(id)
+  );
+
+  if (!item) {
+    return;
+  }
+
+  const newQuantity = Number(item.quantity || 0) - 1;
+
+  if (newQuantity <= 0) {
+    this.removeFromCart(id);
+    return;
+  }
+
+  item.quantity = newQuantity;
+  this.saveCartItems();
+}
+
+  /* CART DRAWER QUANTITY */
+
+  increaseQuantity(
+    item: CartItem
+  ): void {
+
+    this.increaseProductQuantity(
+      String(item.id)
+    );
+
+  }
+
+
+  decreaseQuantity(
+    item: CartItem
+  ): void {
+
+    this.decreaseProductQuantity(
+      String(item.id)
+    );
+
+  }
+
+
+  /* REMOVE FROM CART */
+
+  removeFromCart(
+    itemOrId: CartItem | string
+  ): void {
+
+
+    const id =
+      typeof itemOrId === 'string'
+        ? itemOrId
+        : String(itemOrId.id);
+
+
+    this.cartItems =
+      this.cartItems.filter(
+        item =>
+          String(item.id) !== id
+      );
+
+
+    this.saveCartItems();
+
+  }
+
+
+  /* CHANGE CART QUANTITY */
+
+ /* CHANGE CART QUANTITY — STOCK VALIDATION */
+
+changeCartQty(
+  id: string,
+  delta: number
+): void {
+  const item = this.cartItems.find(
+    cartItem => String(cartItem.id) === String(id)
+  );
+
+  if (!item) {
+    return;
+  }
+
+  const product = this.getProduct(id);
+
+  if (!product) {
+    return;
+  }
+
+  const currentQuantity = Number(item.quantity || 0);
+  const newQuantity = currentQuantity + delta;
+  const availableStock = this.getStock(id);
+
+  if (delta > 0) {
+    if (this.isOutOfStock(id) || newQuantity > availableStock) {
+      return;
+    }
+  }
+
+  if (newQuantity <= 0) {
+    this.removeFromCart(id);
+    return;
+  }
+
+  item.quantity = newQuantity;
+  this.saveCartItems();
+}
+
+
+  /* LOAD CART */
+
+  private updateCartState(): void {
+
+    try {
+
+      const storedCart =
+        localStorage.getItem(
+          'botaniqueCartItems'
+        );
+
+
+      const cart =
+        storedCart
+          ? JSON.parse(storedCart)
+          : [];
+
+
+      if (!Array.isArray(cart)) {
+
+        this.cartItems = [];
+
+        this.cartCount = 0;
+
+        return;
+
+      }
+
+
+      this.cartItems =
+        cart
+          .filter(
+            (item: any) =>
+              item &&
+              item.id !== undefined &&
+              Number(item.quantity) > 0
+          )
+          .map(
+            (item: any): CartItem => ({
+
+              id: String(item.id),
+
+              quantity:
+                Number(item.quantity) || 1,
+
+              name:
+                item.name ||
+                this.getProduct(
+                  String(item.id)
+                )?.name,
+
+              price:
+                Number(item.price) ||
+                this.getProduct(
+                  String(item.id)
+                )?.price,
+
+              image:
+                item.image ||
+                this.getProduct(
+                  String(item.id)
+                )?.image
+
+            })
+          );
+
+
+      this.updateCartCount();
+
+    } catch {
+
+      this.cartItems = [];
+
+      this.cartCount = 0;
+
+    }
+
+  }
+
+
+  /* SAVE CART */
+
+  private saveCartItems(): void {
+
+    this.cartItems =
+      this.cartItems.filter(
+        item =>
+          item &&
+          item.id !== undefined &&
+          Number(item.quantity) > 0
+      );
+
+
+    localStorage.setItem(
+      'botaniqueCartItems',
+      JSON.stringify(
+        this.cartItems
+      )
+    );
+
+
+    this.updateCartCount();
+
+  }
+
+
+  /* CART COUNT */
+
+  private updateCartCount(): void {
+
+    this.cartCount =
+      this.cartItems.reduce(
+        (sum, item) =>
+          sum +
+          (
+            Number(item.quantity) || 0
+          ),
+        0
+      );
+
+  }
+
+
+  /* WISHLIST */
+
+  isInWishlist(
+    productId: string
+  ): boolean {
+
+    try {
+
+      const stored =
+        localStorage.getItem(
+          this.WISHLIST_STORAGE_KEY
+        );
+
+
+      if (!stored) {
+        return false;
+      }
+
+
+      const wishlist =
+        JSON.parse(stored);
+
+
+      return (
+        Array.isArray(wishlist) &&
+        wishlist.some(
+          (item: any) =>
+            String(item?.id) ===
+            String(productId)
+        )
+      );
+
+    } catch {
+
+      return false;
+
+    }
+
+  }
+
+
+  toggleWishlist(
+    productId: string,
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+
+    event?.stopPropagation();
+
+
+    try {
+
+      const stored =
+        localStorage.getItem(
+          this.WISHLIST_STORAGE_KEY
+        );
+
+
+      let wishlist: any[] = [];
+
+
+      if (stored) {
+
+        const parsed =
+          JSON.parse(stored);
+
+
+        if (Array.isArray(parsed)) {
+
+          wishlist =
+            parsed;
+
+        }
+
+      }
+
+
+      const index =
+        wishlist.findIndex(
+          item =>
+            String(item?.id) ===
+            String(productId)
+        );
+
+
+      if (index !== -1) {
+
+        wishlist.splice(
+          index,
+          1
+        );
+
+      } else {
+
+        const product =
+          this.getProduct(productId);
+
+          
+
+
+        if (!product) {
+          return;
+        }
+
+
+        wishlist.push({
+
+          id: product.id,
+
+          name: product.name,
+
+          price: product.price,
+
+          image: product.image,
+
+          category: product.category,
+
+          subcategory:
+            product.subcategory
+
+        });
+
+      }
+
+      
+
+
+      localStorage.setItem(
+        this.WISHLIST_STORAGE_KEY,
+        JSON.stringify(wishlist)
+      );
+
+
+      this.updateWishlistCount();
+
+    } catch (error) {
+
+      console.error(
+        'Unable to update wishlist:',
+        error
+      );
+
+    }
+
+  }
+
+  
+
+
+  private updateWishlistCount(): void {
+
+    try {
+
+      const stored =
+        localStorage.getItem(
+          this.WISHLIST_STORAGE_KEY
+        );
+
+
+      if (!stored) {
+
+        this.wishlistCount =
+          0;
+
+        return;
+
+      }
+
+
+      const wishlist =
+        JSON.parse(stored);
+
+
+      this.wishlistCount =
+        Array.isArray(wishlist)
+          ? wishlist.length
+          : 0;
+
+    } catch {
+
+      this.wishlistCount =
+        0;
+
+    }
+
+  }
+
+
+  /* WISHLIST PAGE */
+
+  goToWishlist(
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+
+    this.router.navigate([
+      '/wishlist'
+    ]);
+
+  }
+
+
+  /* NOTIFICATIONS */
+
+  private updateNotificationCount(): void {
+
+    try {
+
+      const stored =
+        localStorage.getItem(
+          this.NOTIFICATION_STORAGE_KEY
+        );
+
+
+      if (!stored) {
+
+        this.notificationCount =
+          0;
+
+        return;
+
+      }
+
+
+      const notifications =
+        JSON.parse(stored);
+
+
+      if (Array.isArray(notifications)) {
+
+        this.notificationCount =
+          notifications.filter(
+            (notification: any) =>
+              notification?.read !== true
+          ).length;
+
+      } else if (
+        typeof notifications === 'number'
+      ) {
+
+        this.notificationCount =
+          notifications;
+
+      } else {
+
+        this.notificationCount =
+          0;
+
+      }
+
+    } catch {
+
+      this.notificationCount =
+        0;
+
+    }
+
+  }
+
+
+  goToNotifications(
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+
+    this.closeOverlays();
+
+
+    this.router.navigate([
+      '/notifications'
+    ]);
+
+  }
+
+
+  /* LOAD LOGGED-IN USER */
+
+  private loadLoggedInUser(): void {
+
+    try {
+
+      const storedUser =
+        localStorage.getItem(
+          'botaniqueUser'
+        );
+
+
+      if (!storedUser) {
+        return;
+      }
+
+
+      const user =
+        JSON.parse(
+          storedUser
+        );
+
+
+      if (user?.email) {
+
+        this.email =
+          user.email;
+
+      }
+
+    } catch {
+
+    }
+
+  }
+
+
+  /* LOGIN */
+
+  async login(
+    form?: NgForm
+  ): Promise<void> {
+
+    if (
+      form &&
+      form.invalid
+    ) {
+
+      await this.showAlert(
+        'Login Required',
+        'Please enter your email address and password.'
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !this.email.trim() ||
+      !this.password.trim()
+    ) {
+
+      await this.showAlert(
+        'Login Required',
+        'Please enter your email address and password.'
+      );
+
+      return;
+
+    }
+
+
+    let user;
+    try {
+      user = await this.authService.login(
+        this.email,
+        this.password,
+        this.rememberMe
+      );
+    } catch (error: any) {
+      await this.showAlert(
+        'Login Failed',
+        error?.message || 'Incorrect email or password.'
+      );
+      return;
+    }
+
+    this.closeLoginDropdown();
+
+    this.password = '';
+
+
+    await this.showAlert(
+      'Welcome Back',
+      `Welcome back, ${user.name || user.email}!`
+    );
+
+  }
+
+
+  /* FORGOT PASSWORD */
+
+  async forgotPassword(
+    event?: Event
+  ): Promise<void> {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    const email = (
+      prompt('Enter the email address of your Botanique account:') || ''
+    ).trim();
+
+    if (!email) {
+      return;
+    }
+
+    try {
+      await this.authService.resetPassword(email);
+      alert(
+        'If an account exists for that email address, a password reset link has been sent.'
+      );
+    } catch (error: any) {
+      alert(
+        error?.message ||
+        'Unable to send the reset email. Please try again.'
+      );
+    }
+  }
+
+
+  /* CONTINUE AS GUEST */
+
+  continueAsGuest(): void {
+
+    this.closeLoginDropdown();
+
+
+    this.router.navigate([
+      '/home'
+    ]);
+
+  }
+
+
+  /* CHECKOUT */
+
+  goToCheckout(
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+
+
+    if (
+      this.cartItems.length === 0
+    ) {
+
+      this.showAlert(
+        'Empty Cart',
+        'Your shopping bag is empty.'
+      );
+
+      return;
+
+    }
+
+
+    this.closeCartDrawer();
+
+
+    this.router.navigate([
+      '/checkout'
+    ]);
+
+  }
+
+
+  checkout(
+    event?: Event
+  ): void {
+
+    this.goToCheckout(
+      event
+    );
+
+  }
+
+  continueShopping(
+    event?: Event
+  ): void {
+
+    event?.preventDefault();
+
+    event?.stopPropagation();
+
+
+    this.closeCartDrawer();
+
+
+    this.router.navigate([
+      '/product'
+    ]);
+
+  }
+
+
+  /* CLOSE OVERLAYS */
+
+  private closeOverlays(): void {
+
+    this.closeMenu();
+
+    this.closeLoginDropdown();
+
+    this.closeCartDrawer();
+
+  }
+
+
+  /* ALERT */
+
+  private async showAlert(
+    header: string,
+    message: string
+  ): Promise<void> {
+
+    const alert =
+      await this.alertController.create({
+
+        header,
+
+        message,
+
+        buttons: [
+          'OK'
+        ]
+
+      });
+
+
+    await alert.present();
+
+  }
+
+}

@@ -1,0 +1,29 @@
+node_modules/
+
+.env
+.env.*
+!.env.example
+
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+dist/
+coverage/
+
+*.log
+
+.DS_Store
+Thumbs.db
+
+# Firebase credentials - never commit
+*firebase-adminsdk*.json
+serviceAccount*.json
+*-service-account*.json
+.tmp-build/
+tsconfig.check.json
+
+# Generated test-admin credentials - never commit or share
+Botanique-Admin-Test-Credentials*.txt
+*-Test-Credentials*.txt

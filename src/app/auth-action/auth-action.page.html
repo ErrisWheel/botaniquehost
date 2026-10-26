@@ -1,0 +1,60 @@
+<main class="auth-action-page">
+  <section class="auth-action-card" aria-live="polite">
+    <button class="auth-brand" type="button" (click)="goHome()" aria-label="Botanique home">
+      <span class="brand-mark">✿</span><span>Botanique</span>
+    </button>
+
+    <div class="action-icon" aria-hidden="true">{{ mode === 'verifyEmail' ? '✉' : '🌿' }}</div>
+    <p class="eyebrow">ACCOUNT SECURITY</p>
+
+    <ng-container *ngIf="loading">
+      <h1>Checking your link</h1>
+      <p class="intro">Please wait while we securely validate your request.</p>
+      <div class="loading-bar" role="status" aria-label="Checking link"></div>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && mode === 'resetPassword' && !success && email && !canRequestNewResetLink">
+      <h1>Create a new password</h1>
+      <p class="intro">Choose a strong password for <strong>{{ email }}</strong>.</p>
+      <form (ngSubmit)="submitPassword()">
+        <label for="new-password">New password</label>
+        <div class="password-field">
+          <input id="new-password" name="password" [(ngModel)]="password" [type]="showPassword ? 'text' : 'password'" minlength="6" autocomplete="new-password" required />
+          <button type="button" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'">{{ showPassword ? 'Hide' : 'Show' }}</button>
+        </div>
+        <label for="confirm-password">Confirm new password</label>
+        <input id="confirm-password" name="confirmPassword" [(ngModel)]="confirmPassword" type="password" minlength="6" autocomplete="new-password" required />
+        <p class="field-hint">Use at least 6 characters. Both fields must match.</p>
+        <p class="action-message error" *ngIf="message" role="alert">{{ message }}</p>
+        <button class="primary-action" type="submit" [disabled]="submitting || !password || !confirmPassword">{{ submitting ? 'Updating…' : 'Reset password' }}</button>
+      </form>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && mode === 'verifyEmail' && success">
+      <h1>Email verified</h1>
+      <p class="intro">{{ message }}</p>
+      <button class="primary-action" type="button" (click)="goLogin()">Continue to login</button>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && success && mode === 'resetPassword'">
+      <h1>Password updated</h1>
+      <p class="intro">{{ message }}</p>
+      <button class="primary-action" type="button" (click)="goLogin()">Continue to login</button>
+    </ng-container>
+
+    <ng-container *ngIf="!loading && !success && message && (mode === '' || (mode === 'resetPassword' && (!email || canRequestNewResetLink)) || (mode === 'verifyEmail' && !success))">
+      <h1>{{ mode === 'verifyEmail' ? 'Verification link unavailable' : 'This link needs attention' }}</h1>
+      <p class="action-message error" role="alert">{{ message }}</p>
+      <p class="intro" *ngIf="mode === 'verifyEmail'">For your security, a verification link can only be used once and may expire.</p>
+      <button class="secondary-action" type="button" *ngIf="mode === 'verifyEmail'" (click)="resendVerification()" [disabled]="submitting">{{ submitting ? 'Sending…' : 'Send another verification email' }}</button>
+      <form class="new-reset-form" *ngIf="mode === 'resetPassword' || mode === ''" (ngSubmit)="requestNewResetLink()">
+        <label for="reset-email">Email address</label>
+        <input id="reset-email" name="resetRequestEmail" [(ngModel)]="resetRequestEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <button class="secondary-action" type="submit" [disabled]="submitting">Request a new reset link</button>
+      </form>
+      <button class="text-action" type="button" (click)="goLogin()">Back to login</button>
+    </ng-container>
+
+    <p class="security-note">Botanique will never ask you to share your password by email.</p>
+  </section>
+</main>

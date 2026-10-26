@@ -1,0 +1,1086 @@
+<div class="home-scroll" (scroll)="onHomeScroll($event)">
+
+  <!-- HEADER / NAVBAR -->
+  <header class="site-header">
+    <nav class="nav wrap" aria-label="Main navigation">
+
+      <!-- LOGO -->
+      <a
+        class="logo"
+        href="#"
+        (click)="goHome($event)"
+      >
+        <img
+          src="assets/images/logo.png"
+          alt="Botanique Logo"
+          class="logo-img"
+        />
+        Botanique
+      </a>
+
+      <!-- MOBILE MENU BUTTON -->
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Open menu"
+        [attr.aria-expanded]="menuOpen"
+        (click)="toggleMenu()"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- NAVIGATION -->
+      <div
+        class="nav-links"
+        [class.open]="menuOpen"
+      >
+        <a
+          class="active"
+          href="#"
+          (click)="goHome($event)"
+        >
+          Home
+        </a>
+
+        <a
+          href="#"
+          (click)="goToAbout($event)"
+        >
+          About Us
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Product
+        </a>
+
+        <a
+          href="#"
+          (click)="goToDevelopers($event)"
+        >
+          Developers
+        </a>
+
+        <a
+          href="#"
+          (click)="goToContact($event)"
+        >
+          Contact Us
+        </a>
+      </div>
+
+      <!-- NAV ACTIONS -->
+      <div class="nav-actions">
+
+        <!-- WISHLIST -->
+        <button
+          class="icon-link wishlist-link"
+          type="button"
+          title="Wishlist"
+          aria-label="Wishlist"
+          (click)="goToWishlist($event)"
+        >
+          <svg
+            class="nav-svg wishlist-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"
+            />
+          </svg>
+
+          <span
+            class="wishlist-badge"
+            *ngIf="wishlistCount > 0"
+          >
+            {{ wishlistCount }}
+          </span>
+        </button>
+
+        <!-- NOTIFICATIONS -->
+        <button
+          class="icon-link notification-link"
+          type="button"
+          title="Notifications"
+          aria-label="Notifications"
+          (click)="goToNotifications($event)"
+        >
+          <svg
+            class="nav-svg notification-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+            />
+
+            <path
+              d="M13.73 21a2 2 0 0 1-3.46 0"
+            />
+          </svg>
+
+          <span
+            class="notification-badge"
+            *ngIf="notificationCount > 0"
+          >
+            {{ notificationCount }}
+          </span>
+        </button>
+
+        <!--  CART -->
+
+<button
+  class="icon-link cart-link"
+  type="button"
+  title="Shopping Bag"
+  aria-label="Shopping bag"
+  (click)="goToCart($event)"
+>
+  <svg
+    class="nav-svg cart-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <!-- Shopping Bag -->
+    <path
+      d="M5 8h14l1 13H4L5 8z"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linejoin="round"
+    />
+
+    <!-- Bag Handle -->
+    <path
+      d="M8 8V6a4 4 0 0 1 8 0v2"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+    />
+  </svg>
+
+  <span
+    class="cart-badge"
+    *ngIf="cartCount > 0"
+  >
+    {{ cartCount }}
+  </span>
+</button>
+        <!-- ACCOUNT -->
+        <button
+  class="icon-link user-button"
+  type="button"
+   [title]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+   [attr.aria-label]="isLoggedIn ? 'Account (Logged in)' : 'Account'"
+  (click)="toggleLoginDropdown($event)"
+>
+  <svg
+    class="nav-svg user-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <circle
+      cx="12"
+      cy="8"
+      r="3.5"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+    />
+
+    <path
+      d="M5 20c.8-4 3.3-6 7-6s6.2 2 7 6"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+    />
+  </svg>
+</button>
+
+        <!-- LOGIN DROPDOWN -->
+        <div
+          class="login-dropdown"
+          [class.show]="loginDropdownOpen"
+        >
+          <h3>Welcome Back</h3>
+
+          <p>
+            Login to your Botanique account
+          </p>
+
+          <form
+            (ngSubmit)="login()"
+          >
+
+            <div class="dropdown-input">
+              <label for="homeEmail">
+                Email Address
+              </label>
+
+              <input
+                id="homeEmail"
+                type="email"
+                name="email"
+                [(ngModel)]="email"
+                placeholder="Enter your email"
+                autocomplete="email"
+                required
+              />
+            </div>
+
+            <div class="dropdown-input">
+              <label for="homePassword">
+                Password
+              </label>
+
+              <input
+                id="homePassword"
+                type="password"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+
+            <div class="dropdown-options">
+
+              <label>
+                <input
+                  type="checkbox"
+                  name="rememberMe"
+                  [(ngModel)]="rememberMe"
+                />
+
+                <span>
+                  Remember me
+                </span>
+              </label>
+
+              <a
+                href="#"
+                (click)="forgotPassword($event)"
+              >
+                Forgot Password?
+              </a>
+
+            </div>
+
+            <button
+              class="dropdown-login"
+              type="submit"
+            >
+              Login
+            </button>
+
+          </form>
+
+          <div class="dropdown-divider">
+            <span>OR</span>
+          </div>
+
+          <button
+            class="dropdown-guest"
+            type="button"
+            (click)="continueAsGuest()"
+          >
+            Continue as Guest
+          </button>
+
+          <p class="dropdown-signup">
+            Don't have an account?
+
+            <a
+              href="#"
+              (click)="goToSignup($event)"
+            >
+              Sign Up
+            </a>
+          </p>
+
+        </div>
+
+      </div>
+
+    </nav>
+  </header>
+
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- HERO -->
+    <section class="hero wrap">
+
+      <div class="hero-copy">
+
+        <span class="eyebrow">
+          Bring nature home
+        </span>
+
+        <h1>
+          Make room for a little more green.
+        </h1>
+
+        <p>
+          Thoughtfully chosen plants, pots, and everyday
+          care essentials for spaces that feel more alive.
+        </p>
+
+        <div class="button-row">
+
+          <a
+            class="button button-dark"
+            href="#"
+            (click)="goToProduct($event)"
+          >
+            Shop plants
+          </a>
+
+          <a
+            class="text-link"
+            href="#"
+            (click)="goToAbout($event)"
+          >
+            Our story
+            <span>→</span>
+          </a>
+
+        </div>
+
+      </div>
+
+      <div class="hero-image">
+
+        <img
+          src="https://images.pexels.com/photos/12014192/pexels-photo-12014192.jpeg?auto=compress&cs=tinysrgb&h=1400&w=1000"
+          alt="Monstera plant basking in sunlight by a window"
+        />
+
+      </div>
+
+    </section>
+
+
+    <!-- SCROLL VIDEO -->
+    <section
+      class="plant-scroll-expand"
+      id="plantScrollExpand"
+    >
+
+      <div class="plant-scroll-expand__track">
+
+        <div class="plant-scroll-expand__stage">
+
+          <!-- VIDEO FRAME -->
+          <div
+            class="plant-scroll-expand__frame"
+            [style.width.%]="82 + (videoProgress * 18)"
+            [style.height.vh]="68 + (videoProgress * 32)"
+            [style.border-radius.px]="28 - (videoProgress * 28)"
+          >
+
+            <!-- VIDEO -->
+            <video
+              class="plant-scroll-expand__media"
+              src="https://www.pexels.com/download/video/9707289/"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="auto"
+            ></video>
+
+            <!-- DARK OVERLAY -->
+            <div class="plant-scroll-expand__scrim"></div>
+
+            <!-- INITIAL TITLE -->
+            <h2
+              class="plant-scroll-expand__title"
+              [style.opacity]="videoProgress < 0.75 ? 1 : 0"
+            >
+              Let it grow
+            </h2>
+
+            <!-- FINAL CONTENT -->
+            <div
+              class="plant-scroll-expand__overlay"
+              [style.opacity]="videoProgress >= 0.75 ? 1 : 0"
+            >
+
+              <span
+                class="eyebrow"
+                style="color: #e1eee1"
+              >
+                Rooted in care
+              </span>
+
+              <a
+                class="button button-dark"
+                href="#"
+                (click)="goToProduct($event)"
+              >
+                Shop the collection
+              </a>
+
+            </div>
+
+          </div>
+
+          <!-- SCROLL HINT -->
+          <div
+            class="plant-scroll-expand__hint"
+            [style.opacity]="videoProgress >= 0.8 ? 0 : 1"
+          >
+            Scroll
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- FEATURES -->
+    <section class="feature-strip">
+
+      <div class="wrap feature-grid">
+
+        <div>
+          <strong>
+            Carefully grown
+          </strong>
+
+          <span>
+            Plants selected for healthy new homes.
+          </span>
+        </div>
+
+        <div>
+          <strong>
+            Easy to love
+          </strong>
+
+          <span>
+            Simple care notes with every order.
+          </span>
+        </div>
+
+        <div>
+          <strong>
+            Made for your space
+          </strong>
+
+          <span>
+            Find the right green for every room.
+          </span>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- PROMO CARD -->
+    <section class="promo-section">
+
+      <div class="promo-card wrap">
+
+        <!-- LEFT CONTENT -->
+        <div class="promo-content">
+
+          <span class="promo-eyebrow">
+            SPECIAL OFFER
+          </span>
+
+          <h2>
+            Grow more, save more.
+          </h2>
+
+          <p class="promo-text">
+            Get <strong>20% OFF</strong> your order when your
+            products total more than ₱15,000.
+          </p>
+
+          <p class="promo-shipping">
+            🌿 Plus, enjoy <strong>FREE SHIPPING.</strong>
+          </p>
+
+          <a
+            href="#"
+            class="promo-button"
+            (click)="goToProduct($event)"
+          >
+            Shop Now
+            <span>→</span>
+          </a>
+
+        </div>
+
+        <!-- RIGHT IMAGE -->
+        <div class="promo-image">
+
+          <img
+            src="https://images.unsplash.com/photo-1551301038-df7eca0bc0f3?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YWVzdGhldGljJTIwcGxhbnR8ZW58MHx8MHx8fDA%3D"
+            alt="Green indoor plants"
+            loading="lazy"
+          />
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!--  CATEGORIES -->
+    <section
+      class="section wrap categories-section"
+    >
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="eyebrow">
+            Explore our collection
+          </span>
+
+          <h2>
+            Find your kind of green.
+          </h2>
+
+        </div>
+
+        <a
+          class="text-link"
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          View all plants
+          <span>→</span>
+        </a>
+
+      </div>
+
+
+      <div class="category-grid">
+
+        <!-- INDOOR -->
+        <a
+          class="category-card"
+          href="#"
+          (click)="goToProduct($event)"
+        >
+
+          <img
+            src="https://images.pexels.com/photos/7663989/pexels-photo-7663989.jpeg?auto=compress&cs=tinysrgb&h=800&w=1000"
+            alt="Indoor plants on shelves"
+            loading="lazy"
+          />
+
+          <span class="category-content">
+
+            <b>
+              Indoor plants
+            </b>
+
+            <small>
+              For desks, shelves, and quiet corners
+            </small>
+
+          </span>
+
+        </a>
+
+
+        <!-- OUTDOOR -->
+        <a
+          class="category-card"
+          href="#"
+          (click)="goToProduct($event)"
+        >
+
+          <img
+            src="https://i.pinimg.com/originals/0c/b1/58/0cb1585fc9181ff98f6657f3a8f326d0.jpg"
+            alt="Outdoor plants in a garden"
+            loading="lazy"
+          />
+
+          <span class="category-content">
+
+            <b>
+              Outdoor plants
+            </b>
+
+            <small>
+              For balconies, patios, and gardens
+            </small>
+
+          </span>
+
+        </a>
+
+
+        <!-- ACCESSORIES -->
+        <a
+          class="category-card"
+          href="#"
+          (click)="goToProduct($event)"
+        >
+
+          <img
+            src="https://images.pexels.com/photos/1903965/pexels-photo-1903965.jpeg?auto=compress&cs=tinysrgb&h=800&w=1000"
+            alt="Plant pots and accessories"
+            loading="lazy"
+          />
+
+          <span class="category-content">
+
+            <b>
+              Plant accessories
+            </b>
+
+            <small>
+              Pots, tools, and little helpers
+            </small>
+
+          </span>
+
+        </a>
+
+      </div>
+
+    </section>
+
+
+    <!-- STORY -->
+    <section class="story-section">
+
+      <div class="wrap story-grid">
+
+        <!-- IMAGE -->
+        <div class="story-image">
+
+          <img
+            src="https://m.media-amazon.com/images/I/71FTGNJiDLL._AC_UF894,1000_QL80_.jpg"
+            alt="Hands caring for a potted plant"
+            loading="lazy"
+          />
+
+        </div>
+
+
+        <!-- CONTENT -->
+        <div class="story-copy">
+
+          <span class="eyebrow">
+            A slower way to shop
+          </span>
+
+          <h2>
+            Good plants. Good homes. Good days.
+          </h2>
+
+          <p>
+            Botanique makes it simple to bring nature into
+            your everyday. Every plant is selected with real
+            homes in mind, so you can spend less time
+            worrying and more time enjoying the green
+            around you.
+          </p>
+
+          <a
+            class="button button-outline"
+            href="#"
+            (click)="goToAbout($event)"
+          >
+            About Botanique
+          </a>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- NEWSLETTER -->
+    <section class="newsletter wrap">
+
+      <span class="eyebrow">
+        Stay in the loop
+      </span>
+
+      <h2>
+        Care tips, new plants, and good things growing.
+      </h2>
+
+      <form
+        (ngSubmit)="subscribeNewsletter()"
+      >
+
+        <input
+          type="email"
+          name="newsletterEmail"
+          [(ngModel)]="newsletterEmail"
+          placeholder="Your email address"
+          autocomplete="email"
+          required
+        />
+
+        <button
+          class="button button-dark"
+          type="submit"
+        >
+          Sign me up
+        </button>
+
+      </form>
+
+      <p
+        class="newsletter-message"
+        role="status"
+      >
+        {{ newsletterMessage }}
+      </p>
+
+    </section>
+
+  </main>
+
+
+  <!-- FOOTER -->
+  <footer class="footer">
+
+    <div class="wrap footer-grid">
+
+      <!-- BRAND -->
+      <div>
+
+        <a
+          class="logo"
+          href="#"
+          (click)="goHome($event)"
+        >
+
+          <img
+            src="assets/images/logo.png"
+            alt="Botanique Logo"
+            class="logo-img"
+          />
+
+          Botanique
+
+        </a>
+
+        <p>
+          Plants for the way you live.
+        </p>
+
+      </div>
+
+
+      <!-- SHOP -->
+      <div>
+
+        <b>
+          Shop
+        </b>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          All plants
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Indoor
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Outdoor
+        </a>
+
+        <a
+          href="#"
+          (click)="goToProduct($event)"
+        >
+          Accessories
+        </a>
+
+      </div>
+
+
+      <!-- COMPANY -->
+      <div>
+
+        <b>
+          Company
+        </b>
+
+        <a
+          href="#"
+          (click)="goToAbout($event)"
+        >
+          About Us
+        </a>
+
+        <a
+          href="#"
+          (click)="goToDevelopers($event)"
+        >
+          Developers
+        </a>
+
+        <a
+          href="#"
+          (click)="goToContact($event)"
+        >
+          Contact Us
+        </a>
+
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER BOTTOM -->
+    <div class="wrap footer-bottom">
+
+      <span>
+        © 2026 Botanique Plant Co.
+      </span>
+
+      <span>
+        Thoughtfully grown, beautifully lived.
+      </span>
+
+    </div>
+
+  </footer>
+
+  <!-- CART OVERLAY -->
+
+  <div
+    class="cart-overlay"
+    [class.show]="cartDrawerOpen"
+    (click)="closeCart()"
+  ></div>
+
+
+  <!-- CART DRAWER -->
+
+  <aside
+    class="cart-drawer"
+    [class.open]="cartDrawerOpen"
+    aria-label="Shopping cart"
+    [attr.aria-hidden]="!cartDrawerOpen"
+  >
+
+    <!-- CART HEADER -->
+    <div class="cart-drawer-header">
+
+      <div>
+        <span class="cart-eyebrow">
+          Your selection
+        </span>
+
+        <h2>
+          Your Cart
+        </h2>
+      </div>
+
+      <button
+        class="cart-close"
+        type="button"
+        aria-label="Close cart"
+        (click)="closeCart()"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <!-- EMPTY CART -->
+
+    <div
+      class="cart-empty"
+      *ngIf="cartItems.length === 0"
+    >
+
+      <div class="empty-cart-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="9"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <circle
+            cx="19"
+            cy="20"
+            r="1.5"
+          ></circle>
+
+          <path
+            d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 2-1.6L22 8H6"
+          />
+        </svg>
+
+      </div>
+
+      <h3>
+        Your cart is empty
+      </h3>
+
+      <p>
+        Add something green and it will appear here.
+      </p>
+
+      <button
+        class="cart-shop-button"
+        type="button"
+        (click)="continueShopping($event)"
+      >
+        Shop Plants
+      </button>
+
+    </div>
+
+
+    <!-- CART ITEMS -->
+
+    <div
+      class="cart-items"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div
+        class="cart-item"
+        *ngFor="let item of cartItems"
+      >
+
+        <!-- IMAGE -->
+        <div class="cart-item-image">
+
+          <img
+            [src]="item.image"
+            [alt]="item.name || 'Plant'"
+          />
+
+        </div>
+
+
+        <!-- INFO -->
+        <div class="cart-item-info">
+
+          <h3>
+            {{ item.name }}
+          </h3>
+
+          <p class="cart-item-price">
+            {{ formatCartPrice(item.price || 0) }}
+          </p>
+
+
+          <!-- QUANTITY -->
+          <div class="cart-quantity">
+
+            <button
+              type="button"
+              aria-label="Decrease quantity"
+              (click)="decreaseQuantity(item)"
+            >
+              −
+            </button>
+
+            <span>
+              {{ item.quantity }}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Increase quantity"
+              (click)="increaseQuantity(item)"
+            >
+              +
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- REMOVE -->
+        <button
+          class="cart-remove"
+          type="button"
+          aria-label="Remove item"
+          (click)="removeFromCart(item)"
+        >
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- CART FOOTER -->
+
+    <div
+      class="cart-drawer-footer"
+      *ngIf="cartItems.length > 0"
+    >
+
+      <div class="cart-total-row">
+
+        <span>
+          Subtotal
+        </span>
+
+        <strong>
+          {{ formatCartPrice(cartSubtotal) }}
+        </strong>
+
+      </div>
+
+      <p class="cart-note">
+        Taxes and delivery fees are calculated at checkout.
+      </p>
+
+      <button
+        class="cart-checkout-button"
+        type="button"
+        (click)="checkout($event)"
+      >
+        Continue to Checkout
+      </button>
+
+    </div>
+
+  </aside>
+
+</div>

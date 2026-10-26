@@ -1,0 +1,98 @@
+import { Routes } from '@angular/router';
+import { adminGuard, authGuard } from './shared/auth.guard';
+
+export const routes: Routes = [
+  {
+    path: 'home',
+    loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
+  },
+  {
+    path: '',
+    redirectTo: 'home',
+    pathMatch: 'full',
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./login/login.page').then(m => m.LoginPage)
+  },
+  {
+    path: 'signup',
+    loadComponent: () => import('./signup/signup.page').then(m => m.SignupPage)
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./about/about.page').then(m => m.AboutPage)
+  },
+  {
+    path: 'product',
+    loadComponent: () => import('./product/product.page').then(m => m.ProductPage)
+  },
+  {
+    path: 'developers',
+    loadComponent: () => import('./developers/developers.page').then(m => m.DevelopersPage)
+  },
+  {
+    path: 'checkout',
+    loadComponent: () => import('./checkout/checkout.page').then(m => m.CheckoutPage)
+  },
+  {
+    path: 'contact',
+    loadComponent: () => import('./contact/contact.page').then(m => m.ContactPage)
+  },
+  {
+    path: 'faq',
+    loadComponent: () => import('./faq/faq.page').then(m => m.FaqPage)
+  },
+  {
+    path: 'auth-action',
+    loadComponent: () => import('./auth-action/auth-action.page').then(m => m.AuthActionPage)
+  },
+  {
+    path: 'product-detail',
+    loadComponent: () =>
+      import('./product-detail/product-detail.page')
+        .then(m => m.ProductDetailPage)
+  },
+  {
+    path: 'wishlist',
+    loadComponent: () => import('./wishlist/wishlist.page').then(m => m.WishlistPage)
+  },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./notification/notification.page')
+        .then(m => m.NotificationPage)
+  },
+
+  // ADMIN
+  {
+    path: 'admin',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./admin/admin.page')
+        .then(m => m.AdminPage)
+  },
+
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () => import('./profile/profile.page').then(m => m.ProfilePage)
+  },
+  {
+    // Explicit order route: opening Track Order from a particular history row
+    // must retain that exact order, even when Ionic reuses cached pages.
+    path: 'track-order/:orderId',
+    canActivate: [authGuard],
+    loadComponent: () => import('./track-order/track-order.page').then(m => m.TrackOrderPage)
+  },
+  {
+    path: 'track-order',
+    canActivate: [authGuard],
+    loadComponent: () => import('./track-order/track-order.page').then(m => m.TrackOrderPage)
+  },
+  {
+    path: 'payment-result',
+    canActivate: [authGuard],
+    loadComponent: () => import('./payment-result/payment-result.page').then(m => m.PaymentResultPage)
+  },
+];
